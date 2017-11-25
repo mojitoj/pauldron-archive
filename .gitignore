@@ -1,0 +1,8 @@
+dist/
+
+# Node stuff
+node_modules/
+*.log
+npm-debug.log*
+.npm
+.node_repl_history

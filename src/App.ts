@@ -12,14 +12,14 @@ class App {
     // Run configuration methods on the Express instance.
     constructor() {
         this.express = express();
+        this.middleware();        
         this.routes();
-        this.middleware();
     }
 
     // Configure Express middleware.
     private middleware(): void {
         this.express.use(logger("dev"));
-        this.express.use(bodyParser.json());
+        this.express.use(bodyParser.json({type: "application/json"}));
         this.express.use(bodyParser.urlencoded({ extended: false }));
     }
 
@@ -32,9 +32,8 @@ class App {
           });
         });
         this.express.use("/", router);
-        this.express.use("/permissions", permissionAPI.getRouter());        
+        this.express.use("/permissions", permissionAPI.router);        
     }
-
 }
 
 export default new App().express;

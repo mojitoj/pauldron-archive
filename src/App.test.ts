@@ -23,7 +23,56 @@ describe('baseRoute', async () => {
 describe('permissionsEndpoint', async () => {
     
     it("should be a json array", async () => {
-        const res = await chai.request(app).get("/permissions");
+        const res = await chai.request(app)
+            .get("/permissions");
         chai.assert.typeOf(res.body, "array");
     });
+
+    it("should be able to create a ticket from a permission", async () => {        
+        const res = await chai.request(app)
+            .post("/permissions")
+            .set("content-type", "application/json")
+            .send({resource_id: "test_res_id",resource_scopes:["ScopeA", "ScopeB"]});
+        chai.assert.exists(res.body.ticket);
+    });
+
+    it("should be able to create a ticket from a permission array", async () => {        
+        const res = await chai.request(app)
+            .post("/permissions")
+            .set("content-type", "application/json")
+            .send([{resource_id: "test_res_id",resource_scopes:["ScopeA", "ScopeB"]}]);
+        chai.assert.exists(res.body.ticket);
+    });
+
+    it("should reject malformed requests", () => {        
+        chai.request(app)
+            .post("/permissions")
+            .set("content-type", "application/json")
+            .send([]).end((err, res) => {
+                res.should.have.status(400);
+              });
+        chai.request(app)
+            .post("/permissions")
+            .set("content-type", "application/json")
+            .send([{}]).end((err, res) => {
+                res.should.have.status(400);
+              });
+
+        chai.request(app)
+            .post("/permissions")
+            .set("content-type", "application/json")
+            .send({resource_id: "test_res_id",resource_scopes:"ScopeA"})
+            .end((err, res) => {
+                  res.should.have.status(400);
+            });
+  
+        chai.request(app)
+            .post("/permissions")
+            .set("content-type", "application/json")
+            .send([{resource_id: "test_res_id",resource_scopes:"ScopeA"}])
+            .end((err, res) => {
+                  res.should.have.status(400);
+            });
+    });
+
 });

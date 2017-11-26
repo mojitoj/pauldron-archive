@@ -1,7 +1,9 @@
 import * as express from "express";
 import * as logger from "morgan";
 import * as bodyParser from "body-parser";
-import permissionAPI from "./routes/PermissionAPI";
+import permissionEndpoint from "./routes/PermissionEndpoint";
+import authorizationEndpoint from "./routes/AuthorizationEndpoint";
+import introspectionEndpoint from "./routes/IntrospectionEndpoint";
 
 // Creates and configures an ExpressJS web server.
 class App {
@@ -12,7 +14,7 @@ class App {
     // Run configuration methods on the Express instance.
     constructor() {
         this.express = express();
-        this.middleware();        
+        this.middleware();
         this.routes();
     }
 
@@ -32,7 +34,9 @@ class App {
           });
         });
         this.express.use("/", router);
-        this.express.use("/permissions", permissionAPI.router);        
+        this.express.use("/protection/permissions", permissionEndpoint.router);
+        this.express.use("/protection/introspection", introspectionEndpoint.router);
+        this.express.use("/authorization", authorizationEndpoint.router);
     }
 }
 

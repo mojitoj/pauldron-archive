@@ -25,7 +25,7 @@ describe('permissionsEndpoint', async () => {
     it("should be a json array", async () => {
         const res = await chai.request(app)
             .get("/permissions");
-        chai.assert.typeOf(res.body, "array");
+        chai.assert.typeOf(res.body, "object");
     });
 
     it("should be able to create a ticket from a permission", async () => {        

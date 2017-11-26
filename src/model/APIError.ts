@@ -1,11 +1,11 @@
 export class APIError {
     message: string;
-    code: string;
+    error: string;
     status: number;
 
-    constructor(theMessage: string, theCode: string, theStatus: number) {
+    constructor(theMessage: string, theErrorCode: string, theStatus: number) {
         this.message = theMessage;
-        this.code = theCode;
+        this.error = theErrorCode;
         this.status = theStatus;
       }
 }

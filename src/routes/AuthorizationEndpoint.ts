@@ -2,8 +2,7 @@ import {Permission} from "../model/Permission";
 import {TimeStampedPermissions} from "../model/TimeStampedPermissions";
 import {APIError} from "../model/APIError";
 import {registered_permissions} from "./PermissionEndpoint";
-
-
+import {config} from "../config";
 import {Router, Request, Response, NextFunction} from "express";
 import {request} from "http";
 
@@ -23,7 +22,7 @@ export class AuthorizationEndpoint {
         const ticket: string = req.body.ticket;
         const permissions: TimeStampedPermissions = registered_permissions [ticket];
         if (permissions && !permissions.isExpired()) {
-            const rpt: TimeStampedPermissions = TimeStampedPermissions.issue(20, permissions.permissions);
+            const rpt: TimeStampedPermissions = TimeStampedPermissions.issue(config.authorization.rpt.ttl, permissions.permissions);
             issued_rpts[rpt.id] = rpt;
             res.status(201)
             .send({rpt: rpt.id});

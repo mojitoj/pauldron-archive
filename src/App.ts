@@ -5,6 +5,10 @@ import permissionEndpoint from "./routes/PermissionEndpoint";
 import authorizationEndpoint from "./routes/AuthorizationEndpoint";
 import introspectionEndpoint from "./routes/IntrospectionEndpoint";
 
+export const permissionEndpointURI: string = "/protection/permissions";
+export const introspectionEndpointURI: string = "/protection/introspection";
+export const authorizationEndpointURI: string = "/authorization";
+
 // Creates and configures an ExpressJS web server.
 class App {
 
@@ -34,9 +38,9 @@ class App {
           });
         });
         this.express.use("/", router);
-        this.express.use("/protection/permissions", permissionEndpoint.router);
-        this.express.use("/protection/introspection", introspectionEndpoint.router);
-        this.express.use("/authorization", authorizationEndpoint.router);
+        this.express.use(permissionEndpointURI, permissionEndpoint.router);
+        this.express.use(introspectionEndpointURI, introspectionEndpoint.router);
+        this.express.use(authorizationEndpointURI, authorizationEndpoint.router);
     }
 }
 

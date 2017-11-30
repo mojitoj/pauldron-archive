@@ -1,12 +1,13 @@
-import * as mocha from 'mocha';
-import * as chai from 'chai';
-import chaiHttp = require('chai-http');
+import * as mocha from "mocha";
+import * as chai from "chai";
+import chaiHttp = require("chai-http");
 
-import app from '../src/App';
+import app from "../src/App";
+import {permissionEndpointURI} from "../src/App";
 
 chai.use(chaiHttp);
 
-describe('baseRoute', async () => {
+describe("baseRoute", async () => {
 
     it("should be json", async () => {
         const res = await chai.request(app).get("/");
@@ -20,56 +21,55 @@ describe('baseRoute', async () => {
     });
 });
 
-describe('permissionsEndpoint', async () => {
-    
+describe("permissionsEndpoint", () => {
     it("should be a json array", async () => {
         const res = await chai.request(app)
-            .get("/permissions");
+            .get(permissionEndpointURI);
         chai.assert.typeOf(res.body, "object");
     });
 
-    it("should be able to create a ticket from a permission", async () => {        
+    it("should be able to create a ticket from a permission", async () => {
         const res = await chai.request(app)
-            .post("/permissions")
+            .post(permissionEndpointURI)
             .set("content-type", "application/json")
-            .send({resource_id: "test_res_id",resource_scopes:["ScopeA", "ScopeB"]});
+            .send({resource_id: "test_res_id", resource_scopes: ["ScopeA", "ScopeB"]});
         chai.assert.exists(res.body.ticket);
     });
 
-    it("should be able to create a ticket from a permission array", async () => {        
+    it("should be able to create a ticket from a permission array", async () => {
         const res = await chai.request(app)
-            .post("/permissions")
+            .post(permissionEndpointURI)
             .set("content-type", "application/json")
-            .send([{resource_id: "test_res_id",resource_scopes:["ScopeA", "ScopeB"]}]);
+            .send([{resource_id: "test_res_id", resource_scopes: ["ScopeA", "ScopeB"]}]);
         chai.assert.exists(res.body.ticket);
     });
 
-    it("should reject malformed requests", () => {        
+    it("should reject malformed requests", () => {
         chai.request(app)
-            .post("/permissions")
+            .post(permissionEndpointURI)
             .set("content-type", "application/json")
             .send([]).end((err, res) => {
                 res.should.have.status(400);
               });
         chai.request(app)
-            .post("/permissions")
+            .post(permissionEndpointURI)
             .set("content-type", "application/json")
             .send([{}]).end((err, res) => {
                 res.should.have.status(400);
               });
 
         chai.request(app)
-            .post("/permissions")
+            .post(permissionEndpointURI)
             .set("content-type", "application/json")
-            .send({resource_id: "test_res_id",resource_scopes:"ScopeA"})
+            .send({resource_id: "test_res_id", resource_scopes: "ScopeA"})
             .end((err, res) => {
                   res.should.have.status(400);
             });
-  
+
         chai.request(app)
-            .post("/permissions")
+            .post(permissionEndpointURI)
             .set("content-type", "application/json")
-            .send([{resource_id: "test_res_id",resource_scopes:"ScopeA"}])
+            .send([{resource_id: "test_res_id", resource_scopes: "ScopeA"}])
             .end((err, res) => {
                   res.should.have.status(400);
             });

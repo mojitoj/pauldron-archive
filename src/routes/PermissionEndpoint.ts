@@ -1,8 +1,7 @@
 import {Permission} from "../model/Permission";
 import {TimeStampedPermissions} from "../model/TimeStampedPermissions";
 import {APIError} from "../model/APIError";
-
-
+import {config} from "../config";
 import {Router, Request, Response, NextFunction} from "express";
 import { request } from "http";
 
@@ -24,7 +23,7 @@ export class PermissionEndpoint {
   public createANewOne(req: Request, res: Response, next: NextFunction): void {
     try {
       PermissionEndpoint.validatePermissionCreationParams(req.body);
-      const ticket: TimeStampedPermissions = TimeStampedPermissions.issue(2000, req.body);
+      const ticket: TimeStampedPermissions = TimeStampedPermissions.issue(config.permission.ticket.ttl, req.body);
       registered_permissions[ticket.id] = ticket;
       res.status(201)
         .send({ticket: ticket.id});

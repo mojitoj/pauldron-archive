@@ -25,7 +25,7 @@ describe("happyFlow", () => {
         const authorizationRes = await chai.request(app)
             .post(authorizationEndpointURI)
             .set("content-type", "application/x-www-form-urlencoded")
-            .send({"ticket": ticket});
+            .send({"ticket": ticket, "claim_tokens": "test"});
         chai.assert.exists(authorizationRes.body.rpt);
         const rpt: string = authorizationRes.body.rpt;
 

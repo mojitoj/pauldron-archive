@@ -4,6 +4,8 @@ import {issued_rpts} from "./AuthorizationEndpoint";
 
 import {Router, Request, Response, NextFunction} from "express";
 import {request} from "http";
+import { InvalidRPTError, ExpiredRPTError, ValidationError } from "../model/Exceptions";
+import { inspect } from "util";
 
 
 export class IntrospectionEndpoint {
@@ -19,34 +21,46 @@ export class IntrospectionEndpoint {
         IntrospectionEndpoint.validateIntrospectionRequestParams(req.body);
         const token: string = req.body.token;
         const permissions: TimeStampedPermissions = issued_rpts [token];
-        if (permissions && !permissions.isExpired()) {
-            let introspectionResponseObject = {
+        IntrospectionEndpoint.validatePermissions(permissions);
+
+        let introspectionResponseObject = {
                 ...permissions,
                 active: true
-            };
-            delete introspectionResponseObject.id;
-            res.status(200)
-            .send(introspectionResponseObject);
-        } else {
-            res.status(200)
-            .send({active: false});
-        }
+        };
+        delete introspectionResponseObject.id;
+        res.status(200).send(introspectionResponseObject);
     } catch (e) {
-      res.status(400)
-        .send(
-          new APIError(e.message,
-          "MissingParameter",
-          400
-        )
-      );
+      if (e instanceof ValidationError) {
+        res.status(400).send(
+            new APIError(e.message,
+            "MissingParameter",
+            400
+         ));
+      } else if (e instanceof InvalidRPTError || e instanceof ExpiredRPTError) {
+        res.status(200).send({active: false});
+      } else {
+        res.status(500).send(
+          new APIError("Internal server error.",
+          "internal_error",
+          500
+        ));
+        console.log(e);
+      }
     }
   }
 
   private static validateIntrospectionRequestParams(object: any): void {
-    if (object && object.token) {
-      return;
+    if (!object || !object.token) {
+      throw new ValidationError("Bad Request. Expecting a ticket.");
     }
-    throw new Error ("Bad Request. Expecting a ticket.");
+  }
+
+  private static validatePermissions(permissions: TimeStampedPermissions): void {
+    if (!permissions) {
+      throw new InvalidRPTError();
+    } else if (permissions.isExpired()) {
+      throw new ExpiredRPTError();
+    }
   }
 
   private init(): void {

@@ -1,9 +1,11 @@
 import {Permission} from "../model/Permission";
 import {TimeStampedPermissions} from "../model/TimeStampedPermissions";
 import {APIError} from "../model/APIError";
-import {config} from "../config";
 import {Router, Request, Response, NextFunction} from "express";
 import { request } from "http";
+import { ValidationError } from "../model/Exceptions";
+
+const config = require("../config.json");
 
 export let registered_permissions: { [ticketId: string]: TimeStampedPermissions } = {};
 
@@ -23,18 +25,24 @@ export class PermissionEndpoint {
   public createANewOne(req: Request, res: Response, next: NextFunction): void {
     try {
       PermissionEndpoint.validatePermissionCreationParams(req.body);
-      const ticket: TimeStampedPermissions = TimeStampedPermissions.issue(config.permission.ticket.ttl, req.body);
+      const ticket: TimeStampedPermissions = TimeStampedPermissions.issue(config.uma.permission.ticket.ttl, req.body);
       registered_permissions[ticket.id] = ticket;
-      res.status(201)
-        .send({ticket: ticket.id});
+      res.status(201).send({ticket: ticket.id});
     } catch (e) {
-      res.status(400)
-        .send(
-         new APIError(e.message,
-          "MissingParameter",
-          400
-        )
-      );
+      if (e instanceof ValidationError) {
+        res.status(400).send(
+            new APIError(e.message,
+            "MissingParameter",
+            400
+         ));
+      } else {
+        res.status(500).send(
+          new APIError("Internal server error.",
+          "internal_error",
+          500
+        ));
+        console.log(e);
+      }
     }
   }
 
@@ -44,7 +52,7 @@ export class PermissionEndpoint {
     } else if (Permission.validate(object)) {
       return;
     }
-    throw new Error ("Bad Request. Expecting a Permissin or Permission array.");
+    throw new ValidationError ("Bad Request. Expecting a Permissin or Permission array.");
   }
 
   private init(): void {

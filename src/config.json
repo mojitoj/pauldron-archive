@@ -1,0 +1,18 @@
+{
+    "uma": {
+        "permission":{
+            "ticket":{
+                "ttl":2000
+            }
+        },
+        "authorization":{
+            "rpt":{
+                "ttl":20
+            },
+            "claimsIssuerKeys":{
+                "sampleIssuer1": "secret1",
+                "sampleIssuer2": "secret2"
+            }
+        }
+    }
+}

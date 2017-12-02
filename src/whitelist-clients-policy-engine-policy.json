@@ -1,0 +1,6 @@
+{
+    "clientIdClaimId" : "client_id",
+    "permittedClients": ["client1"],
+    "deniedClients": ["client2"],
+    "defaultAuthServer": "http://localhost:3001/authorization"
+}

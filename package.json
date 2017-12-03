@@ -1,5 +1,5 @@
 {
-  "name": "separ",
+  "name": "pauldron",
   "version": "0.0.1",
   "description": "UMA/OAuth Server with extensions",
   "main": "dist/index.js",

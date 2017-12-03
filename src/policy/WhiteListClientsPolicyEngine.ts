@@ -2,14 +2,13 @@ import { PolicyEngine, Policy } from "./PolicyEngine";
 import { PolicyDecision, AuthorizationDecision, REDIRECT_OBLIGATION_ID } from "./Decisions";
 
 export class WhiteListClientsPolicyEnginePolicy extends Policy {
-    clientIdClaimId: string;
-    permittedClients: string[];
-    deniedClients: string[];
+    permittedClients: object[];
+    deniedClients: object[];
     defaultAuthServer: string;
 }
 
 export class WhiteListClientsPolicyEngine extends PolicyEngine {
-    public evaluate(request: {[id: string]: any}, policy: WhiteListClientsPolicyEnginePolicy): PolicyDecision {
+    public evaluate(claims: {[id: string]: any}, policy: WhiteListClientsPolicyEnginePolicy): PolicyDecision {
         const notApplicableDecision: PolicyDecision = {authorization: AuthorizationDecision.NotApplicable, obligations: []};
         const permitDecision: PolicyDecision = {authorization: AuthorizationDecision.Permit, obligations: []};
         const denyDecision: PolicyDecision = {authorization: AuthorizationDecision.Deny, obligations: []};
@@ -21,21 +20,22 @@ export class WhiteListClientsPolicyEngine extends PolicyEngine {
                 }]
         };
 
-        if (policy.clientIdClaimId) {
-            const clientId: string = request[policy.clientIdClaimId];
-            if (!clientId) {
-                return notApplicableDecision;
-            }
-            if (policy.deniedClients && policy.deniedClients.indexOf(clientId) > 0) {
-                return denyDecision;
-            } else if (policy.permittedClients && policy.permittedClients.indexOf(clientId) > 0) {
-                return permitDecision;
-            } else {
-                return redirectDecision;
-            }
+        if (policy.deniedClients && this.matches(claims, policy.deniedClients)) {
+            return denyDecision;
+        } else if (policy.permittedClients && this.matches(claims, policy.permittedClients)) {
+            return permitDecision;
         } else {
-            return notApplicableDecision;
+            return redirectDecision;
         }
+    }
+
+    private matches(claims: {[id: string]: any}, rules: object[]) {
+        return rules
+            .map((rule, ruleIndex) => (
+                Object.keys(rule)
+                    .map((key) => (claims[key] === rule[key]))
+                    .reduce((previous, current) => (previous && current))))
+            .reduce((previous, current) => (previous || current));
     }
 }
 

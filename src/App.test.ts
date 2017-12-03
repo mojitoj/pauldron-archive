@@ -7,7 +7,7 @@ import {permissionEndpointURI} from "../src/App";
 
 chai.use(chaiHttp);
 
-describe("baseRoute", async () => {
+describe("routs", () => {
 
     it("should be json", async () => {
         const res = await chai.request(app).get("/");

@@ -84,7 +84,6 @@ describe("policyEndpoint", () => {
             .set("content-type", "application/json")
             .send(policy);
 
-        console.log(policyRes.body);
         const policyId = policyRes.body.id;
 
         let res = await chai.request(app)

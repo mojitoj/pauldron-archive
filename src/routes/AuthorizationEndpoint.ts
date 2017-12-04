@@ -8,6 +8,7 @@ import { ClaimsError, ValidationError, InvalidTicketError, ExpiredTicketError } 
 import { inspect } from "util";
 import * as jwt from "jsonwebtoken";
 import { PolicyEngine, Claims } from "../policy/PolicyEngine";
+import { policyTypeToEnginesMap, policies } from "./PolicyEndpoint";
 
 const config = require("../config.json");
 

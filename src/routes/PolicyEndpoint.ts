@@ -3,6 +3,11 @@ import { ValidationError } from "../model/Exceptions";
 import { Policy } from "../policy/PolicyEngine";
 import * as hash from "object-hash";
 import { APIError } from "../model/APIError";
+import * as whiteListClientsPolicyEngine from "../policy/WhiteListClientsPolicyEngine";
+
+export const policyTypeToEnginesMap = {
+    "pauldron:whitelist-clitents-policy": whiteListClientsPolicyEngine
+};
 
 export let policies: { [id: string]: Policy } = {};
 
@@ -83,9 +88,12 @@ export class PolicyEndpoint {
     }
     private static validateNewPolicyRequestParams(object: any): void {
         if (!object) {
-          throw new ValidationError ("Bad Request.");
+            throw new ValidationError ("Bad Request.");
         } else if (! object.type || ! ((object.type as string).length > 0 )) {
-          throw new ValidationError ("Bad Request. Expecting a valid 'type'.");
+            throw new ValidationError ("Bad Request. Expecting a valid 'type'.");
+        } else if (! Object.keys(policyTypeToEnginesMap).includes(object.type)) {
+            throw new ValidationError
+            (`Bad Request. The server does not support policy type ${object.type}. Current supported formats: ${Object.keys(policyTypeToEnginesMap).join(",")}`);
         } else if (! object.content) {
             throw new ValidationError ("Bad Request. Expecting a valid 'content'.");
         }

@@ -1,5 +1,8 @@
 {
-    "permittedClients": [{"client_id":"client1"}],
-    "deniedClients": [{"client_id":"client2", "organization": "org1"}],
-    "defaultAuthServer": "http://localhost:3001/authorization"
+    "type": "pauldron/whitelist-clitents",
+    "content": {
+        "permittedClients": [{"client_id":"client1"}],
+        "deniedClients": [{"client_id":"client2", "organization": "org1"}],
+        "defaultAuthServer": "http://localhost:3001/authorization"
+    }
 }

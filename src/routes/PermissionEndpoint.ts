@@ -60,5 +60,3 @@ export class PermissionEndpoint {
     this.router.post("/", this.createANewOne);
   }
 }
-
-export default new PermissionEndpoint();

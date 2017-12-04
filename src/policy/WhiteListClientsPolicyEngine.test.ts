@@ -4,7 +4,7 @@ import {WhiteListClientsPolicyEnginePolicy} from "./WhiteListClientsPolicyEngine
 import policyEngine from "./WhiteListClientsPolicyEngine";
 import { PolicyDecision, AuthorizationDecision, REDIRECT_OBLIGATION_ID } from "./Decisions";
 
-const policy: WhiteListClientsPolicyEnginePolicy = require("../whitelist-clients-policy-engine-policy.json");
+const policy: WhiteListClientsPolicyEnginePolicy = require("../whitelist-clients-policy-engine-policy.json").content;
 
 describe("whitelist clients policy engine", () => {
         it("must allow a whitelisted clientId", () => {

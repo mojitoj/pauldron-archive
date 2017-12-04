@@ -7,10 +7,9 @@ import {request} from "http";
 import { ClaimsError, ValidationError, InvalidTicketError, ExpiredTicketError } from "../model/Exceptions";
 import { inspect } from "util";
 import * as jwt from "jsonwebtoken";
-
+import { PolicyEngine, Claims } from "../policy/PolicyEngine";
 
 const config = require("../config.json");
-
 
 export let issued_rpts: { [rpt: string]: TimeStampedPermissions } = {};
 
@@ -26,11 +25,12 @@ export class AuthorizationEndpoint {
     try {
         AuthorizationEndpoint.validateRPTRequestParams(req.body);
         const ticket: string = req.body.ticket;
-        const claims: string = req.body.claim_tokens;
-        AuthorizationEndpoint.validateClaimsToken(claims);
+        const claimsString: string = req.body.claim_tokens;
+        const claims: Claims = AuthorizationEndpoint.validateClaimsToken(claimsString);
 
         const permissions: TimeStampedPermissions = registered_permissions [ticket];
         AuthorizationEndpoint.validatePermissions(permissions);
+        AuthorizationEndpoint.checkPolicies(claims);
 
         const rpt: TimeStampedPermissions = TimeStampedPermissions.issue(config.uma.authorization.rpt.ttl, permissions.permissions);
         issued_rpts[rpt.id] = rpt;
@@ -72,6 +72,9 @@ export class AuthorizationEndpoint {
     }
   }
 
+  private static checkPolicies(claims: Claims): void {
+  }
+
   private static validateRPTRequestParams(object: any): void {
     if (!object) {
       throw new ValidationError ("Bad Request.");
@@ -80,15 +83,15 @@ export class AuthorizationEndpoint {
     }
   }
 
-  private static validateClaimsToken(claims: string): void {
-    if (!claims) {
+  private static validateClaimsToken(claimsString: string): Claims {
+    if (!claimsString) {
       throw new ClaimsError("No claims token submitted.");
     }
-    const claimChunks: string[] = claims.split(".", 3);
+    const claimChunks: string[] = claimsString.split(".", 3);
     if (claimChunks.length !== 3) {
       throw new ClaimsError("Submitted claims token not in JWT format.");
     }
-    let payload: any = {};
+    let payload: Claims = {};
     try {
       payload = JSON.parse(new Buffer(claimChunks[1], "base64").toString());
     } catch (e) {
@@ -104,10 +107,11 @@ export class AuthorizationEndpoint {
     }
     let claimsPayload: object = {};
     try {
-      claimsPayload = jwt.verify(claims, key) as object;
+      claimsPayload = jwt.verify(claimsString, key) as object;
     } catch (e) {
       throw new ClaimsError(`Invalid calims token: ${e.message}.`);
     }
+    return payload;
   }
 
   private static validatePermissions(permissions: TimeStampedPermissions): void {
@@ -122,5 +126,3 @@ export class AuthorizationEndpoint {
     this.router.post("/", this.createANewOne);
   }
 }
-
-export default new AuthorizationEndpoint();

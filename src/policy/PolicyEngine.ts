@@ -1,10 +1,12 @@
 import { PolicyDecision } from "./Decisions";
 
+export type Claims = {[id: string]: any};
+
 export class Policy {
     type: string;
-    content: object;
+    content: any;
 }
 
 export abstract class PolicyEngine {
-    public abstract evaluate (request: {[id: string]: any}, policies: Policy[] | Policy): PolicyDecision;
+    public abstract evaluate (request: Claims, policies: Policy[] | Policy): PolicyDecision;
 }

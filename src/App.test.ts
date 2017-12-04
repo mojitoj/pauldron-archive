@@ -2,10 +2,10 @@ import * as mocha from "mocha";
 import * as chai from "chai";
 import chaiHttp = require("chai-http");
 
-import app from "../src/App";
-import {permissionEndpointURI} from "../src/App";
+import { App, permissionEndpointURI, policyEndpointURI } from "./App";
 
 chai.use(chaiHttp);
+const app = new App().express;
 
 describe("routs", () => {
 
@@ -74,5 +74,27 @@ describe("permissionsEndpoint", () => {
                   res.should.have.status(400);
             });
     });
+});
 
+describe("policyEndpoint", () => {
+    it("should accept a new policy", async () => {
+        const policy = require("./whitelist-clients-policy-engine-policy.json");
+        const policyRes = await chai.request(app)
+            .post(policyEndpointURI)
+            .set("content-type", "application/json")
+            .send(policy);
+
+        console.log(policyRes.body);
+        const policyId = policyRes.body.id;
+
+        let res = await chai.request(app)
+            .get(policyEndpointURI);
+        chai.assert.exists(res.body[0]);
+        chai.assert.equal(res.body[0].id, policyId);
+
+        res = await chai.request(app)
+            .get(policyEndpointURI + "/" + policyId);
+
+        chai.assert.deepEqual(res.body, {id: policyId, ... policy});
+    });
 });

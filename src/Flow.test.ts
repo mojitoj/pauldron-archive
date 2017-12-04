@@ -4,17 +4,14 @@ import chaiHttp = require("chai-http");
 import * as jwt from "jsonwebtoken";
 import { Permission } from "./model/Permission";
 
+import {App, permissionEndpointURI, authorizationEndpointURI, introspectionEndpointURI} from "./App";
 
-import app from "../src/App";
-import {permissionEndpointURI} from "../src/App";
-import {authorizationEndpointURI} from "../src/App";
-import {introspectionEndpointURI} from "../src/App";
-
-
+const app = new App().express;
 
 chai.use(chaiHttp);
 
 describe("happyFlow", () => {
+
     it("should be able to get an RPT", async () => {
         const permissions: Permission[] = [{resource_id: "test_res_id", resource_scopes: ["ScopeA", "ScopeB"]}];
         const registrationRes = await chai.request(app)

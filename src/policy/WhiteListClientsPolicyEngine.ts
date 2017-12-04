@@ -1,4 +1,4 @@
-import { PolicyEngine, Policy } from "./PolicyEngine";
+import { PolicyEngine, Policy, Claims } from "./PolicyEngine";
 import { PolicyDecision, AuthorizationDecision, REDIRECT_OBLIGATION_ID } from "./Decisions";
 
 export class WhiteListClientsPolicyEnginePolicy extends Policy {
@@ -8,7 +8,7 @@ export class WhiteListClientsPolicyEnginePolicy extends Policy {
 }
 
 export class WhiteListClientsPolicyEngine extends PolicyEngine {
-    public evaluate(claims: {[id: string]: any}, policy: WhiteListClientsPolicyEnginePolicy): PolicyDecision {
+    public evaluate(claims: Claims, policy: WhiteListClientsPolicyEnginePolicy): PolicyDecision {
         const notApplicableDecision: PolicyDecision = {authorization: AuthorizationDecision.NotApplicable, obligations: []};
         const permitDecision: PolicyDecision = {authorization: AuthorizationDecision.Permit, obligations: []};
         const denyDecision: PolicyDecision = {authorization: AuthorizationDecision.Deny, obligations: []};
@@ -29,13 +29,13 @@ export class WhiteListClientsPolicyEngine extends PolicyEngine {
         }
     }
 
-    private matches(claims: {[id: string]: any}, rules: object[]) {
+    private matches(claims: Claims, rules: object[]) {
         return rules
-            .map((rule, ruleIndex) => (
+            .map((rule) => (
                 Object.keys(rule)
                     .map((key) => (claims[key] === rule[key]))
-                    .reduce((previous, current) => (previous && current))))
-            .reduce((previous, current) => (previous || current));
+                    .reduce((acc, current) => (acc && current), true)))
+            .reduce((acc, current) => (acc || current), false);
     }
 }
 

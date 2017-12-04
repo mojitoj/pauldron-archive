@@ -67,5 +67,3 @@ export class IntrospectionEndpoint {
     this.router.post("/", this.introspect);
   }
 }
-
-export default new IntrospectionEndpoint();

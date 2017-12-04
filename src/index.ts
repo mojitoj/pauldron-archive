@@ -1,18 +1,25 @@
 import * as http from "http";
 import * as debug from "debug";
 
-import App from "./App";
+import { App } from "./App";
 
 debug("ts-express:server");
 
-const port = 3000;
-App.set("port", port);
+const port = normalizePort (process.env.PORT || 3000);
+const app = new App().express;
+app.set("port", port);
 
-const server = http.createServer(App);
+const server = http.createServer(app);
 server.listen(port);
 server.on("error", onError);
 server.on("listening", onListening);
 
+function normalizePort(val: number|string): number|string|boolean {
+    let port: number = (typeof val === "string") ? parseInt(val, 10) : val;
+    if (isNaN(port)) return val;
+    else if (port >= 0) return port;
+    else return false;
+  }
 
 function onError(error: NodeJS.ErrnoException): void {
     if (error.syscall !== "listen") throw error;

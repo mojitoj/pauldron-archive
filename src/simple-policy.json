@@ -1,0 +1,35 @@
+{
+    "type": "pauldron:simple-policy",
+    "name": "Organizational Policy1",
+    "content": {
+        "rules": {
+            "permittedClients": {
+                "name": "Permitted Clients",
+                "ifMatch":[
+                    {"client_id":"client1"}
+                ],
+                "decision": {
+                    "authorization": "Permit", 
+                    "obligations": []
+                }
+            },
+            "deniedClients":{ 
+                "name": "Denied Clients",            
+                "ifMatch": [
+                    {"client_id":"client2", "organization": "org1"}
+                ],
+                "decision": {
+                    "authorization": "Deny", 
+                    "obligations": []
+                }
+            }
+        },
+        "default": {
+            "authorization": "Indeterminate",
+            "obligations": [{
+                    "id": "UMA_REDIRECT",
+                    "params": {"uma_realm": "http://localhost:3001/authorization"}
+                }]
+        }
+    }
+}

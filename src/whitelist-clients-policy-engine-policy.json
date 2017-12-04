@@ -1,9 +1,0 @@
-{
-    "type": "pauldron:whitelist-clitents-policy",
-    "name": "organizational policy",
-    "content": {
-        "permittedClients": [{"client_id":"client1"}],
-        "deniedClients": [{"client_id":"client2", "organization": "org1"}],
-        "defaultRedirectAuthServer": "http://localhost:3001/authorization"
-    }
-}

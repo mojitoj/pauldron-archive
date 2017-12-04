@@ -3,10 +3,10 @@ import { ValidationError } from "../model/Exceptions";
 import { Policy } from "../policy/PolicyEngine";
 import * as hash from "object-hash";
 import { APIError } from "../model/APIError";
-import * as whiteListClientsPolicyEngine from "../policy/WhiteListClientsPolicyEngine";
+import {SimplePolicyEngine} from "../policy/SimplePolicyEngine";
 
 export const policyTypeToEnginesMap = {
-    "pauldron:whitelist-clitents-policy": whiteListClientsPolicyEngine
+    "pauldron:simple-policy": new SimplePolicyEngine()
 };
 
 export let policies: { [id: string]: Policy } = {};

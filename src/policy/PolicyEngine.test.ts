@@ -1,16 +1,17 @@
 import * as mocha from "mocha";
 import * as chai from "chai";
-import {WhiteListClientsPolicyEnginePolicy, WhiteListClientsPolicyEngine} from "./WhiteListClientsPolicyEngine";
-import whiteListClientsPolicyEngine from "./WhiteListClientsPolicyEngine";
-import { PolicyDecision, AuthorizationDecision, REDIRECT_OBLIGATION_ID } from "./Decisions";
+import { SimplePolicy, SimplePolicyEngine } from "./SimplePolicyEngine";
+import { PolicyDecision, AuthorizationDecision } from "./Decisions";
 import _ = require("lodash");
 import simplePolicyDecisionCombinerEngine from "./SimplePolicyDecisionCombinerEngine";
 
+const simplePolicyEngine = new SimplePolicyEngine();
+
 const policyTypeToEnginesMap = {
-    "pauldron:whitelist-clitents-policy": new WhiteListClientsPolicyEngine()
+    "pauldron:simple-policy": simplePolicyEngine
 };
 
-let policy: WhiteListClientsPolicyEnginePolicy = require("../whitelist-clients-policy-engine-policy.json");
+let policy: SimplePolicy = require("../simple-policy.json");
 
 describe("simple policy combiner engine", () => {
 
@@ -21,13 +22,13 @@ describe("simple policy combiner engine", () => {
     });
 
     it("must return Deny on Permit, Indeterminate, and Deny and combine obligations", () => {
-        let permittingPolicy = _.cloneDeep(policy);
-        let denyingPolicy = _.cloneDeep(policy);
-        denyingPolicy.content.permittedClients = [];
-        denyingPolicy.content.deniedClients = [{client_id: "client1"}];
+        let permittingPolicy: SimplePolicy = _.cloneDeep(policy);
+        let denyingPolicy: SimplePolicy = _.cloneDeep(policy);
+        denyingPolicy.content.rules.permittedClients.ifMatch = [];
+        denyingPolicy.content.rules.deniedClients.ifMatch = [{client_id: "client1"}];
 
-        let indeterminatePolicy = _.cloneDeep(policy);
-        denyingPolicy.content.permittedClients = [];
+        let indeterminatePolicy: SimplePolicy = _.cloneDeep(policy);
+        denyingPolicy.content.rules.permittedClients.ifMatch = [];
 
         const claims = {client_id: "client1"};
         const decision: PolicyDecision = simplePolicyDecisionCombinerEngine.evaluate(claims,
@@ -38,23 +39,23 @@ describe("simple policy combiner engine", () => {
 });
 
 
-describe("whitelist clients policy engine", () => {
+describe("simple policy engine", () => {
         it("must allow a whitelisted clientId", () => {
             const claims = {client_id: "client1"};
-            const decision: PolicyDecision = whiteListClientsPolicyEngine.evaluate(claims, policy);
+            const decision: PolicyDecision = simplePolicyEngine.evaluate(claims, policy);
             chai.assert.equal(decision.authorization, AuthorizationDecision.Permit);
         });
 
         it("must deny a blacklisted clientId", () => {
             const claims = {client_id: "client2", organization: "org1"};
-            const decision: PolicyDecision = whiteListClientsPolicyEngine.evaluate(claims, policy);
+            const decision: PolicyDecision = simplePolicyEngine.evaluate(claims, policy);
             chai.assert.equal(decision.authorization, AuthorizationDecision.Deny);
         });
 
         it("must redirect any other clientIds", () => {
             const claims = {client_id: "client3"};
-            const decision: PolicyDecision = whiteListClientsPolicyEngine.evaluate(claims, policy);
+            const decision: PolicyDecision = simplePolicyEngine.evaluate(claims, policy);
             chai.assert.equal(decision.authorization, AuthorizationDecision.Indeterminate);
-            chai.assert.equal(decision.obligations[0].id, REDIRECT_OBLIGATION_ID);
+            chai.assert.equal(decision.obligations[0].id, "UMA_REDIRECT");
         });
 });

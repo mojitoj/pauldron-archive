@@ -78,7 +78,7 @@ describe("permissionsEndpoint", () => {
 
 describe("policyEndpoint", () => {
     it("should accept a new policy", async () => {
-        const policy = require("./whitelist-clients-policy-engine-policy.json");
+        const policy = require("./simple-policy.json");
         const policyRes = await chai.request(app)
             .post(policyEndpointURI)
             .set("content-type", "application/json")

@@ -4,11 +4,13 @@ import {APIError} from "../model/APIError";
 import {registered_permissions} from "./PermissionEndpoint";
 import {Router, Request, Response, NextFunction} from "express";
 import {request} from "http";
-import { ClaimsError, ValidationError, InvalidTicketError, ExpiredTicketError } from "../model/Exceptions";
+import { ClaimsError, ValidationError, InvalidTicketError, ExpiredTicketError, NotAuthorizedByPolicyError } from "../model/Exceptions";
 import { inspect } from "util";
 import * as jwt from "jsonwebtoken";
-import { PolicyEngine, Claims } from "../policy/PolicyEngine";
+import { PolicyEngine, Claims, Policy } from "../policy/PolicyEngine";
 import { policyTypeToEnginesMap, policies } from "./PolicyEndpoint";
+import { PolicyDecision, AuthorizationDecision } from "../policy/Decisions";
+import { SimplePolicyDecisionCombinerEngine } from "../policy/SimplePolicyDecisionCombinerEngine";
 
 const config = require("../config.json");
 
@@ -50,6 +52,12 @@ export class AuthorizationEndpoint {
             "need_info",
             403
           ));
+      } else if (e instanceof NotAuthorizedByPolicyError) {
+        res.status(403).send(
+          new APIError("Denied per authorization policies.",
+          "not_authorized",
+          403
+        ));
       } else if (e instanceof InvalidTicketError) {
         res.status(400).send(
           new APIError("Ticket is invalid.",
@@ -73,7 +81,13 @@ export class AuthorizationEndpoint {
     }
   }
 
-  private static checkPolicies(claims: Claims): void {
+  private static checkPolicies(claims: Claims): PolicyDecision {
+    const policyArray: Policy[] = Object.keys(policies).map((id) => policies[id]);
+    const decision = new SimplePolicyDecisionCombinerEngine().evaluate(claims, policyArray, policyTypeToEnginesMap);
+    if (decision.authorization === AuthorizationDecision.Deny) {
+      throw new NotAuthorizedByPolicyError();
+    }
+    return decision;
   }
 
   private static validateRPTRequestParams(object: any): void {

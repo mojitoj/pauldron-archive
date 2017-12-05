@@ -4,3 +4,4 @@ export class InvalidTicketError extends Error {}
 export class ExpiredTicketError extends Error {}
 export class InvalidRPTError extends Error {}
 export class ExpiredRPTError extends Error {}
+export class NotAuthorizedByPolicyError extends Error {}

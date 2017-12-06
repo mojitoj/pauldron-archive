@@ -32,7 +32,7 @@ describe("permissionsEndpoint", () => {
         const res = await chai.request(app)
             .post(permissionEndpointURI)
             .set("content-type", "application/json")
-            .send({resource_id: "test_res_id", resource_scopes: ["ScopeA", "ScopeB"]});
+            .send({resource_id: "test_res_id", resource_scopes: ["s1", "s2"]});
         chai.assert.exists(res.body.ticket);
     });
 
@@ -40,39 +40,58 @@ describe("permissionsEndpoint", () => {
         const res = await chai.request(app)
             .post(permissionEndpointURI)
             .set("content-type", "application/json")
-            .send([{resource_id: "test_res_id", resource_scopes: ["ScopeA", "ScopeB"]}]);
+            .send([{resource_id: "test_res_id", resource_scopes: ["s1", "s2"]}]);
         chai.assert.exists(res.body.ticket);
     });
 
-    it("should reject malformed requests", () => {
-        chai.request(app)
-            .post(permissionEndpointURI)
-            .set("content-type", "application/json")
-            .send([]).end((err, res) => {
-                res.should.have.status(400);
-              });
-        chai.request(app)
-            .post(permissionEndpointURI)
-            .set("content-type", "application/json")
-            .send([{}]).end((err, res) => {
-                res.should.have.status(400);
-              });
+    it("should reject malformed requests", async () => {
+        let res = null;
+        try {
+            res =  await chai.request(app)
+                .post(permissionEndpointURI)
+                .set("content-type", "application/json")
+                .send([]);
+        } catch (e) {
+            chai.assert.equal(e.status, 400);
+            chai.assert.equal(e.response.body.error, "MissingParameter");
+        }
+        chai.assert.isNotOk(res);
 
-        chai.request(app)
-            .post(permissionEndpointURI)
-            .set("content-type", "application/json")
-            .send({resource_id: "test_res_id", resource_scopes: "ScopeA"})
-            .end((err, res) => {
-                  res.should.have.status(400);
-            });
+        res = null;
+        try {
+            res =  await chai.request(app)
+                .post(permissionEndpointURI)
+                .set("content-type", "application/json")
+                .send([{}]);
+        } catch (e) {
+            chai.assert.equal(e.status, 400);
+            chai.assert.equal(e.response.body.error, "MissingParameter");
+        }
+        chai.assert.isNotOk(res);
 
-        chai.request(app)
-            .post(permissionEndpointURI)
-            .set("content-type", "application/json")
-            .send([{resource_id: "test_res_id", resource_scopes: "ScopeA"}])
-            .end((err, res) => {
-                  res.should.have.status(400);
-            });
+        res = null;
+        try {
+            res =  await chai.request(app)
+                .post(permissionEndpointURI)
+                .set("content-type", "application/json")
+                .send({resource_id: "test_res_id", resource_scopes: "ScopeA"});
+        } catch (e) {
+            chai.assert.equal(e.status, 400);
+            chai.assert.equal(e.response.body.error, "MissingParameter");
+        }
+        chai.assert.isNotOk(res);
+
+        res = null;
+        try {
+            res =  await chai.request(app)
+                .post(permissionEndpointURI)
+                .set("content-type", "application/json")
+                .send([{resource_id: "test_res_id", resource_scopes: "s1"}]);
+        } catch (e) {
+            chai.assert.equal(e.status, 400);
+            chai.assert.equal(e.response.body.error, "MissingParameter");
+        }
+        chai.assert.isNotOk(res);
     });
 });
 

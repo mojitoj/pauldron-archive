@@ -4,11 +4,10 @@ export enum AuthorizationDecision {
     Indeterminate = "Indeterminate",
     NotApplicable = "NotApplicable"
 }
-export class Obligation {
-    id: string;
-    params: {[id: string]: string};
-}
+export type Obligations = {[id: string]: any};
+
 export class PolicyDecision {
     authorization: AuthorizationDecision;
-    obligations: Obligation[];
+    obligations: Obligations;
 }
+

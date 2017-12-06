@@ -1,5 +1,5 @@
 import { PolicyEngine, Policy, Claims } from "./PolicyEngine";
-import { PolicyDecision, AuthorizationDecision, Obligation } from "./Decisions";
+import { PolicyDecision, AuthorizationDecision } from "./Decisions";
 
 export class SimpleRule {
     name: string;
@@ -27,16 +27,16 @@ export function combineDecisionsDenyOverrides (decisions: PolicyDecision[]): Pol
             (AuthzDecisionsPriorities[sofar] >= AuthzDecisionsPriorities[thisDecision]) ? sofar : thisDecision
         ), AuthorizationDecision.NotApplicable);
 
-    const finalObligations: Obligation[] = decisions
+    const finalObligations = decisions
         .map((decision) => decision.obligations)
-        .reduce((sofar, thisObligationArray) => (
-            sofar.concat(thisObligationArray)
-        ), []);
+        .reduce((sofar, thisObligation) => (
+            { ...sofar , ...thisObligation}
+        ), {});
     return {
         authorization: finalAuthorizationDecision,
         obligations: (finalAuthorizationDecision === AuthorizationDecision.Indeterminate || finalAuthorizationDecision === AuthorizationDecision.Permit)
             ? finalObligations
-            : []
+            : {}
     };
 }
 

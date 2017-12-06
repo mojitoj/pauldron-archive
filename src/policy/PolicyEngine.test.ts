@@ -4,6 +4,7 @@ import { SimplePolicy, SimplePolicyEngine } from "./SimplePolicyEngine";
 import { PolicyDecision, AuthorizationDecision } from "./Decisions";
 import _ = require("lodash");
 import simplePolicyDecisionCombinerEngine from "./SimplePolicyDecisionCombinerEngine";
+import { UMA_REDIRECT_OBLIGATION_ID } from "../routes/AuthorizationEndpoint";
 
 const simplePolicyEngine = new SimplePolicyEngine();
 
@@ -56,6 +57,6 @@ describe("simple policy engine", () => {
             const claims = {client_id: "client3"};
             const decision: PolicyDecision = simplePolicyEngine.evaluate(claims, policy);
             chai.assert.equal(decision.authorization, AuthorizationDecision.Indeterminate);
-            chai.assert.equal(decision.obligations[0].id, "UMA_REDIRECT");
+            chai.assert.hasAnyKeys(decision.obligations, [UMA_REDIRECT_OBLIGATION_ID]);
         });
 });

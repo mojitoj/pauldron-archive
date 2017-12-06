@@ -10,7 +10,9 @@
                 ],
                 "decision": {
                     "authorization": "Permit", 
-                    "obligations": []
+                    "obligations": {
+                        "DENY_SCOPES": ["s1"]
+                    }
                 }
             },
             "deniedClients":{ 
@@ -20,16 +22,18 @@
                 ],
                 "decision": {
                     "authorization": "Deny", 
-                    "obligations": []
+                    "obligations": {}
                 }
             }
         },
         "default": {
             "authorization": "Indeterminate",
-            "obligations": [{
-                    "id": "UMA_REDIRECT",
-                    "params": {"uma_realm": "http://localhost:3001/authorization"}
-                }]
+            "obligations": {
+                    "UMA_REDIRECT": {
+                        "realm": "Upstream UMA Server",
+                        "as_uri": "http://localhost:3001/authorization"
+                    }
+            }
         }
     }
 }

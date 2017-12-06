@@ -4,16 +4,18 @@ import {APIError} from "../model/APIError";
 import {registered_permissions} from "./PermissionEndpoint";
 import {Router, Request, Response, NextFunction} from "express";
 import {request} from "http";
-import { ClaimsError, ValidationError, InvalidTicketError, ExpiredTicketError, NotAuthorizedByPolicyError } from "../model/Exceptions";
+import { ClaimsError, ValidationError, InvalidTicketError, ExpiredTicketError, NotAuthorizedByPolicyError, UMARedirect } from "../model/Exceptions";
 import { inspect } from "util";
 import * as jwt from "jsonwebtoken";
 import { PolicyEngine, Claims, Policy } from "../policy/PolicyEngine";
 import { policyTypeToEnginesMap, policies } from "./PolicyEndpoint";
-import { PolicyDecision, AuthorizationDecision } from "../policy/Decisions";
+import { PolicyDecision, AuthorizationDecision, Obligations } from "../policy/Decisions";
 import { SimplePolicyDecisionCombinerEngine } from "../policy/SimplePolicyDecisionCombinerEngine";
 
 const config = require("../config.json");
 
+export const UMA_REDIRECT_OBLIGATION_ID = "UMA_REDIRECT";
+export const DENY_SCOPES_OBLIGATION_ID = "DENY_SCOPES";
 export let issued_rpts: { [rpt: string]: TimeStampedPermissions } = {};
 
 export class AuthorizationEndpoint {
@@ -33,9 +35,10 @@ export class AuthorizationEndpoint {
 
         const permissions: TimeStampedPermissions = registered_permissions [ticket];
         AuthorizationEndpoint.validatePermissions(permissions);
-        AuthorizationEndpoint.checkPolicies(claims);
 
-        const rpt: TimeStampedPermissions = TimeStampedPermissions.issue(config.uma.authorization.rpt.ttl, permissions.permissions);
+        const rpt: TimeStampedPermissions = TimeStampedPermissions.issue(config.uma.authorization.rpt.ttl,
+          AuthorizationEndpoint.checkPolicies(claims, permissions.permissions));
+
         issued_rpts[rpt.id] = rpt;
         res.status(201).send({rpt: rpt.id});
         delete registered_permissions[ticket];
@@ -54,6 +57,14 @@ export class AuthorizationEndpoint {
           ));
       } else if (e instanceof NotAuthorizedByPolicyError) {
         res.status(403).send(
+          new APIError("Denied per authorization policies.",
+          "not_authorized",
+          403
+        ));
+      } else if (e instanceof UMARedirect) {
+        res.status(401)
+        .set("WWW-Authenticate", `UMA realm=${e.umaServerParams.realm} as_uri=${e.umaServerParams.as_uri}`)
+        .send(
           new APIError("Denied per authorization policies.",
           "not_authorized",
           403
@@ -81,13 +92,39 @@ export class AuthorizationEndpoint {
     }
   }
 
-  private static checkPolicies(claims: Claims): PolicyDecision {
+  private static checkPolicies(claims: Claims, permissions: Permission[]): Permission[] {
     const policyArray: Policy[] = Object.keys(policies).map((id) => policies[id]);
     const decision = new SimplePolicyDecisionCombinerEngine().evaluate(claims, policyArray, policyTypeToEnginesMap);
     if (decision.authorization === AuthorizationDecision.Deny) {
       throw new NotAuthorizedByPolicyError();
+    } else if (decision.authorization === AuthorizationDecision.NotApplicable) {
+      // failing safe on Deny if no applicable policies were found. This could be a configuration setting.
+      throw new NotAuthorizedByPolicyError();
+    } else if (decision.authorization === AuthorizationDecision.Indeterminate) {
+      const e = new UMARedirect();
+      e.umaServerParams = decision.obligations[UMA_REDIRECT_OBLIGATION_ID];
+      throw e;
     }
-    return decision;
+    // else if (decision.authorization === AuthorizationDecision.Permit):
+    return AuthorizationEndpoint.reconcilePermissionsAndObligations(permissions, decision.obligations);
+  }
+
+  private static reconcilePermissionsAndObligations (permissions: Permission[], obligations: Obligations): Permission[] {
+    const deniedScopes = obligations[DENY_SCOPES_OBLIGATION_ID];
+    if (deniedScopes) {
+      return permissions.map((permission) => (
+        {
+          resource_id: permission.resource_id,
+          resource_scopes: (permission.resource_scopes || []).filter((scope) => (
+            ! deniedScopes.includes(scope)
+          ))
+        }
+      )).filter((permission) => (
+        ((permission.resource_scopes.length || 0) !== 0)
+      ));
+    } else {
+      return permissions;
+    }
   }
 
   private static validateRPTRequestParams(object: any): void {

@@ -1,4 +1,4 @@
-import { PolicyDecision, AuthorizationDecision, Obligation } from "./Decisions";
+import { PolicyDecision, AuthorizationDecision } from "./Decisions";
 
 export type Claims = {[id: string]: any};
 

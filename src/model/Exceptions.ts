@@ -5,3 +5,6 @@ export class ExpiredTicketError extends Error {}
 export class InvalidRPTError extends Error {}
 export class ExpiredRPTError extends Error {}
 export class NotAuthorizedByPolicyError extends Error {}
+export class UMARedirect extends Error {
+    umaServerParams: any;
+}

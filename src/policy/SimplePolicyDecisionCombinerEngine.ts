@@ -1,4 +1,4 @@
-import { PolicyDecision, AuthorizationDecision, Obligation } from "./Decisions";
+import { PolicyDecision, AuthorizationDecision } from "./Decisions";
 import { Claims, Policy, PolicyEngine, PolicyDecionCombinerEngine } from "./PolicyEngine";
 import {combineDecisionsDenyOverrides} from "./SimplePolicyEngine";
 

@@ -1,9 +1,8 @@
 import {Router, Request, Response, NextFunction} from "express";
 import { ValidationError } from "../model/Exceptions";
-import { Policy } from "../policy/PolicyEngine";
+import { Policy, SimplePolicyEngine } from "pauldron-policy";
 import * as hash from "object-hash";
 import { APIError } from "../model/APIError";
-import {SimplePolicyEngine} from "../policy/SimplePolicyEngine";
 
 export const policyTypeToEnginesMap = {
     "pauldron:simple-policy": new SimplePolicyEngine()

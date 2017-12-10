@@ -7,4 +7,6 @@ export class ExpiredRPTError extends Error {}
 export class NotAuthorizedByPolicyError extends Error {}
 export class UMARedirect extends Error {
     umaServerParams: any;
+    ticket: string;
 }
+export class UMARedirectError extends UMARedirect {}

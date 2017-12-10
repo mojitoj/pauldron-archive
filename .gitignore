@@ -1,4 +1,5 @@
 dist/
+.DS_Store
 
 # Node stuff
 node_modules/

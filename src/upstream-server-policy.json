@@ -1,0 +1,26 @@
+{
+    "type": "pauldron:simple-policy",
+    "name": "Organizational Policy1",
+    "content": {
+        "rules": {
+            "permittedClientsBasedOnPurpose": {
+                "name": "Permitted Clients Based on pou",
+                "matchAnyOf":[
+                    {"client_id":"client4"},
+                    {"client_id":"client1"}                    
+                ],
+                "decision": {
+                    "authorization": "Permit", 
+                    "obligations": {
+                        "DENY_SCOPES": ["s1"]
+                    }
+                },
+                "condition": "pous.filter((pou)=>(pou.system==='http://hl7.org/fhir/v3/ActReason' && pou.code==='TREAT')).length>0"            
+            }
+        },
+        "default": {
+            "authorization": "Deny", 
+            "obligations": {}
+        }
+    }
+}

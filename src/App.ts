@@ -4,7 +4,6 @@ import * as bodyParser from "body-parser";
 import {PermissionEndpoint} from "./routes/PermissionEndpoint";
 import {AuthorizationEndpoint} from "./routes/AuthorizationEndpoint";
 import {IntrospectionEndpoint} from "./routes/IntrospectionEndpoint";
-import { PolicyEngine } from "./policy/PolicyEngine";
 import { PolicyEndpoint } from "./routes/PolicyEndpoint";
 
 export const permissionEndpointURI: string = "/protection/permissions";

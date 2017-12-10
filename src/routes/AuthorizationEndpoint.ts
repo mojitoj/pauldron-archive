@@ -4,13 +4,12 @@ import {APIError} from "../model/APIError";
 import {registered_permissions} from "./PermissionEndpoint";
 import {Router, Request, Response, NextFunction} from "express";
 import {request} from "http";
-import { ClaimsError, ValidationError, InvalidTicketError, ExpiredTicketError, NotAuthorizedByPolicyError, UMARedirect } from "../model/Exceptions";
+import { ClaimsError, ValidationError, InvalidTicketError, ExpiredTicketError, NotAuthorizedByPolicyError, UMARedirect, UMARedirectError } from "../model/Exceptions";
 import { inspect } from "util";
 import * as jwt from "jsonwebtoken";
-import { PolicyEngine, Claims, Policy } from "../policy/PolicyEngine";
+import { PolicyDecision, AuthorizationDecision, Obligations, SimplePolicyDecisionCombinerEngine, PolicyEngine, Claims, Policy } from "pauldron-policy";
 import { policyTypeToEnginesMap, policies } from "./PolicyEndpoint";
-import { PolicyDecision, AuthorizationDecision, Obligations } from "../policy/Decisions";
-import { SimplePolicyDecisionCombinerEngine } from "../policy/SimplePolicyDecisionCombinerEngine";
+import * as rp from "request-promise";
 
 const config = require("../config.json");
 
@@ -26,18 +25,19 @@ export class AuthorizationEndpoint {
     this.init();
   }
 
-  public createANewOne(req: Request, res: Response, next: NextFunction): void {
+  public async createANewOne(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
         AuthorizationEndpoint.validateRPTRequestParams(req.body);
         const ticket: string = req.body.ticket;
         const claimsString: string = req.body.claim_tokens;
         const claims: Claims = AuthorizationEndpoint.validateClaimsToken(claimsString);
+        const claimsAndOtherAssertions = {rpts: (req.body.rpts || {}), ...claims};
 
         const permissions: TimeStampedPermissions = registered_permissions [ticket];
         AuthorizationEndpoint.validatePermissions(permissions);
 
-        const rpt: TimeStampedPermissions = TimeStampedPermissions.issue(config.uma.authorization.rpt.ttl,
-          AuthorizationEndpoint.checkPolicies(claims, permissions.permissions));
+        const permissionsAfterReconciliationWithPolicies = await AuthorizationEndpoint.checkPolicies(claimsAndOtherAssertions, permissions.permissions);
+        const rpt: TimeStampedPermissions = TimeStampedPermissions.issue(config.uma.authorization.rpt.ttl, permissionsAfterReconciliationWithPolicies);
 
         issued_rpts[rpt.id] = rpt;
         res.status(201).send({rpt: rpt.id});
@@ -61,13 +61,20 @@ export class AuthorizationEndpoint {
           "not_authorized",
           403
         ));
+      } else if (e instanceof UMARedirectError) {
+        res.status(403)
+        .send(
+          new APIError(`Need approval from ${e.umaServerParams.uri} but failed at communicating with this server.`,
+          "need_info",
+          403
+        ));
       } else if (e instanceof UMARedirect) {
         res.status(401)
-        .set("WWW-Authenticate", `UMA realm=${e.umaServerParams.realm} as_uri=${e.umaServerParams.as_uri}`)
+        .set("WWW-Authenticate", `UMA realm=${e.umaServerParams.realm}, as_uri=${e.umaServerParams.uri}, ticket=${e.ticket}`)
         .send(
-          new APIError("Denied per authorization policies.",
-          "not_authorized",
-          403
+          new APIError(`Need approval from ${e.umaServerParams.uri}.`,
+          "uma_redirect",
+          401
         ));
       } else if (e instanceof InvalidTicketError) {
         res.status(400).send(
@@ -92,7 +99,7 @@ export class AuthorizationEndpoint {
     }
   }
 
-  private static checkPolicies(claims: Claims, permissions: Permission[]): Permission[] {
+  private static async checkPolicies(claims: Claims, permissions: Permission[]): Promise<Permission[]> {
     const policyArray: Policy[] = Object.keys(policies).map((id) => policies[id]);
     const decision = new SimplePolicyDecisionCombinerEngine().evaluate(claims, policyArray, policyTypeToEnginesMap);
     if (decision.authorization === AuthorizationDecision.Deny) {
@@ -101,12 +108,40 @@ export class AuthorizationEndpoint {
       // failing safe on Deny if no applicable policies were found. This could be a configuration setting.
       throw new NotAuthorizedByPolicyError();
     } else if (decision.authorization === AuthorizationDecision.Indeterminate) {
+      let ticket: string = "";
+      try {
+        ticket = await AuthorizationEndpoint.registerUMAPermissions(decision.obligations[UMA_REDIRECT_OBLIGATION_ID], permissions);
+      } catch (umaError) {
+        const exception = new UMARedirectError(`Error in registering permissions with another UMA server: ${umaError.message}`);
+        exception.umaServerParams = decision.obligations[UMA_REDIRECT_OBLIGATION_ID];
+        throw exception;
+      }
       const e = new UMARedirect();
       e.umaServerParams = decision.obligations[UMA_REDIRECT_OBLIGATION_ID];
+      e.ticket = ticket;
       throw e;
     }
     // else if (decision.authorization === AuthorizationDecision.Permit):
     return AuthorizationEndpoint.reconcilePermissionsAndObligations(permissions, decision.obligations);
+  }
+
+  private static async registerUMAPermissions(server: any, permissions: Permission[]): Promise<string> {
+    const options = {
+      method: "POST"
+      , json: true
+      , uri: server.uri + server.permission_registration_endpoint
+      , body: permissions
+    };
+
+    try {
+      const response = await rp(options);
+      if (! response.ticket) {
+        throw new UMARedirectError(`No ticket was returned from ${server.uri + server.permission_registration_endpoint}.`);
+      }
+      return response.ticket;
+    } catch (e) {
+      throw new UMARedirectError(e.message);
+    }
   }
 
   private static reconcilePermissionsAndObligations (permissions: Permission[], obligations: Obligations): Permission[] {
@@ -131,7 +166,7 @@ export class AuthorizationEndpoint {
     if (!object) {
       throw new ValidationError ("Bad Request.");
     } else if (! object.ticket) {
-      throw new ValidationError ("Bad Request. Expecting a ticket.");
+      throw new ValidationError (`Bad Request. Expecting a ticket in ${JSON.stringify(object)}`);
     }
   }
 

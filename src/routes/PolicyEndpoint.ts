@@ -8,7 +8,7 @@ export const policyTypeToEnginesMap = {
     "pauldron:simple-policy": new SimplePolicyEngine()
 };
 
-export let policies: { [id: string]: Policy } = {};
+// export let policies: { [id: string]: Policy } = {};
 
 export class PolicyEndpoint {
     router: Router;
@@ -20,6 +20,7 @@ export class PolicyEndpoint {
 
     public createANewOne(req: Request, res: Response, next: NextFunction): void {
         try {
+            let policies = req.app.locals.policies;
             PolicyEndpoint.validateNewPolicyRequestParams(req.body);
             const policy = req.body as Policy;
             const id = hash(policy);
@@ -59,6 +60,7 @@ export class PolicyEndpoint {
     }
 
     public getAll(req: Request, res: Response, next: NextFunction): void {
+        const policies = req.app.locals.policies;
         res.status(200).send(Object.keys(policies)
             .map((id) => (
                 {
@@ -70,6 +72,7 @@ export class PolicyEndpoint {
     }
 
     public getOne(req: Request, res: Response, next: NextFunction): void {
+        const policies = req.app.locals.policies;
         const id = req.params.id;
         const policy = policies [id];
         if (policy) {

@@ -1,13 +1,13 @@
 {
     "type": "pauldron:simple-policy",
-    "name": "Organizational Policy1",
+    "name": "Upstream Organizational Policy1",
     "content": {
         "rules": {
             "permittedClientsBasedOnPurpose": {
                 "name": "Permitted Clients Based on pou",
                 "matchAnyOf":[
                     {"client_id":"client4"},
-                    {"client_id":"client1"}                    
+                    {"client_id":"client3"}                    
                 ],
                 "decision": {
                     "authorization": "Permit", 

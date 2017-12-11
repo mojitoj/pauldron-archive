@@ -11,11 +11,6 @@ export const introspectionEndpointURI: string = "/protection/introspection";
 export const authorizationEndpointURI: string = "/authorization";
 export const policyEndpointURI: string = "/policies";
 
-const permissionEndpoint = new PermissionEndpoint();
-const introspectionEndpoint = new IntrospectionEndpoint();
-const authorizationEndpoint = new AuthorizationEndpoint();
-const policyEndpoint = new PolicyEndpoint();
-
 // Creates and configures an ExpressJS web server.
 export class App {
 
@@ -25,6 +20,7 @@ export class App {
     // Run configuration methods on the Express instance.
     constructor() {
         this.express = express();
+        this.express.locals.policies = {};
         this.middleware();
         this.routes();
     }
@@ -38,6 +34,11 @@ export class App {
 
     // Configure API endpoints.
     private routes(): void {
+        const permissionEndpoint = new PermissionEndpoint();
+        const introspectionEndpoint = new IntrospectionEndpoint();
+        const authorizationEndpoint = new AuthorizationEndpoint();
+        const policyEndpoint = new PolicyEndpoint();
+
         const router = express.Router();
         router.get("/", (req, res) => {
           res.json({

@@ -24,12 +24,9 @@ const claims: object = {
     ]
 };
 const otherAssertions: object = {
-    rpts: [
-        {
-            serverId: "http://localhost:3001/",
-            introspected_permissions: [{resource_id: "test_res_id", resource_scopes: ["s1", "s2"]}]
+    rpts: {
+            "http://localhost:3001/": [{resource_id: "test_res_id", resource_scopes: ["s1", "s2"]}]
         }
-    ]
 };
 const permissions: Permission[] = [{resource_id: "test_res_id", resource_scopes: ["s1", "s2"]}];
 
@@ -43,10 +40,13 @@ describe("happyFlow", () => {
             .send(policy);
 
         const upstreamPolicy = require("./upstream-server-policy.json");
-        const upstreamPolicyRes = await chai.request(serverInstance)
+        const upstreamPolicyRes = await chai.request(serverInstance2)
             .post(policyEndpointURI)
             .set("content-type", "application/json")
-            .send(policy);
+            .send(upstreamPolicy);
+
+        const upstreamPolicyListRes = await chai.request(serverInstance2)
+            .get(policyEndpointURI);
     });
 
     it("should be able to get an RPT for an authorized client with scopes according to the policy obligations", async () => {
@@ -60,7 +60,7 @@ describe("happyFlow", () => {
 
         const authorizationRes = await chai.request(serverInstance)
             .post(authorizationEndpointURI)
-            .set("content-type", "application/x-www-form-urlencoded")
+            .set("content-type", "application/json")
             .send({"ticket": ticket, "claim_tokens": claimsToken});
         chai.assert.exists(authorizationRes.body.rpt);
         const rpt: string = authorizationRes.body.rpt;
@@ -88,10 +88,51 @@ describe("happyFlow", () => {
 
         const claimsToken = jwt.sign(newClaims, "secret1");
 
+        let rptRes = null;
+        let secondTicket = null;
+        let upstreamServerInfo = null;
+        try {
+            rptRes =  await chai.request(serverInstance)
+                .post(authorizationEndpointURI)
+                .set("content-type", "application/json")
+                .send({"ticket": ticket, "claim_tokens": claimsToken});
+        } catch (e) {
+            chai.assert.equal(e.status, 401);
+            chai.assert.exists(e.response.headers["www-authenticate"]);
+            chai.assert.equal(e.response.body.error, "uma_redirect");
+            const ticketOpeningTag = "ticket=\"";
+            const ticketStartIndex = e.response.headers["www-authenticate"].indexOf(ticketOpeningTag) + ticketOpeningTag.length;
+            secondTicket = e.response.headers["www-authenticate"].substring(ticketStartIndex, e.response.headers["www-authenticate"].indexOf("\"", ticketStartIndex));
+            upstreamServerInfo = e.response.body.info.server;
+        }
+
+        let upstreamRpt: string = null;
+        try {
+        const upstreamAuthorizationRes = await chai.request(serverInstance2)
+            .post(authorizationEndpointURI)
+            .set("content-type", "application/json")
+            .send({"ticket": secondTicket, "claim_tokens": claimsToken});
+
+        chai.assert.exists(upstreamAuthorizationRes.body.rpt);
+         upstreamRpt = upstreamAuthorizationRes.body.rpt;
+        } catch (e) {
+            console.log(e);
+        }
+
         const authorizationRes = await chai.request(serverInstance)
             .post(authorizationEndpointURI)
-            .set("content-type", "application/x-www-form-urlencoded")
-            .send({"ticket": ticket, "claim_tokens": claimsToken});
+            .set("content-type", "application/json")
+            .send({
+                "ticket": ticket,
+                "claim_tokens": claimsToken,
+                "rpts": {
+                        [upstreamServerInfo.uri]: {
+                            "server": upstreamServerInfo,
+                            "rpt": upstreamRpt
+                        }
+                    }
+                }
+            );
         chai.assert.exists(authorizationRes.body.rpt);
         const rpt: string = authorizationRes.body.rpt;
 
@@ -120,7 +161,7 @@ describe("unhappy flow", () => {
         try {
             rptRes =  await chai.request(serverInstance)
                 .post(authorizationEndpointURI)
-                .set("content-type", "application/x-www-form-urlencoded")
+                .set("content-type", "application/json")
                 .send({"ticket": ticket, "claim_tokens": claimsToken});
         } catch (e) {
             chai.assert.equal(e.status, 403);
@@ -143,11 +184,11 @@ describe("unhappy flow", () => {
         try {
             rptRes =  await chai.request(serverInstance)
                 .post(authorizationEndpointURI)
-                .set("content-type", "application/x-www-form-urlencoded")
+                .set("content-type", "application/json")
                 .send({"ticket": ticket, "claim_tokens": claimsToken});
         } catch (e) {
-            chai.assert.exists(e.response.headers["www-authenticate"]);
             chai.assert.equal(e.status, 401);
+            chai.assert.exists(e.response.headers["www-authenticate"]);
             chai.assert.equal(e.response.body.error, "uma_redirect");
         }
         chai.assert.isNotOk(rptRes);

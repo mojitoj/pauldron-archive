@@ -10,3 +10,5 @@ export class UMARedirect extends Error {
     ticket: string;
 }
 export class UMARedirectError extends UMARedirect {}
+export class UMAIntrospectionError extends UMARedirect {}
+

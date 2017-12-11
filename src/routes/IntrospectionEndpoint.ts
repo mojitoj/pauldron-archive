@@ -51,7 +51,7 @@ export class IntrospectionEndpoint {
 
   private static validateIntrospectionRequestParams(object: any): void {
     if (!object || !object.token) {
-      throw new ValidationError("Bad Request. Expecting a ticket.");
+      throw new ValidationError("Bad Request. Expecting a token.");
     }
   }
 

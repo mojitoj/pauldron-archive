@@ -13,7 +13,7 @@
     "clean": "rimraf ./dist",
     "lint": "tslint --project tsconfig.json",
     "prepublishOnly": "npm run clean && npm run build && npm run lint && npm run test",
-    "test": "mocha --exit --timeout 5000 --recursive --throw-deprecation --require ts-node/register --require dotenv/config \"src/**/*.test.ts\""
+    "test": "mocha --exit --timeout 5000 --recursive --throw-deprecation --full-trace --require ts-node/register --require source-map-support/register --require dotenv/config \"src/**/*.test.ts\""
   },
   "keywords": [
     "OAth",

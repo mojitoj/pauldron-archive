@@ -4,11 +4,11 @@ import {APIError} from "../model/APIError";
 import {registered_permissions} from "./PermissionEndpoint";
 import {Router, Request, Response, NextFunction} from "express";
 import {request} from "http";
-import { ClaimsError, ValidationError, InvalidTicketError, ExpiredTicketError, NotAuthorizedByPolicyError, UMARedirect, UMARedirectError } from "../model/Exceptions";
+import { ClaimsError, ValidationError, InvalidTicketError, ExpiredTicketError, NotAuthorizedByPolicyError, UMARedirect, UMARedirectError, UMAIntrospectionError } from "../model/Exceptions";
 import { inspect } from "util";
 import * as jwt from "jsonwebtoken";
 import { PolicyDecision, AuthorizationDecision, Obligations, SimplePolicyDecisionCombinerEngine, PolicyEngine, Claims, Policy } from "pauldron-policy";
-import { policyTypeToEnginesMap, policies } from "./PolicyEndpoint";
+import { policyTypeToEnginesMap} from "./PolicyEndpoint";
 import * as rp from "request-promise";
 
 const config = require("../config.json");
@@ -27,16 +27,19 @@ export class AuthorizationEndpoint {
 
   public async createANewOne(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
+        const policies = req.app.locals.policies;
         AuthorizationEndpoint.validateRPTRequestParams(req.body);
         const ticket: string = req.body.ticket;
         const claimsString: string = req.body.claim_tokens;
         const claims: Claims = AuthorizationEndpoint.validateClaimsToken(claimsString);
-        const claimsAndOtherAssertions = {rpts: (req.body.rpts || {}), ...claims};
 
-        const permissions: TimeStampedPermissions = registered_permissions [ticket];
+        const permissions: TimeStampedPermissions = registered_permissions[ticket];
         AuthorizationEndpoint.validatePermissions(permissions);
 
-        const permissionsAfterReconciliationWithPolicies = await AuthorizationEndpoint.checkPolicies(claimsAndOtherAssertions, permissions.permissions);
+        const claimsAndOtherAssertions = await AuthorizationEndpoint.augmentClaims(claims, req.body);
+        const permissionsAfterReconciliationWithPolicies = await AuthorizationEndpoint
+            .checkPolicies(claimsAndOtherAssertions, permissions.permissions, policies);
+
         const rpt: TimeStampedPermissions = TimeStampedPermissions.issue(config.uma.authorization.rpt.ttl, permissionsAfterReconciliationWithPolicies);
 
         issued_rpts[rpt.id] = rpt;
@@ -45,19 +48,27 @@ export class AuthorizationEndpoint {
     } catch (e) {
       if (e instanceof ValidationError) {
         res.status(400).send(
-            new APIError(e.message,
+            new APIError(`Missing parameter: ${e.message}: ${req}`,
             "MissingParameter",
             400
          ));
       } else if (e instanceof ClaimsError) {
         res.status(403).send(
-            new APIError(`Invalid or insufficient claims token: ${e.message}`,
+            new APIError(`Invalid or insufficient claims token: ${e.message}.`,
             "need_info",
             403
           ));
       } else if (e instanceof NotAuthorizedByPolicyError) {
         res.status(403).send(
           new APIError("Denied per authorization policies.",
+          "not_authorized",
+          403
+        ));
+      } else if (e instanceof UMAIntrospectionError) {
+        console.log(e);
+        res.status(403)
+        .send(
+          new APIError(`Failed at introspecting an RPT: ${e.message}`,
           "not_authorized",
           403
         ));
@@ -70,11 +81,12 @@ export class AuthorizationEndpoint {
         ));
       } else if (e instanceof UMARedirect) {
         res.status(401)
-        .set("WWW-Authenticate", `UMA realm=${e.umaServerParams.realm}, as_uri=${e.umaServerParams.uri}, ticket=${e.ticket}`)
+        .set("WWW-Authenticate", `UMA realm=\"${e.umaServerParams.realm}\", as_uri=\"${e.umaServerParams.uri}\", ticket=\"${e.ticket}\"`)
         .send(
           new APIError(`Need approval from ${e.umaServerParams.uri}.`,
           "uma_redirect",
-          401
+          401,
+          {"server": e.umaServerParams}
         ));
       } else if (e instanceof InvalidTicketError) {
         res.status(400).send(
@@ -89,17 +101,52 @@ export class AuthorizationEndpoint {
           400
         ));
       } else {
+        console.log(e);
         res.status(500).send(
           new APIError("Internal server error.",
           "internal_error",
           500
         ));
-        console.log(e);
       }
     }
   }
+  private static async augmentClaims(claims: Claims, otherStuff: any): Promise<Claims> {
+    let claimsAndOtherAssertions = {
+      rpts: (otherStuff.rpts || {}),
+      ...claims
+    };
 
-  private static async checkPolicies(claims: Claims, permissions: Permission[]): Promise<Permission[]> {
+    if (otherStuff.rpts) {
+      for (const serverURI in otherStuff.rpts) {
+           const introspectedPermissions = await AuthorizationEndpoint.introspectRPT(otherStuff.rpts[serverURI].server, otherStuff.rpts[serverURI].rpt);
+           claimsAndOtherAssertions["rpts"][serverURI] = introspectedPermissions;
+      }
+    }
+    return claimsAndOtherAssertions;
+  }
+
+  private static async introspectRPT(server: any, rpt: string): Promise<Permission[]> {
+    const options = {
+      method: "POST",
+      json: true,
+      form: {
+        token: rpt
+      },
+      uri: server.uri + server.introspection_endpoint
+    };
+    let response = null;
+    try {
+      response = await rp(options);
+    } catch (e) {
+      throw new UMAIntrospectionError(`Unsuccessful introspection from ${(server.uri || "<Empty>") + (server.introspection_endpoint || "<Empty>")}: ${e.message}`);
+    }
+    if (!response || !response.active || ! response.permissions) {
+        throw new UMAIntrospectionError(`Unsuccessful introspection from ${(server.uri || "<Empty>") + (server.introspection_endpoint || "<Empty>")}.`);
+    }
+    return response.permissions;
+  }
+
+  private static async checkPolicies(claims: Claims, permissions: Permission[], policies: { [id: string]: Policy }): Promise<Permission[]> {
     const policyArray: Policy[] = Object.keys(policies).map((id) => policies[id]);
     const decision = new SimplePolicyDecisionCombinerEngine().evaluate(claims, policyArray, policyTypeToEnginesMap);
     if (decision.authorization === AuthorizationDecision.Deny) {
@@ -127,10 +174,10 @@ export class AuthorizationEndpoint {
 
   private static async registerUMAPermissions(server: any, permissions: Permission[]): Promise<string> {
     const options = {
-      method: "POST"
-      , json: true
-      , uri: server.uri + server.permission_registration_endpoint
-      , body: permissions
+      method: "POST",
+      json: true,
+      uri: server.uri + server.permission_registration_endpoint,
+      body: permissions
     };
 
     try {

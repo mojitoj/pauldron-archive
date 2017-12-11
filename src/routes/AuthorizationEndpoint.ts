@@ -10,12 +10,19 @@ import * as jwt from "jsonwebtoken";
 import { PolicyDecision, AuthorizationDecision, Obligations, SimplePolicyDecisionCombinerEngine, PolicyEngine, Claims, Policy } from "pauldron-policy";
 import { policyTypeToEnginesMap} from "./PolicyEndpoint";
 import * as rp from "request-promise";
+import { UMAServerInfo } from "../model/UMAServerInfo";
 
 const config = require("../config.json");
 
 export const UMA_REDIRECT_OBLIGATION_ID = "UMA_REDIRECT";
 export const DENY_SCOPES_OBLIGATION_ID = "DENY_SCOPES";
 export let issued_rpts: { [rpt: string]: TimeStampedPermissions } = {};
+
+export class UMAClaimToken {
+  format: string;
+  token: string;
+  info: any;
+}
 
 export class AuthorizationEndpoint {
   router: Router;
@@ -30,15 +37,15 @@ export class AuthorizationEndpoint {
         const policies = req.app.locals.policies;
         AuthorizationEndpoint.validateRPTRequestParams(req.body);
         const ticket: string = req.body.ticket;
-        const claimsString: string = req.body.claim_tokens;
-        const claims: Claims = AuthorizationEndpoint.validateClaimsToken(claimsString);
+        const claimsTokens: UMAClaimToken[] = req.body.claim_tokens;
+        const claims: Claims = await AuthorizationEndpoint.parseAndValidateClaimTokens(claimsTokens);
 
         const permissions: TimeStampedPermissions = registered_permissions[ticket];
         AuthorizationEndpoint.validatePermissions(permissions);
 
-        const claimsAndOtherAssertions = await AuthorizationEndpoint.augmentClaims(claims, req.body);
+        // const claimsAndOtherAssertions = await AuthorizationEndpoint.augmentClaims(claims, req.body);
         const permissionsAfterReconciliationWithPolicies = await AuthorizationEndpoint
-            .checkPolicies(claimsAndOtherAssertions, permissions.permissions, policies);
+            .checkPolicies(claims, permissions.permissions, policies);
 
         const rpt: TimeStampedPermissions = TimeStampedPermissions.issue(config.uma.authorization.rpt.ttl, permissionsAfterReconciliationWithPolicies);
 
@@ -110,41 +117,20 @@ export class AuthorizationEndpoint {
       }
     }
   }
-  private static async augmentClaims(claims: Claims, otherStuff: any): Promise<Claims> {
-    let claimsAndOtherAssertions = {
-      rpts: (otherStuff.rpts || {}),
-      ...claims
-    };
+  // private static async augmentClaims(claims: Claims, otherStuff: any): Promise<Claims> {
+  //   let claimsAndOtherAssertions = {
+  //     rpts: (otherStuff.rpts || {}),
+  //     ...claims
+  //   };
 
-    if (otherStuff.rpts) {
-      for (const serverURI in otherStuff.rpts) {
-           const introspectedPermissions = await AuthorizationEndpoint.introspectRPT(otherStuff.rpts[serverURI].server, otherStuff.rpts[serverURI].rpt);
-           claimsAndOtherAssertions["rpts"][serverURI] = introspectedPermissions;
-      }
-    }
-    return claimsAndOtherAssertions;
-  }
-
-  private static async introspectRPT(server: any, rpt: string): Promise<Permission[]> {
-    const options = {
-      method: "POST",
-      json: true,
-      form: {
-        token: rpt
-      },
-      uri: server.uri + server.introspection_endpoint
-    };
-    let response = null;
-    try {
-      response = await rp(options);
-    } catch (e) {
-      throw new UMAIntrospectionError(`Unsuccessful introspection from ${(server.uri || "<Empty>") + (server.introspection_endpoint || "<Empty>")}: ${e.message}`);
-    }
-    if (!response || !response.active || ! response.permissions) {
-        throw new UMAIntrospectionError(`Unsuccessful introspection from ${(server.uri || "<Empty>") + (server.introspection_endpoint || "<Empty>")}.`);
-    }
-    return response.permissions;
-  }
+  //   if (otherStuff.rpts) {
+  //     for (const serverURI in otherStuff.rpts) {
+  //          const introspectedPermissions = await AuthorizationEndpoint.introspectRPT(otherStuff.rpts[serverURI].server, otherStuff.rpts[serverURI].rpt);
+  //          claimsAndOtherAssertions["rpts"][serverURI] = introspectedPermissions;
+  //     }
+  //   }
+  //   return claimsAndOtherAssertions;
+  // }
 
   private static async checkPolicies(claims: Claims, permissions: Permission[], policies: { [id: string]: Policy }): Promise<Permission[]> {
     const policyArray: Policy[] = Object.keys(policies).map((id) => policies[id]);
@@ -157,7 +143,7 @@ export class AuthorizationEndpoint {
     } else if (decision.authorization === AuthorizationDecision.Indeterminate) {
       let ticket: string = "";
       try {
-        ticket = await AuthorizationEndpoint.registerUMAPermissions(decision.obligations[UMA_REDIRECT_OBLIGATION_ID], permissions);
+        ticket = await AuthorizationEndpoint.registerUMAPermissions(decision.obligations[UMA_REDIRECT_OBLIGATION_ID] as UMAServerInfo, permissions);
       } catch (umaError) {
         const exception = new UMARedirectError(`Error in registering permissions with another UMA server: ${umaError.message}`);
         exception.umaServerParams = decision.obligations[UMA_REDIRECT_OBLIGATION_ID];
@@ -172,7 +158,7 @@ export class AuthorizationEndpoint {
     return AuthorizationEndpoint.reconcilePermissionsAndObligations(permissions, decision.obligations);
   }
 
-  private static async registerUMAPermissions(server: any, permissions: Permission[]): Promise<string> {
+  private static async registerUMAPermissions(server: UMAServerInfo, permissions: Permission[]): Promise<string> {
     const options = {
       method: "POST",
       json: true,
@@ -217,13 +203,63 @@ export class AuthorizationEndpoint {
     }
   }
 
-  private static validateClaimsToken(claimsString: string): Claims {
-    if (!claimsString) {
-      throw new ClaimsError("No claims token submitted.");
+  private static async introspectRPT(server: UMAServerInfo, rpt: string): Promise<Permission[]> {
+    const options = {
+      method: "POST",
+      json: true,
+      form: {
+        token: rpt
+      },
+      uri: server.uri + server.introspection_endpoint
+    };
+    let response = null;
+    try {
+      response = await rp(options);
+    } catch (e) {
+      throw new UMAIntrospectionError(`Unsuccessful introspection from ${(server.uri || "<Empty>") + (server.introspection_endpoint || "<Empty>")}: ${e.message}`);
     }
+    if (!response || !response.active || ! response.permissions) {
+      throw new UMAIntrospectionError(`Unsuccessful introspection from ${(server.uri || "<Empty>") + (server.introspection_endpoint || "<Empty>")}.`);
+    }
+    return response.permissions;
+  }
+
+  private static async parseAndValidateClaimTokens(claimTokens: UMAClaimToken[]): Promise<Claims> {
+    if (!claimTokens || claimTokens.length === 0) {
+      throw new ClaimsError("No claim tokens submitted.");
+    }
+    let allClaims: Claims = {rpts: {}};
+    for (let index = 0; index < claimTokens.length; index++) {
+      const claimToken = claimTokens [index];
+      if (claimToken.format === "jwt") {
+        allClaims = {
+          ...AuthorizationEndpoint.parseJWTClaimToken(claimToken.token),
+          ...allClaims
+        };
+      } else if (claimToken.format === "rpt") {
+        const rpt = claimToken.token;
+        const serverInfo: UMAServerInfo = claimToken.info;
+        if (!serverInfo || !serverInfo.introspection_endpoint) {
+          throw new ClaimsError(`RPT claims must provide 'info.introspection_endpoint' to enable verificication.`);
+        }
+
+        const introspectedPermissions = await AuthorizationEndpoint.introspectRPT(serverInfo, rpt);
+
+        allClaims.rpts = {
+          ...allClaims.rpts,
+          [serverInfo.uri]: introspectedPermissions
+        };
+      } else {
+        throw new ClaimsError(`Unrecognized claim format '${claimToken.format}'.`);
+      }
+    }
+    return allClaims;
+  }
+
+  private static parseJWTClaimToken(claimsString: string): Claims {
     const claimChunks: string[] = claimsString.split(".", 3);
     if (claimChunks.length !== 3) {
-      throw new ClaimsError("Submitted claims token not in JWT format.");
+      throw new ClaimsError("Submitted claim token not in JWT format.");
     }
     let payload: Claims = {};
     try {

@@ -7,10 +7,15 @@ import _ = require("lodash");
 import {App, permissionEndpointURI, authorizationEndpointURI, introspectionEndpointURI, policyEndpointURI} from "./App";
 import { SimplePolicy } from "pauldron-policy";
 import {instantiateServer, serverInstance} from ".";
+import { config } from "bluebird";
+
+const testConfigs = require("./test-config.json");
 
 const serverInstance2 = instantiateServer(3001);
 
 chai.use(chaiHttp);
+
+const testAPIKeyForPolicyEndpoint = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1aWQiOiJ0ZXN0X3VzZXIiLCJzY29wZXMiOlsiUE9MIiwiQyIsIkwiXX0.Eei4pegcIIwMZvQWDlqmd_MT188Y9yzBs_mD7yZTl4w";
 
 const claims: object = {
     client_id: "client4",
@@ -37,22 +42,26 @@ describe("happyFlow", () => {
         const policyRes = await chai.request(serverInstance)
             .post(policyEndpointURI)
             .set("content-type", "application/json")
+            .set("Authorization", `Bearer ${testConfigs.testPolicyEndpointAPIKey}`)
             .send(policy);
 
         const upstreamPolicy = require("./upstream-server-policy.json");
         const upstreamPolicyRes = await chai.request(serverInstance2)
             .post(policyEndpointURI)
             .set("content-type", "application/json")
+            .set("Authorization", `Bearer ${testConfigs.testPolicyEndpointAPIKey}`)
             .send(upstreamPolicy);
 
         const upstreamPolicyListRes = await chai.request(serverInstance2)
-            .get(policyEndpointURI);
+            .get(policyEndpointURI)
+            .set("Authorization", `Bearer ${testConfigs.testPolicyEndpointAPIKey}`);
     });
 
     it("should be able to get an RPT for an authorized client with scopes according to the policy obligations", async () => {
         const registrationRes = await chai.request(serverInstance)
             .post(permissionEndpointURI)
             .set("content-type", "application/json")
+            .set("Authorization", `Bearer ${testConfigs.testProtectionAPIKey}`)
             .send(permissions);
         chai.assert.exists(registrationRes.body.ticket);
         const ticket: string = registrationRes.body.ticket;
@@ -61,6 +70,7 @@ describe("happyFlow", () => {
         const authorizationRes = await chai.request(serverInstance)
             .post(authorizationEndpointURI)
             .set("content-type", "application/json")
+            .set("Authorization", `Bearer ${testConfigs.testAuthAPIKey}`)
             .send({
                 "ticket": ticket,
                 "claim_tokens": [
@@ -75,6 +85,7 @@ describe("happyFlow", () => {
         const introspectionRes = await chai.request(serverInstance)
             .post(introspectionEndpointURI)
             .set("content-type", "application/x-www-form-urlencoded")
+            .set("Authorization", `Bearer ${testConfigs.testProtectionAPIKey}`)
             .send({"token": rpt});
         chai.assert.exists(introspectionRes.body.active);
         chai.assert.exists(introspectionRes.body.iat);
@@ -86,6 +97,7 @@ describe("happyFlow", () => {
         const registrationRes = await chai.request(serverInstance)
             .post(permissionEndpointURI)
             .set("content-type", "application/json")
+            .set("Authorization", `Bearer ${testConfigs.testProtectionAPIKey}`)
             .send(permissions);
         chai.assert.exists(registrationRes.body.ticket);
         const ticket: string = registrationRes.body.ticket;
@@ -102,6 +114,7 @@ describe("happyFlow", () => {
             rptRes =  await chai.request(serverInstance)
                 .post(authorizationEndpointURI)
                 .set("content-type", "application/json")
+                .set("Authorization", `Bearer ${testConfigs.testAuthAPIKey}`)
                 .send({"ticket": ticket, "claim_tokens": [{
                     format: "jwt",
                     token: claimsToken
@@ -121,6 +134,7 @@ describe("happyFlow", () => {
         const upstreamAuthorizationRes = await chai.request(serverInstance2)
             .post(authorizationEndpointURI)
             .set("content-type", "application/json")
+            .set("Authorization", `Bearer ${testConfigs.testAuthAPIKey}`)
             .send({ticket: secondTicket, claim_tokens: [{
                 format: "jwt",
                 token: claimsToken
@@ -135,6 +149,7 @@ describe("happyFlow", () => {
         const authorizationRes = await chai.request(serverInstance)
             .post(authorizationEndpointURI)
             .set("content-type", "application/json")
+            .set("Authorization", `Bearer ${testConfigs.testAuthAPIKey}`)
             .send({
                 "ticket": ticket,
                 "claim_tokens": [{
@@ -155,6 +170,7 @@ describe("happyFlow", () => {
         const introspectionRes = await chai.request(serverInstance)
             .post(introspectionEndpointURI)
             .set("content-type", "application/x-www-form-urlencoded")
+            .set("Authorization", `Bearer ${testConfigs.testProtectionAPIKey}`)
             .send({"token": rpt});
         chai.assert.exists(introspectionRes.body.active);
         chai.assert.exists(introspectionRes.body.iat);
@@ -167,6 +183,7 @@ describe("unhappy flow", () => {
         const registrationRes = await chai.request(serverInstance)
             .post(permissionEndpointURI)
             .set("content-type", "application/json")
+            .set("Authorization", `Bearer ${testConfigs.testProtectionAPIKey}`)
             .send(permissions);
         const ticket: string = registrationRes.body.ticket;
         let newClaims = _.cloneDeep(claims);
@@ -178,6 +195,7 @@ describe("unhappy flow", () => {
             rptRes =  await chai.request(serverInstance)
                 .post(authorizationEndpointURI)
                 .set("content-type", "application/json")
+                .set("Authorization", `Bearer ${testConfigs.testAuthAPIKey}`)
                 .send({ticket: ticket, claim_tokens: [{
                     format: "jwt",
                     token: claimsToken
@@ -193,6 +211,7 @@ describe("unhappy flow", () => {
         const registrationRes = await chai.request(serverInstance)
             .post(permissionEndpointURI)
             .set("content-type", "application/json")
+            .set("Authorization", `Bearer ${testConfigs.testProtectionAPIKey}`)
             .send(permissions);
         const ticket: string = registrationRes.body.ticket;
         let newClaims = _.cloneDeep(claims);
@@ -204,6 +223,7 @@ describe("unhappy flow", () => {
             rptRes =  await chai.request(serverInstance)
                 .post(authorizationEndpointURI)
                 .set("content-type", "application/json")
+                .set("Authorization", `Bearer ${testConfigs.testAuthAPIKey}`)
                 .send({ticket: ticket, claim_tokens: [{
                     format: "jwt",
                     token: claimsToken

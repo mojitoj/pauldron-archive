@@ -4,8 +4,9 @@ import {issued_rpts} from "./AuthorizationEndpoint";
 
 import {Router, Request, Response, NextFunction} from "express";
 import {request} from "http";
-import { InvalidRPTError, ExpiredRPTError, ValidationError } from "../model/Exceptions";
+import { InvalidRPTError, ExpiredRPTError, ValidationError, APIAuthorizationError } from "../model/Exceptions";
 import { inspect } from "util";
+import { User, APIAuthorization } from "../model/APIAuthorization";
 
 
 export class IntrospectionEndpoint {
@@ -18,6 +19,8 @@ export class IntrospectionEndpoint {
 
   public introspect(req: Request, res: Response, next: NextFunction): void {
     try {
+        const user: User = APIAuthorization.validate(req, ["INTR:R"]);
+
         IntrospectionEndpoint.validateIntrospectionRequestParams(req.body);
         const token: string = req.body.token;
         const permissions: TimeStampedPermissions = issued_rpts [token];
@@ -30,23 +33,29 @@ export class IntrospectionEndpoint {
         delete introspectionResponseObject.id;
         res.status(200).send(introspectionResponseObject);
     } catch (e) {
-      if (e instanceof ValidationError) {
+      if (e instanceof InvalidRPTError || e instanceof ExpiredRPTError) {
+        res.status(200).send({active: false});
+      } else if (e instanceof ValidationError) {
         res.status(400).send(
             new APIError(e.message,
             "MissingParameter",
             400
          ));
-      } else if (e instanceof InvalidRPTError || e instanceof ExpiredRPTError) {
-        res.status(200).send({active: false});
-      } else {
-        res.status(500).send(
-          new APIError("Internal server error.",
-          "internal_error",
-          500
+      } else if (e instanceof APIAuthorizationError) {
+        res.status(403).send(
+            new APIError(`API authorization error: ${e.message}.`,
+            "api_auth_error",
+            403
         ));
-        console.log(e);
+      } else {
+          res.status(500).send(
+            new APIError("Internal server error.",
+            "internal_error",
+            500
+          ));
+          console.log(e);
+        }
       }
-    }
   }
 
   private static validateIntrospectionRequestParams(object: any): void {

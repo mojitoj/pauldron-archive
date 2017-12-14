@@ -1,14 +1,13 @@
 import {Router, Request, Response, NextFunction} from "express";
-import { ValidationError } from "../model/Exceptions";
+import { ValidationError, APIAuthorizationError } from "../model/Exceptions";
 import { Policy, SimplePolicyEngine } from "pauldron-policy";
 import * as hash from "object-hash";
 import { APIError } from "../model/APIError";
+import { User, APIAuthorization } from "../model/APIAuthorization";
 
 export const policyTypeToEnginesMap = {
     "pauldron:simple-policy": new SimplePolicyEngine()
 };
-
-// export let policies: { [id: string]: Policy } = {};
 
 export class PolicyEndpoint {
     router: Router;
@@ -20,6 +19,8 @@ export class PolicyEndpoint {
 
     public createANewOne(req: Request, res: Response, next: NextFunction): void {
         try {
+            const user: User = APIAuthorization.validate(req, ["POL:C"]);
+
             let policies = req.app.locals.policies;
             PolicyEndpoint.validateNewPolicyRequestParams(req.body);
             const policy = req.body as Policy;
@@ -48,6 +49,13 @@ export class PolicyEndpoint {
                   "MissingParameter",
                   400
                ));
+            } else if (e instanceof APIAuthorizationError) {
+                res.status(403).send(
+                    new APIError(`API authorization error: ${e.message}.`,
+                    "api_auth_error",
+                    403
+                  ));
+                  console.log(e);
             } else {
                 res.status(500).send(
                   new APIError("Internal server error.",
@@ -60,32 +68,71 @@ export class PolicyEndpoint {
     }
 
     public getAll(req: Request, res: Response, next: NextFunction): void {
-        const policies = req.app.locals.policies;
-        res.status(200).send(Object.keys(policies)
-            .map((id) => (
-                {
-                    "id": id,
-                    ... policies[id]
-                }
-            ))
-        );
+        try {
+            const user: User = APIAuthorization.validate(req, ["POL:L"]);
+
+            const policies = req.app.locals.policies;
+            res.status(200).send(Object.keys(policies)
+                .map((id) => (
+                    {
+                        "id": id,
+                        ... policies[id]
+                    }
+                ))
+            );
+        } catch (e) {
+            if (e instanceof APIAuthorizationError) {
+                res.status(403).send(
+                    new APIError(`API authorization error: ${e.message}.`,
+                    "api_auth_error",
+                    403
+                ));
+                console.log(e);
+            } else {
+                res.status(500).send(
+                new APIError("Internal server error.",
+                "internal_error",
+                500
+                ));
+                console.log(e);
+            }
+        }
     }
 
     public getOne(req: Request, res: Response, next: NextFunction): void {
-        const policies = req.app.locals.policies;
-        const id = req.params.id;
-        const policy = policies [id];
-        if (policy) {
-            res.status(200).send({
-                "id": id,
-                ... policy
-            });
-        } else {
-            res.status(404).send(
-                new APIError(`No policy exists by the id '${id}'.`,
-                "ObjectNotFound",
-                404
-            ));
+        try {
+            const user: User = APIAuthorization.validate(req, ["POL:R"]);
+            const policies = req.app.locals.policies;
+            const id = req.params.id;
+            const policy = policies [id];
+            if (policy) {
+                res.status(200).send({
+                    "id": id,
+                    ... policy
+                });
+            } else {
+                res.status(404).send(
+                    new APIError(`No policy exists by the id '${id}'.`,
+                    "ObjectNotFound",
+                    404
+                ));
+            }
+        } catch (e) {
+            if (e instanceof APIAuthorizationError) {
+                res.status(403).send(
+                    new APIError(`API authorization error: ${e.message}.`,
+                    "api_auth_error",
+                    403
+                  ));
+                  console.log(e);
+            } else {
+                res.status(500).send(
+                    new APIError("Internal server error.",
+                    "internal_error",
+                    500
+                  ));
+                  console.log(e);
+            }
         }
     }
     private static validateNewPolicyRequestParams(object: any): void {

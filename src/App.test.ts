@@ -4,6 +4,8 @@ import chaiHttp = require("chai-http");
 
 import { App, permissionEndpointURI, policyEndpointURI } from "./App";
 
+const testConfigs = require("./test-config.json");
+
 chai.use(chaiHttp);
 const app = new App().express;
 
@@ -22,9 +24,10 @@ describe("routs", () => {
 });
 
 describe("permissionsEndpoint", () => {
-    it("should be a json array", async () => {
+    it("should be a json object", async () => {
         const res = await chai.request(app)
-            .get(permissionEndpointURI);
+            .get(permissionEndpointURI)
+            .set("Authorization", `Bearer ${testConfigs.testProtectionAPIKey}`);
         chai.assert.typeOf(res.body, "object");
     });
 
@@ -32,6 +35,7 @@ describe("permissionsEndpoint", () => {
         const res = await chai.request(app)
             .post(permissionEndpointURI)
             .set("content-type", "application/json")
+            .set("Authorization", `Bearer ${testConfigs.testProtectionAPIKey}`)
             .send({resource_id: "test_res_id", resource_scopes: ["s1", "s2"]});
         chai.assert.exists(res.body.ticket);
     });
@@ -40,6 +44,7 @@ describe("permissionsEndpoint", () => {
         const res = await chai.request(app)
             .post(permissionEndpointURI)
             .set("content-type", "application/json")
+            .set("Authorization", `Bearer ${testConfigs.testProtectionAPIKey}`)
             .send([{resource_id: "test_res_id", resource_scopes: ["s1", "s2"]}]);
         chai.assert.exists(res.body.ticket);
     });
@@ -50,6 +55,7 @@ describe("permissionsEndpoint", () => {
             res =  await chai.request(app)
                 .post(permissionEndpointURI)
                 .set("content-type", "application/json")
+                .set("Authorization", `Bearer ${testConfigs.testProtectionAPIKey}`)
                 .send([]);
         } catch (e) {
             chai.assert.equal(e.status, 400);
@@ -61,6 +67,7 @@ describe("permissionsEndpoint", () => {
         try {
             res =  await chai.request(app)
                 .post(permissionEndpointURI)
+                .set("Authorization", `Bearer ${testConfigs.testProtectionAPIKey}`)
                 .set("content-type", "application/json")
                 .send([{}]);
         } catch (e) {
@@ -74,6 +81,7 @@ describe("permissionsEndpoint", () => {
             res =  await chai.request(app)
                 .post(permissionEndpointURI)
                 .set("content-type", "application/json")
+                .set("Authorization", `Bearer ${testConfigs.testProtectionAPIKey}`)
                 .send({resource_id: "test_res_id", resource_scopes: "ScopeA"});
         } catch (e) {
             chai.assert.equal(e.status, 400);
@@ -86,6 +94,7 @@ describe("permissionsEndpoint", () => {
             res =  await chai.request(app)
                 .post(permissionEndpointURI)
                 .set("content-type", "application/json")
+                .set("Authorization", `Bearer ${testConfigs.testProtectionAPIKey}`)
                 .send([{resource_id: "test_res_id", resource_scopes: "s1"}]);
         } catch (e) {
             chai.assert.equal(e.status, 400);
@@ -101,17 +110,20 @@ describe("policyEndpoint", () => {
         const policyRes = await chai.request(app)
             .post(policyEndpointURI)
             .set("content-type", "application/json")
+            .set("Authorization", `Bearer ${testConfigs.testPolicyEndpointAPIKey}`)
             .send(policy);
 
         const policyId = policyRes.body.id;
 
         let res = await chai.request(app)
-            .get(policyEndpointURI);
+            .get(policyEndpointURI)
+            .set("Authorization", `Bearer ${testConfigs.testPolicyEndpointAPIKey}`);
         chai.assert.exists(res.body[0]);
         chai.assert.equal(res.body[0].id, policyId);
 
         res = await chai.request(app)
-            .get(policyEndpointURI + "/" + policyId);
+            .get(policyEndpointURI + "/" + policyId)
+            .set("Authorization", `Bearer ${testConfigs.testPolicyEndpointAPIKey}`);
 
         chai.assert.deepEqual(res.body, {id: policyId, ... policy});
     });

@@ -1,5 +1,8 @@
 {
     "uma": {
+        "apiKeys": {
+            "secretKey": "secret"
+        },
         "permission":{
             "ticket":{
                 "ttl":2000
@@ -12,6 +15,9 @@
             "claimsIssuerKeys":{
                 "sampleIssuer1": "secret1",
                 "sampleIssuer2": "secret2"
+            },
+            "upstreamProtectionAPIKeys": {
+                "http://localhost:3001":"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1aWQiOiJ0ZXN0X3VzZXIiLCJzY29wZXMiOlsiSU5UUjpSIiwiUEVSTVM6QyIsIlBFUk1TOlIiLCJQRVJNUzpMIl19.yXfFFp4LuWsa26VuIr3VFy6QXdG8R2GNRSZvzQO0zys"
             }
         }
     }

@@ -4,15 +4,17 @@ import {APIError} from "../model/APIError";
 import {registered_permissions} from "./PermissionEndpoint";
 import {Router, Request, Response, NextFunction} from "express";
 import {request} from "http";
-import { ClaimsError, ValidationError, InvalidTicketError, ExpiredTicketError, NotAuthorizedByPolicyError, UMARedirect, UMARedirectError, UMAIntrospectionError } from "../model/Exceptions";
+import { ClaimsError, ValidationError, InvalidTicketError, ExpiredTicketError, NotAuthorizedByPolicyError, UMARedirect, UMARedirectError, UMAIntrospectionError, APIAuthorizationError } from "../model/Exceptions";
 import { inspect } from "util";
 import * as jwt from "jsonwebtoken";
 import { PolicyDecision, AuthorizationDecision, Obligations, SimplePolicyDecisionCombinerEngine, PolicyEngine, Claims, Policy } from "pauldron-policy";
 import { policyTypeToEnginesMap} from "./PolicyEndpoint";
 import * as rp from "request-promise";
 import { UMAServerInfo } from "../model/UMAServerInfo";
+import {serverConfig} from "../model/ServerConfig";
+import { User, APIAuthorization } from "../model/APIAuthorization";
 
-const config = require("../config.json");
+// const config = require("../config.json");
 
 export const UMA_REDIRECT_OBLIGATION_ID = "UMA_REDIRECT";
 export const DENY_SCOPES_OBLIGATION_ID = "DENY_SCOPES";
@@ -34,8 +36,11 @@ export class AuthorizationEndpoint {
 
   public async createANewOne(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
+        const user: User = APIAuthorization.validate(req, ["AUTH:C"]);
+
+        AuthorizationEndpoint.validateRPTRequest(req);
+
         const policies = req.app.locals.policies;
-        AuthorizationEndpoint.validateRPTRequestParams(req.body);
         const ticket: string = req.body.ticket;
         const claimsTokens: UMAClaimToken[] = req.body.claim_tokens;
         const claims: Claims = await AuthorizationEndpoint.parseAndValidateClaimTokens(claimsTokens);
@@ -47,7 +52,7 @@ export class AuthorizationEndpoint {
         const permissionsAfterReconciliationWithPolicies = await AuthorizationEndpoint
             .checkPolicies(claims, permissions.permissions, policies);
 
-        const rpt: TimeStampedPermissions = TimeStampedPermissions.issue(config.uma.authorization.rpt.ttl, permissionsAfterReconciliationWithPolicies);
+        const rpt: TimeStampedPermissions = TimeStampedPermissions.issue(serverConfig.uma.authorization.rpt.ttl, permissionsAfterReconciliationWithPolicies);
 
         issued_rpts[rpt.id] = rpt;
         res.status(201).send({rpt: rpt.id});
@@ -55,10 +60,16 @@ export class AuthorizationEndpoint {
     } catch (e) {
       if (e instanceof ValidationError) {
         res.status(400).send(
-            new APIError(`Missing parameter: ${e.message}: ${req}`,
+            new APIError(`Missing parameter: ${e.message}: ${JSON.stringify(req.body)}`,
             "MissingParameter",
             400
          ));
+      } else if (e instanceof APIAuthorizationError) {
+        res.status(403).send(
+            new APIError(`API authorization error: ${e.message}.`,
+            "api_auth_error",
+            403
+        ));
       } else if (e instanceof ClaimsError) {
         res.status(403).send(
             new APIError(`Invalid or insufficient claims token: ${e.message}.`,
@@ -117,20 +128,6 @@ export class AuthorizationEndpoint {
       }
     }
   }
-  // private static async augmentClaims(claims: Claims, otherStuff: any): Promise<Claims> {
-  //   let claimsAndOtherAssertions = {
-  //     rpts: (otherStuff.rpts || {}),
-  //     ...claims
-  //   };
-
-  //   if (otherStuff.rpts) {
-  //     for (const serverURI in otherStuff.rpts) {
-  //          const introspectedPermissions = await AuthorizationEndpoint.introspectRPT(otherStuff.rpts[serverURI].server, otherStuff.rpts[serverURI].rpt);
-  //          claimsAndOtherAssertions["rpts"][serverURI] = introspectedPermissions;
-  //     }
-  //   }
-  //   return claimsAndOtherAssertions;
-  // }
 
   private static async checkPolicies(claims: Claims, permissions: Permission[], policies: { [id: string]: Policy }): Promise<Permission[]> {
     const policyArray: Policy[] = Object.keys(policies).map((id) => policies[id]);
@@ -159,10 +156,15 @@ export class AuthorizationEndpoint {
   }
 
   private static async registerUMAPermissions(server: UMAServerInfo, permissions: Permission[]): Promise<string> {
+    const protectionAPIKeyForUpstreamServer = serverConfig.uma.authorization.upstreamProtectionAPIKeys[server.uri];
+    if (! protectionAPIKeyForUpstreamServer) {
+      throw new UMARedirectError(`No API key found for communicating with ${server.uri + server.permission_registration_endpoint}.`);
+    }
     const options = {
       method: "POST",
       json: true,
       uri: server.uri + server.permission_registration_endpoint,
+      headers: {"Authorization": `Bearer ${protectionAPIKeyForUpstreamServer}`},
       body: permissions
     };
 
@@ -195,21 +197,18 @@ export class AuthorizationEndpoint {
     }
   }
 
-  private static validateRPTRequestParams(object: any): void {
-    if (!object) {
-      throw new ValidationError ("Bad Request.");
-    } else if (! object.ticket) {
-      throw new ValidationError (`Bad Request. Expecting a ticket in ${JSON.stringify(object)}`);
-    }
-  }
-
   private static async introspectRPT(server: UMAServerInfo, rpt: string): Promise<Permission[]> {
+    const protectionAPIKeyForUpstreamServer = serverConfig.uma.authorization.upstreamProtectionAPIKeys[server.uri];
+    if (! protectionAPIKeyForUpstreamServer) {
+      throw new UMARedirectError(`No API key found for communicating with ${server.uri + server.permission_registration_endpoint}.`);
+    }
     const options = {
       method: "POST",
       json: true,
       form: {
         token: rpt
       },
+      headers: {"Authorization": `Bearer ${protectionAPIKeyForUpstreamServer}`},
       uri: server.uri + server.introspection_endpoint
     };
     let response = null;
@@ -271,13 +270,13 @@ export class AuthorizationEndpoint {
     if (!issuer) {
       throw new ClaimsError("Submitted claims must have 'iss'.");
     }
-    const key = config.uma.authorization.claimsIssuerKeys[issuer];
+    const key = serverConfig.uma.authorization.claimsIssuerKeys[issuer];
     if (!key) {
       throw new ClaimsError(`Unknown issuer ${issuer}.`);
     }
-    let claimsPayload: object = {};
+    let claimsPayload: any = {};
     try {
-      claimsPayload = jwt.verify(claimsString, key) as object;
+      claimsPayload = jwt.verify(claimsString, key);
     } catch (e) {
       throw new ClaimsError(`Invalid calims token: ${e.message}.`);
     }
@@ -289,6 +288,14 @@ export class AuthorizationEndpoint {
       throw new InvalidTicketError();
     } else if (permissions.isExpired()) {
       throw new ExpiredTicketError();
+    }
+  }
+
+  private static validateRPTRequest(request: Request): void {
+    if (!request.body) {
+      throw new ValidationError ("Bad Request.");
+    } else if (! request.body.ticket) {
+      throw new ValidationError (`Bad Request. Expecting a ticket in ${JSON.stringify(request.body)}`);
     }
   }
 

@@ -1,5 +1,6 @@
 import { UMAServerInfo } from "./UMAServerInfo";
 
+export class APIAuthorizationError extends Error {}
 export class ValidationError extends Error {}
 export class ClaimsError extends Error {}
 export class InvalidTicketError extends Error {}

@@ -18,9 +18,12 @@ export class App {
     public express: express.Application;
 
     // Run configuration methods on the Express instance.
-    constructor() {
+    constructor(serverConfig: any) {
         this.express = express();
         this.express.locals.policies = {};
+        this.express.locals.issuedRPTs = {};
+        this.express.locals.registeredPermissions = {};
+        this.express.locals.serverConfig = serverConfig; // require("./config.json");
         this.middleware();
         this.routes();
     }

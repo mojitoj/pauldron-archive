@@ -1,6 +1,6 @@
 import {TimeStampedPermissions} from "../model/TimeStampedPermissions";
 import {APIError} from "../model/APIError";
-import {issued_rpts} from "./AuthorizationEndpoint";
+import {IssuedRPTs} from "./AuthorizationEndpoint";
 
 import {Router, Request, Response, NextFunction} from "express";
 import {request} from "http";
@@ -8,7 +8,6 @@ import { InvalidRPTError, ExpiredRPTError, ValidationError, APIAuthorizationErro
 import { inspect } from "util";
 import { User, APIAuthorization } from "../model/APIAuthorization";
 import { GenericErrorHandler } from "./GenericErrorHandler";
-
 
 export class IntrospectionEndpoint {
   router: Router;
@@ -20,7 +19,8 @@ export class IntrospectionEndpoint {
 
   public introspect(req: Request, res: Response, next: NextFunction): void {
     try {
-        const user: User = APIAuthorization.validate(req, ["INTR:R"]);
+        const user: User = APIAuthorization.validate(req, ["INTR:R"], req.app.locals.serverConfig);
+        const issued_rpts: IssuedRPTs = req.app.locals.issuedRPTs;
 
         IntrospectionEndpoint.validateIntrospectionRequestParams(req.body);
         const token: string = req.body.token;
@@ -28,8 +28,8 @@ export class IntrospectionEndpoint {
         IntrospectionEndpoint.validatePermissions(permissions);
 
         let introspectionResponseObject = {
-                ...permissions,
-                active: true
+          ...permissions,
+          active: true
         };
         delete introspectionResponseObject.id;
         res.status(200).send(introspectionResponseObject);

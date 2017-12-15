@@ -10,8 +10,9 @@ import {instantiateServer, serverInstance} from ".";
 import { config } from "bluebird";
 
 const testConfigs = require("./test-config.json");
+const theServerConfig = require("./config.json");
 
-const serverInstance2 = instantiateServer(3001);
+const serverInstance2 = instantiateServer(3001, theServerConfig);
 
 chai.use(chaiHttp);
 

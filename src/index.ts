@@ -5,8 +5,8 @@ import { App } from "./App";
 
 debug("ts-express:server");
 
-export function instantiateServer (port: number) {
-    const app = new App().express;
+export function instantiateServer (port: number, serverConfig: any) {
+    const app = new App(serverConfig).express;
     app.set("port", port);
     const server = http.createServer(app);
     server.listen(port);
@@ -18,8 +18,8 @@ export function instantiateServer (port: number) {
     });
     return server;
 }
-
-export const serverInstance = instantiateServer (3000);
+const theServerConfig = require("./config.json");
+export const serverInstance = instantiateServer (3000, theServerConfig);
 
 function onError(error: NodeJS.ErrnoException): void {
     if (error.syscall !== "listen") throw error;

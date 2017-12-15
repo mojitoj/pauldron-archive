@@ -10,6 +10,10 @@ export const policyTypeToEnginesMap = {
     "pauldron:simple-policy": new SimplePolicyEngine()
 };
 
+export declare type ActivePolicies = {
+    [id: string]: Policy
+  };
+
 
 export class PolicyEndpoint {
     router: Router;
@@ -21,9 +25,9 @@ export class PolicyEndpoint {
 
     public createANewOne(req: Request, res: Response, next: NextFunction): void {
         try {
-            const user: User = APIAuthorization.validate(req, ["POL:C"]);
+            const user: User = APIAuthorization.validate(req, ["POL:C"], req.app.locals.serverConfig);
 
-            let policies: {[policyId: string]: Policy} = req.app.locals.policies;
+            let policies: ActivePolicies = req.app.locals.policies;
             PolicyEndpoint.validateNewPolicyRequestParams(req.body);
             const policy = req.body as Policy;
             const id = hash(policy);
@@ -51,7 +55,7 @@ export class PolicyEndpoint {
 
     public getAll(req: Request, res: Response, next: NextFunction): void {
         try {
-            const user: User = APIAuthorization.validate(req, ["POL:L"]);
+            const user: User = APIAuthorization.validate(req, ["POL:L"], req.app.locals.serverConfig);
 
             const policies = req.app.locals.policies;
             res.status(200).send(Object.keys(policies)
@@ -69,7 +73,7 @@ export class PolicyEndpoint {
 
     public getOne(req: Request, res: Response, next: NextFunction): void {
         try {
-            const user: User = APIAuthorization.validate(req, ["POL:R"]);
+            const user: User = APIAuthorization.validate(req, ["POL:R"], req.app.locals.serverConfig);
             const policies = req.app.locals.policies;
             const id = req.params.id;
             const policy = policies [id];

@@ -1,10 +1,7 @@
 import * as jwt from "jsonwebtoken";
-import {serverConfig} from "../model/ServerConfig";
 import { APIAuthorizationError } from "./Exceptions";
 import { Request} from "express";
 import { read } from "fs";
-
-
 
 class APIKey {
     uid: string;
@@ -27,7 +24,7 @@ export class APIAuthorization {
       const apiKey = request.get("authorization").split(" ")[1];
       return apiKey;
     }
-    public static validate (request: Request, requiredScopes: string[]): User {
+    public static validate (request: Request, requiredScopes: string[], serverConfig: any): User {
         const apiKey = APIAuthorization.getAPIKeyFromHeader(request);
         let payload: APIKey = null;
         try {

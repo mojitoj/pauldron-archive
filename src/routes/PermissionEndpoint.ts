@@ -4,11 +4,14 @@ import {APIError} from "../model/APIError";
 import {Router, Request, Response, NextFunction} from "express";
 import { request } from "http";
 import { ValidationError, APIAuthorizationError } from "../model/Exceptions";
-import {serverConfig} from "../model/ServerConfig";
 import { APIAuthorization, User } from "../model/APIAuthorization";
 import { GenericErrorHandler } from "./GenericErrorHandler";
 
-export let registered_permissions: { [ticketId: string]: TimeStampedPermissions } = {};
+// export let registered_permissions: { [ticketId: string]: TimeStampedPermissions } = {};
+
+export declare type RegisteredPermissions = {
+  [ticketId: string]: TimeStampedPermissions
+};
 
 
 export class PermissionEndpoint {
@@ -21,7 +24,8 @@ export class PermissionEndpoint {
 
   public getAll(req: Request, res: Response, next: NextFunction): void {
     try {
-      const user: User = APIAuthorization.validate(req, ["PERMS:L"]);
+      const user: User = APIAuthorization.validate(req, ["PERMS:L"], req.app.locals.serverConfig);
+      const registered_permissions: RegisteredPermissions = req.app.locals.registeredPermissions;
 
       res.send(registered_permissions);
     } catch (e) {
@@ -31,7 +35,9 @@ export class PermissionEndpoint {
 
   public createANewOne(req: Request, res: Response, next: NextFunction): void {
     try {
-      const user: User = APIAuthorization.validate(req, ["PERMS:C"]);
+      const serverConfig = req.app.locals.serverConfig;
+      const user: User = APIAuthorization.validate(req, ["PERMS:C"], serverConfig);
+      let registered_permissions: RegisteredPermissions = req.app.locals.registeredPermissions;
 
       PermissionEndpoint.validatePermissionCreationParams(req.body);
       const ticket: TimeStampedPermissions = TimeStampedPermissions.issue(serverConfig.uma.permission.ticket.ttl, req.body);

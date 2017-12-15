@@ -5,9 +5,11 @@ import chaiHttp = require("chai-http");
 import { App, permissionEndpointURI, policyEndpointURI } from "./App";
 
 const testConfigs = require("./test-config.json");
+const theServerConfig = require("./config.json");
 
 chai.use(chaiHttp);
-const app = new App().express;
+
+const app = new App(theServerConfig).express;
 
 describe("routs", () => {
 

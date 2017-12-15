@@ -13,6 +13,7 @@ import * as rp from "request-promise";
 import { UMAServerInfo } from "../model/UMAServerInfo";
 import {serverConfig} from "../model/ServerConfig";
 import { User, APIAuthorization } from "../model/APIAuthorization";
+import { GenericErrorHandler } from "./GenericErrorHandler";
 
 // const config = require("../config.json");
 
@@ -58,73 +59,62 @@ export class AuthorizationEndpoint {
         res.status(201).send({rpt: rpt.id});
         delete registered_permissions[ticket];
     } catch (e) {
-      if (e instanceof ValidationError) {
-        res.status(400).send(
-            new APIError(`Missing parameter: ${e.message}: ${JSON.stringify(req.body)}`,
-            "MissingParameter",
-            400
-         ));
-      } else if (e instanceof APIAuthorizationError) {
-        res.status(403).send(
-            new APIError(`API authorization error: ${e.message}.`,
-            "api_auth_error",
-            403
-        ));
-      } else if (e instanceof ClaimsError) {
-        res.status(403).send(
-            new APIError(`Invalid or insufficient claims token: ${e.message}.`,
-            "need_info",
-            403
-          ));
+      if (e instanceof ClaimsError) {
+        res.status(403).send({
+            message: `Invalid or insufficient claims token: ${e.message}.`,
+            error: "need_info",
+            status: 403
+          }
+        );
       } else if (e instanceof NotAuthorizedByPolicyError) {
-        res.status(403).send(
-          new APIError("Denied per authorization policies.",
-          "not_authorized",
-          403
-        ));
+        res.status(403).send({
+            message: "Denied per authorization policies.",
+            error: "not_authorized",
+            status: 403
+          }
+        );
       } else if (e instanceof UMAIntrospectionError) {
-        console.log(e);
-        res.status(403)
-        .send(
-          new APIError(`Failed at introspecting an RPT: ${e.message}`,
-          "not_authorized",
-          403
-        ));
+        res.status(403).send({
+            message: `Failed at introspecting an RPT: ${e.message}`,
+            error: "not_authorized",
+            status: 403
+          }
+        );
       } else if (e instanceof UMARedirectError) {
-        res.status(403)
-        .send(
-          new APIError(`Need approval from ${e.umaServerParams.uri} but failed at communicating with this server.`,
-          "need_info",
-          403
-        ));
+        res.status(403).send({
+            message: `Need approval from ${e.umaServerParams.uri} but failed at communicating with this server.`,
+            error: "need_info",
+            status: 403
+          }
+        );
       } else if (e instanceof UMARedirect) {
         res.status(401)
         .set("WWW-Authenticate", `UMA realm=\"${e.umaServerParams.realm}\", as_uri=\"${e.umaServerParams.uri}\", ticket=\"${e.ticket}\"`)
-        .send(
-          new APIError(`Need approval from ${e.umaServerParams.uri}.`,
-          "uma_redirect",
-          401,
-          {"server": e.umaServerParams}
-        ));
+        .send({
+            message: `Need approval from ${e.umaServerParams.uri}.`,
+            error: "uma_redirect",
+            status: 401,
+            info: {"server": e.umaServerParams}
+          }
+        );
       } else if (e instanceof InvalidTicketError) {
-        res.status(400).send(
-          new APIError("Ticket is invalid.",
-          "invalid_ticket",
-          400
-        ));
+        res.status(400)
+        .send({
+            message: "Ticket is invalid.",
+            error: "invalid_ticket",
+            status: 400
+          }
+        );
       } else if (e instanceof ExpiredTicketError) {
-        res.status(400).send(
-          new APIError("Ticket has expired.",
-          "expired_ticket",
-          400
-        ));
+        res.status(400)
+        .send({
+            message: "Ticket has expired.",
+            error: "expired_ticket",
+            status: 400
+          }
+        );
       } else {
-        console.log(e);
-        res.status(500).send(
-          new APIError("Internal server error.",
-          "internal_error",
-          500
-        ));
+        GenericErrorHandler.handle(e, res, req);
       }
     }
   }

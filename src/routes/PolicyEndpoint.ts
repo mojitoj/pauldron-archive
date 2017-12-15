@@ -1,13 +1,15 @@
 import {Router, Request, Response, NextFunction} from "express";
-import { ValidationError, APIAuthorizationError } from "../model/Exceptions";
+import { ValidationError, APIAuthorizationError, ObjectNotFoundError } from "../model/Exceptions";
 import { Policy, SimplePolicyEngine } from "pauldron-policy";
 import * as hash from "object-hash";
 import { APIError } from "../model/APIError";
 import { User, APIAuthorization } from "../model/APIAuthorization";
+import { GenericErrorHandler } from "./GenericErrorHandler";
 
 export const policyTypeToEnginesMap = {
     "pauldron:simple-policy": new SimplePolicyEngine()
 };
+
 
 export class PolicyEndpoint {
     router: Router;
@@ -21,7 +23,7 @@ export class PolicyEndpoint {
         try {
             const user: User = APIAuthorization.validate(req, ["POL:C"]);
 
-            let policies = req.app.locals.policies;
+            let policies: {[policyId: string]: Policy} = req.app.locals.policies;
             PolicyEndpoint.validateNewPolicyRequestParams(req.body);
             const policy = req.body as Policy;
             const id = hash(policy);
@@ -43,27 +45,7 @@ export class PolicyEndpoint {
                 );
             }
         } catch (e) {
-            if (e instanceof ValidationError) {
-              res.status(400).send(
-                  new APIError(e.message,
-                  "MissingParameter",
-                  400
-               ));
-            } else if (e instanceof APIAuthorizationError) {
-                res.status(403).send(
-                    new APIError(`API authorization error: ${e.message}.`,
-                    "api_auth_error",
-                    403
-                  ));
-                  console.log(e);
-            } else {
-                res.status(500).send(
-                  new APIError("Internal server error.",
-                  "internal_error",
-                  500
-                ));
-                console.log(e);
-            }
+            GenericErrorHandler.handle(e, res, req);
         }
     }
 
@@ -81,21 +63,7 @@ export class PolicyEndpoint {
                 ))
             );
         } catch (e) {
-            if (e instanceof APIAuthorizationError) {
-                res.status(403).send(
-                    new APIError(`API authorization error: ${e.message}.`,
-                    "api_auth_error",
-                    403
-                ));
-                console.log(e);
-            } else {
-                res.status(500).send(
-                new APIError("Internal server error.",
-                "internal_error",
-                500
-                ));
-                console.log(e);
-            }
+            GenericErrorHandler.handle(e, res, req);
         }
     }
 
@@ -111,28 +79,10 @@ export class PolicyEndpoint {
                     ... policy
                 });
             } else {
-                res.status(404).send(
-                    new APIError(`No policy exists by the id '${id}'.`,
-                    "ObjectNotFound",
-                    404
-                ));
+                throw new ObjectNotFoundError (`No policy exists by the id '${id}'.`);
             }
         } catch (e) {
-            if (e instanceof APIAuthorizationError) {
-                res.status(403).send(
-                    new APIError(`API authorization error: ${e.message}.`,
-                    "api_auth_error",
-                    403
-                  ));
-                  console.log(e);
-            } else {
-                res.status(500).send(
-                    new APIError("Internal server error.",
-                    "internal_error",
-                    500
-                  ));
-                  console.log(e);
-            }
+            GenericErrorHandler.handle(e, res, req);
         }
     }
     private static validateNewPolicyRequestParams(object: any): void {

@@ -7,6 +7,7 @@ import {request} from "http";
 import { InvalidRPTError, ExpiredRPTError, ValidationError, APIAuthorizationError } from "../model/Exceptions";
 import { inspect } from "util";
 import { User, APIAuthorization } from "../model/APIAuthorization";
+import { GenericErrorHandler } from "./GenericErrorHandler";
 
 
 export class IntrospectionEndpoint {
@@ -35,27 +36,10 @@ export class IntrospectionEndpoint {
     } catch (e) {
       if (e instanceof InvalidRPTError || e instanceof ExpiredRPTError) {
         res.status(200).send({active: false});
-      } else if (e instanceof ValidationError) {
-        res.status(400).send(
-            new APIError(e.message,
-            "MissingParameter",
-            400
-         ));
-      } else if (e instanceof APIAuthorizationError) {
-        res.status(403).send(
-            new APIError(`API authorization error: ${e.message}.`,
-            "api_auth_error",
-            403
-        ));
       } else {
-          res.status(500).send(
-            new APIError("Internal server error.",
-            "internal_error",
-            500
-          ));
-          console.log(e);
-        }
+        GenericErrorHandler.handle(e, res, req);
       }
+    }
   }
 
   private static validateIntrospectionRequestParams(object: any): void {

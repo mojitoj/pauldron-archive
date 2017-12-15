@@ -6,6 +6,7 @@ import { request } from "http";
 import { ValidationError, APIAuthorizationError } from "../model/Exceptions";
 import {serverConfig} from "../model/ServerConfig";
 import { APIAuthorization, User } from "../model/APIAuthorization";
+import { GenericErrorHandler } from "./GenericErrorHandler";
 
 export let registered_permissions: { [ticketId: string]: TimeStampedPermissions } = {};
 
@@ -24,20 +25,7 @@ export class PermissionEndpoint {
 
       res.send(registered_permissions);
     } catch (e) {
-      if (e instanceof APIAuthorizationError) {
-        res.status(403).send(
-            new APIError(`API authorization error: ${e.message}.`,
-            "api_auth_error",
-            403
-        ));
-      } else {
-        res.status(500).send(
-          new APIError("Internal server error.",
-          "internal_error",
-          500
-        ));
-        console.log(e);
-      }
+      GenericErrorHandler.handle(e, res, req);
     }
   }
 
@@ -50,26 +38,7 @@ export class PermissionEndpoint {
       registered_permissions[ticket.id] = ticket;
       res.status(201).send({ticket: ticket.id});
     } catch (e) {
-      if (e instanceof ValidationError) {
-        res.status(400).send(
-            new APIError(e.message,
-            "MissingParameter",
-            400
-         ));
-      } else if (e instanceof APIAuthorizationError) {
-        res.status(403).send(
-            new APIError(`API authorization error: ${e.message}.`,
-            "api_auth_error",
-            403
-        ));
-      } else {
-        res.status(500).send(
-          new APIError("Internal server error.",
-          "internal_error",
-          500
-        ));
-        console.log(e);
-      }
+      GenericErrorHandler.handle(e, res, req);
     }
   }
 

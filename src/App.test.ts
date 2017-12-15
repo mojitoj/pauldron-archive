@@ -59,7 +59,7 @@ describe("permissionsEndpoint", () => {
                 .send([]);
         } catch (e) {
             chai.assert.equal(e.status, 400);
-            chai.assert.equal(e.response.body.error, "MissingParameter");
+            chai.assert.equal(e.response.body.error, "missing_parameter");
         }
         chai.assert.isNotOk(res);
 
@@ -72,7 +72,7 @@ describe("permissionsEndpoint", () => {
                 .send([{}]);
         } catch (e) {
             chai.assert.equal(e.status, 400);
-            chai.assert.equal(e.response.body.error, "MissingParameter");
+            chai.assert.equal(e.response.body.error, "missing_parameter");
         }
         chai.assert.isNotOk(res);
 
@@ -85,7 +85,7 @@ describe("permissionsEndpoint", () => {
                 .send({resource_id: "test_res_id", resource_scopes: "ScopeA"});
         } catch (e) {
             chai.assert.equal(e.status, 400);
-            chai.assert.equal(e.response.body.error, "MissingParameter");
+            chai.assert.equal(e.response.body.error, "missing_parameter");
         }
         chai.assert.isNotOk(res);
 
@@ -98,7 +98,7 @@ describe("permissionsEndpoint", () => {
                 .send([{resource_id: "test_res_id", resource_scopes: "s1"}]);
         } catch (e) {
             chai.assert.equal(e.status, 400);
-            chai.assert.equal(e.response.body.error, "MissingParameter");
+            chai.assert.equal(e.response.body.error, "missing_parameter");
         }
         chai.assert.isNotOk(res);
     });

@@ -1,14 +1,18 @@
 import {Router, Request, Response, NextFunction} from "express";
 import { ValidationError, APIAuthorizationError, ObjectNotFoundError } from "../model/Exceptions";
-import { Policy, SimplePolicyEngine } from "pauldron-policy";
+import { Policy, SimplePolicyEngine, PolicyEngine, SimplePolicy } from "pauldron-policy";
 import * as hash from "object-hash";
 import { APIError } from "../model/APIError";
 import { APIAuthorization } from "../model/APIAuthorization";
 import { GenericErrorHandler } from "./GenericErrorHandler";
 import { APIUser } from "../model/APIUser";
 
-export const policyTypeToEnginesMap = {
+export const policyTypeToEnginesMap: {[id: string]: PolicyEngine} = {
     "pauldron:simple-policy": new SimplePolicyEngine()
+};
+
+export const policyTypeToValidator: {[id: string]: ((Policy) => boolean)} = {
+    "pauldron:simple-policy": SimplePolicy.validatePolicy
 };
 
 export declare type ActivePolicies = {
@@ -90,16 +94,22 @@ export class PolicyEndpoint {
             GenericErrorHandler.handle(e, res, req);
         }
     }
-    private static validateNewPolicyRequestParams(object: any): void {
-        if (!object) {
-            throw new ValidationError ("Bad Request.");
-        } else if (! object.type || ! ((object.type as string).length > 0 )) {
+    private static validateNewPolicyRequestParams(policy: any): void {
+        if (!policy) {
+            throw new ValidationError ("Bad Request. Must provide a Policy.");
+        } else if (! policy.type || ! ((policy.type as string).length > 0 )) {
             throw new ValidationError ("Bad Request. Expecting a valid 'type'.");
-        } else if (! Object.keys(policyTypeToEnginesMap).includes(object.type)) {
+        } else if (! Object.keys(policyTypeToEnginesMap).includes(policy.type)) {
             throw new ValidationError
-            (`Bad Request. The server does not support policy type ${object.type}. Current supported formats: ${Object.keys(policyTypeToEnginesMap).join(",")}`);
-        } else if (! object.content) {
-            throw new ValidationError ("Bad Request. Expecting a valid 'content'.");
+            (`The server does not support policy type ${policy.type}. Current supported formats: ${Object.keys(policyTypeToEnginesMap).join(",")}`);
+        } else if (! Object.keys(policyTypeToValidator).includes(policy.type)) {
+            throw new ValidationError
+            (`Could not find the validator for policy type ${policy.type}.`);
+        }
+        try {
+            const validationResult = policyTypeToValidator[policy.type].call(null, policy);
+        } catch (e) {
+            throw new ValidationError(`Invalid policy: ${e.message}`);
         }
         // todo more validation based on the type. Each type must have its own validator to be called.
     }

@@ -7,7 +7,7 @@ export class GenericErrorHandler {
             response.status(400).send(
               {
                   message: e.message,
-                  error: "missing_parameter",
+                  error: "bad_request",
                   status: 400
               }
             );

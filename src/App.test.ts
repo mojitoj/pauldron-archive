@@ -3,6 +3,7 @@ import * as chai from "chai";
 import chaiHttp = require("chai-http");
 
 import { App, permissionEndpointURI, policyEndpointURI } from "./App";
+import * as _ from "lodash";
 
 const testConfigs = require("./test-config.json");
 const theServerConfig = require("./config.json");
@@ -45,7 +46,6 @@ describe("permissionsEndpoint", () => {
         res = await chai.request(app)
             .get(permissionEndpointURI)
             .set("Authorization", `Bearer ${testConfigs.testProtectionAPIKey}`);
-        chai.assert.typeOf(res.body, "object");
         chai.assert.containsAllKeys(res.body, [ticket]);
 
         res = await chai.request(app)
@@ -73,7 +73,7 @@ describe("permissionsEndpoint", () => {
                 .send([]);
         } catch (e) {
             chai.assert.equal(e.status, 400);
-            chai.assert.equal(e.response.body.error, "missing_parameter");
+            chai.assert.equal(e.response.body.error, "bad_request");
         }
         chai.assert.isNotOk(res);
 
@@ -86,7 +86,7 @@ describe("permissionsEndpoint", () => {
                 .send([{}]);
         } catch (e) {
             chai.assert.equal(e.status, 400);
-            chai.assert.equal(e.response.body.error, "missing_parameter");
+            chai.assert.equal(e.response.body.error, "bad_request");
         }
         chai.assert.isNotOk(res);
 
@@ -99,7 +99,7 @@ describe("permissionsEndpoint", () => {
                 .send({resource_id: "test_res_id", resource_scopes: "ScopeA"});
         } catch (e) {
             chai.assert.equal(e.status, 400);
-            chai.assert.equal(e.response.body.error, "missing_parameter");
+            chai.assert.equal(e.response.body.error, "bad_request");
         }
         chai.assert.isNotOk(res);
 
@@ -112,7 +112,7 @@ describe("permissionsEndpoint", () => {
                 .send([{resource_id: "test_res_id", resource_scopes: "s1"}]);
         } catch (e) {
             chai.assert.equal(e.status, 400);
-            chai.assert.equal(e.response.body.error, "missing_parameter");
+            chai.assert.equal(e.response.body.error, "bad_request");
         }
         chai.assert.isNotOk(res);
     });
@@ -120,6 +120,7 @@ describe("permissionsEndpoint", () => {
 
 describe("policyEndpoint", () => {
     it("should accept a new policy", async () => {
+        try {
         const policy = require("./simple-policy.json");
         const policyRes = await chai.request(app)
             .post(policyEndpointURI)
@@ -140,5 +141,27 @@ describe("policyEndpoint", () => {
             .set("Authorization", `Bearer ${testConfigs.testPolicyEndpointAPIKey}`);
 
         chai.assert.deepEqual(res.body, {id: policyId, ... policy});
+        } catch (e) {
+            console.log(e.response.body);
+        }
+    });
+
+    it("should reject a malformed policy", async () => {
+        const policy = require("./simple-policy.json");
+        const wrongPolicy = _.cloneDeep(policy);
+        wrongPolicy.content.rules["permittedClientsBasedOnPurpose"].condition = "delete(rpts);";
+        let policyRes = null;
+
+        try {
+            policyRes = await chai.request(app)
+                .post(policyEndpointURI)
+                .set("content-type", "application/json")
+                .set("Authorization", `Bearer ${testConfigs.testPolicyEndpointAPIKey}`)
+                .send(wrongPolicy);
+        } catch (e) {
+            console.log (e.message);
+            chai.assert.equal(e.status, 400);
+        }
+        chai.assert.isNotOk(policyRes);
     });
 });

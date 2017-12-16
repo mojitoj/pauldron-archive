@@ -3,8 +3,9 @@ import { ValidationError, APIAuthorizationError, ObjectNotFoundError } from "../
 import { Policy, SimplePolicyEngine } from "pauldron-policy";
 import * as hash from "object-hash";
 import { APIError } from "../model/APIError";
-import { User, APIAuthorization } from "../model/APIAuthorization";
+import { APIAuthorization } from "../model/APIAuthorization";
 import { GenericErrorHandler } from "./GenericErrorHandler";
+import { APIUser } from "../model/APIUser";
 
 export const policyTypeToEnginesMap = {
     "pauldron:simple-policy": new SimplePolicyEngine()
@@ -25,7 +26,7 @@ export class PolicyEndpoint {
 
     public createANewOne(req: Request, res: Response, next: NextFunction): void {
         try {
-            const user: User = APIAuthorization.validate(req, ["POL:C"], req.app.locals.serverConfig);
+            const user: APIUser = APIAuthorization.validate(req, ["POL:C"], req.app.locals.serverConfig);
 
             let policies: ActivePolicies = req.app.locals.policies;
             PolicyEndpoint.validateNewPolicyRequestParams(req.body);
@@ -55,7 +56,7 @@ export class PolicyEndpoint {
 
     public getAll(req: Request, res: Response, next: NextFunction): void {
         try {
-            const user: User = APIAuthorization.validate(req, ["POL:L"], req.app.locals.serverConfig);
+            const user: APIUser = APIAuthorization.validate(req, ["POL:L"], req.app.locals.serverConfig);
 
             const policies = req.app.locals.policies;
             res.status(200).send(Object.keys(policies)
@@ -73,7 +74,7 @@ export class PolicyEndpoint {
 
     public getOne(req: Request, res: Response, next: NextFunction): void {
         try {
-            const user: User = APIAuthorization.validate(req, ["POL:R"], req.app.locals.serverConfig);
+            const user: APIUser = APIAuthorization.validate(req, ["POL:R"], req.app.locals.serverConfig);
             const policies = req.app.locals.policies;
             const id = req.params.id;
             const policy = policies [id];

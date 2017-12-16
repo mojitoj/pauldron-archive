@@ -236,4 +236,38 @@ describe("unhappy flow", () => {
         }
         chai.assert.isNotOk(rptRes);
     });
+
+    it("should be able to reject introspection request for an RPT issued based on Permissions originally registered by a different API user", async () => {
+        const registrationRes = await chai.request(serverInstance)
+            .post(permissionEndpointURI)
+            .set("content-type", "application/json")
+            .set("Authorization", `Bearer ${testConfigs.testProtectionAPIKey}`)
+            .send(permissions);
+        chai.assert.exists(registrationRes.body.ticket);
+        const ticket: string = registrationRes.body.ticket;
+        const claimsToken = jwt.sign(claims, "secret1");
+
+        const authorizationRes = await chai.request(serverInstance)
+            .post(authorizationEndpointURI)
+            .set("content-type", "application/json")
+            .set("Authorization", `Bearer ${testConfigs.testAuthAPIKey}`)
+            .send({
+                "ticket": ticket,
+                "claim_tokens": [
+                    {
+                        format: "jwt",
+                        token: claimsToken
+                    }
+                ]});
+        chai.assert.exists(authorizationRes.body.rpt);
+        const rpt: string = authorizationRes.body.rpt;
+
+        const introspectionRes = await chai.request(serverInstance)
+            .post(introspectionEndpointURI)
+            .set("content-type", "application/x-www-form-urlencoded")
+            .set("Authorization", `Bearer ${testConfigs.anotherTestProtectionAPIKey}`)
+            .send({"token": rpt});
+        chai.assert.exists(introspectionRes.body.active);
+        chai.assert.deepEqual(introspectionRes.body.active, false);
+    });
 });

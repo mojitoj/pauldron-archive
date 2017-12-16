@@ -33,13 +33,25 @@ describe("permissionsEndpoint", () => {
         chai.assert.typeOf(res.body, "object");
     });
 
-    it("should be able to create a ticket from a permission", async () => {
-        const res = await chai.request(app)
+    it("should be able to create a ticket from a permission and list it only with the right APIUser", async () => {
+        let res = await chai.request(app)
             .post(permissionEndpointURI)
             .set("content-type", "application/json")
             .set("Authorization", `Bearer ${testConfigs.testProtectionAPIKey}`)
             .send({resource_id: "test_res_id", resource_scopes: ["s1", "s2"]});
         chai.assert.exists(res.body.ticket);
+        const ticket = res.body.ticket;
+
+        res = await chai.request(app)
+            .get(permissionEndpointURI)
+            .set("Authorization", `Bearer ${testConfigs.testProtectionAPIKey}`);
+        chai.assert.typeOf(res.body, "object");
+        chai.assert.containsAllKeys(res.body, [ticket]);
+
+        res = await chai.request(app)
+            .get(permissionEndpointURI)
+            .set("Authorization", `Bearer ${testConfigs.anotherTestProtectionAPIKey}`);
+        chai.assert.notOk(res.body[ticket]);
     });
 
     it("should be able to create a ticket from a permission array", async () => {

@@ -6,8 +6,12 @@ import {Router, Request, Response, NextFunction} from "express";
 import {request} from "http";
 import { InvalidRPTError, ExpiredRPTError, ValidationError, APIAuthorizationError } from "../model/Exceptions";
 import { inspect } from "util";
-import { User, APIAuthorization } from "../model/APIAuthorization";
+import { APIAuthorization } from "../model/APIAuthorization";
 import { GenericErrorHandler } from "./GenericErrorHandler";
+import { APIUser } from "../model/APIUser";
+
+import _ = require("lodash");
+
 
 export class IntrospectionEndpoint {
   router: Router;
@@ -19,13 +23,13 @@ export class IntrospectionEndpoint {
 
   public introspect(req: Request, res: Response, next: NextFunction): void {
     try {
-        const user: User = APIAuthorization.validate(req, ["INTR:R"], req.app.locals.serverConfig);
+        const user: APIUser = APIAuthorization.validate(req, ["INTR:R"], req.app.locals.serverConfig);
         const issued_rpts: IssuedRPTs = req.app.locals.issuedRPTs;
 
         IntrospectionEndpoint.validateIntrospectionRequestParams(req.body);
         const token: string = req.body.token;
         const permissions: TimeStampedPermissions = issued_rpts [token];
-        IntrospectionEndpoint.validatePermissions(permissions);
+        IntrospectionEndpoint.validatePermissions(permissions, user);
 
         let introspectionResponseObject = {
           ...permissions,
@@ -48,11 +52,13 @@ export class IntrospectionEndpoint {
     }
   }
 
-  private static validatePermissions(permissions: TimeStampedPermissions): void {
+  private static validatePermissions(permissions: TimeStampedPermissions, user: APIUser): void {
     if (!permissions) {
       throw new InvalidRPTError();
     } else if (permissions.isExpired()) {
       throw new ExpiredRPTError();
+    } else if (! _.isEqual(permissions.user, user)) {
+      throw new InvalidRPTError();
     }
   }
 

@@ -2,16 +2,13 @@ import * as jwt from "jsonwebtoken";
 import { APIAuthorizationError } from "./Exceptions";
 import { Request} from "express";
 import { read } from "fs";
+import { APIUser } from "./APIUser";
 
 class APIKey {
     uid: string;
     nbf: number;
     exp: number;
     scopes: string[];
-}
-
-export class User {
-    id: string;
 }
 
 export class APIAuthorization {
@@ -24,7 +21,7 @@ export class APIAuthorization {
       const apiKey = request.get("authorization").split(" ")[1];
       return apiKey;
     }
-    public static validate (request: Request, requiredScopes: string[], serverConfig: any): User {
+    public static validate (request: Request, requiredScopes: string[], serverConfig: any): APIUser {
         const apiKey = APIAuthorization.getAPIKeyFromHeader(request);
         let payload: APIKey = null;
         try {
@@ -33,7 +30,7 @@ export class APIAuthorization {
             throw new APIAuthorizationError(`Malformed API key.`);
         }
         if (!payload.uid) {
-            throw new APIAuthorizationError(`Malformed API key. Missing 'uid'`);
+            throw new APIAuthorizationError(`Malformed API key. Missing or empty 'uid'`);
         }
         const hasSufficientScopes = requiredScopes.map((requiredScope) => (payload.scopes.includes(requiredScope)))
                         .reduce((sofar, thisOne) => (

@@ -11,14 +11,13 @@ import { PolicyDecision, AuthorizationDecision, Obligations, SimplePolicyDecisio
 import { policyTypeToEnginesMap, ActivePolicies} from "./PolicyEndpoint";
 import * as rp from "request-promise";
 import { UMAServerInfo } from "../model/UMAServerInfo";
-import { User, APIAuthorization } from "../model/APIAuthorization";
+import { APIAuthorization } from "../model/APIAuthorization";
 import { GenericErrorHandler } from "./GenericErrorHandler";
-
-// const config = require("../config.json");
+import { APIUser } from "../model/APIUser";
 
 export const UMA_REDIRECT_OBLIGATION_ID = "UMA_REDIRECT";
 export const DENY_SCOPES_OBLIGATION_ID = "DENY_SCOPES";
-// export let issued_rpts: { [rpt: string]: TimeStampedPermissions } = {};
+
 export declare type IssuedRPTs = {
     [rpt: string]: TimeStampedPermissions
 };
@@ -40,7 +39,7 @@ export class AuthorizationEndpoint {
   public async createANewOne(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
         const serverConfig = req.app.locals.serverConfig;
-        const user: User = APIAuthorization.validate(req, ["AUTH:C"], serverConfig);
+        const user: APIUser = APIAuthorization.validate(req, ["AUTH:C"], serverConfig);
         const userId = user.id;
 
         AuthorizationEndpoint.validateRPTRequest(req);
@@ -60,7 +59,7 @@ export class AuthorizationEndpoint {
         const permissionsAfterReconciliationWithPolicies = await AuthorizationEndpoint
             .checkPolicies(claims, permissions.permissions, policies, serverConfig);
 
-        const rpt: TimeStampedPermissions = TimeStampedPermissions.issue(serverConfig.uma.authorization.rpt.ttl, permissionsAfterReconciliationWithPolicies);
+        const rpt: TimeStampedPermissions = TimeStampedPermissions.issue(serverConfig.uma.authorization.rpt.ttl, permissionsAfterReconciliationWithPolicies, permissions.user);
 
         issued_rpts[rpt.id] = rpt;
         res.status(201).send({rpt: rpt.id});

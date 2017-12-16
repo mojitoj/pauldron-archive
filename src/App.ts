@@ -23,7 +23,7 @@ export class App {
         this.express.locals.policies = {};
         this.express.locals.issuedRPTs = {};
         this.express.locals.registeredPermissions = {};
-        this.express.locals.serverConfig = serverConfig; // require("./config.json");
+        this.express.locals.serverConfig = serverConfig;
         this.middleware();
         this.routes();
     }

@@ -120,7 +120,6 @@ describe("permissionsEndpoint", () => {
 
 describe("policyEndpoint", () => {
     it("should accept a new policy", async () => {
-        try {
         const policy = require("./simple-policy.json");
         const policyRes = await chai.request(app)
             .post(policyEndpointURI)
@@ -141,9 +140,6 @@ describe("policyEndpoint", () => {
             .set("Authorization", `Bearer ${testConfigs.testPolicyEndpointAPIKey}`);
 
         chai.assert.deepEqual(res.body, {id: policyId, ... policy});
-        } catch (e) {
-            console.log(e.response.body);
-        }
     });
 
     it("should reject a malformed policy", async () => {
@@ -163,5 +159,34 @@ describe("policyEndpoint", () => {
             chai.assert.equal(e.status, 400);
         }
         chai.assert.isNotOk(policyRes);
+    });
+
+    it("should be able to delete a policy by Id", async () => {
+        const policy = require("./simple-policy.json");
+        let policyRes = null;
+
+        policyRes = await chai.request(app)
+            .post(policyEndpointURI)
+            .set("content-type", "application/json")
+            .set("Authorization", `Bearer ${testConfigs.testPolicyEndpointAPIKey}`)
+            .send(policy);
+
+        const policyId = policyRes.body.id;
+
+        let res = await chai.request(app)
+            .del(`${policyEndpointURI}/${policyId}`)
+            .set("Authorization", `Bearer ${testConfigs.testPolicyEndpointAPIKey}`);
+        chai.assert.equal(res.status, 204);
+
+        res = null;
+        try {
+            res = await chai.request(app)
+                .get(`${policyEndpointURI}/${policyId}`)
+                .set("Authorization", `Bearer ${testConfigs.testPolicyEndpointAPIKey}`);
+        } catch (e) {
+            console.log (e.message);
+            chai.assert.equal(e.status, 404);
+        }
+        chai.assert.isNotOk(res);
     });
 });

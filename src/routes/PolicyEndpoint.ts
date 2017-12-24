@@ -94,6 +94,24 @@ export class PolicyEndpoint {
             GenericErrorHandler.handle(e, res, req);
         }
     }
+
+    public deleteOne(req: Request, res: Response, next: NextFunction): void {
+        try {
+            const user: APIUser = APIAuthorization.validate(req, ["POL:D"], req.app.locals.serverConfig);
+            const policies = req.app.locals.policies;
+            const id = req.params.id;
+            const policy = policies [id];
+            if (policy) {
+                delete policies[id];
+                res.status(204).send();
+            } else {
+                throw new ObjectNotFoundError (`No policy exists by the id '${id}'.`);
+            }
+        } catch (e) {
+            GenericErrorHandler.handle(e, res, req);
+        }
+    }
+
     private static validateNewPolicyRequestParams(policy: any): void {
         if (!policy) {
             throw new ValidationError ("Bad Request. Must provide a Policy.");
@@ -117,5 +135,6 @@ export class PolicyEndpoint {
         this.router.post("/", this.createANewOne);
         this.router.get("/", this.getAll);
         this.router.get("/:id", this.getOne);
+        this.router.delete("/:id", this.deleteOne);
     }
 }

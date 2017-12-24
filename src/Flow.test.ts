@@ -16,7 +16,7 @@ const serverInstance2 = instantiateServer(3001, theServerConfig);
 
 chai.use(chaiHttp);
 
-const testAPIKeyForPolicyEndpoint = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1aWQiOiJ0ZXN0X3VzZXIiLCJzY29wZXMiOlsiUE9MIiwiQyIsIkwiXX0.Eei4pegcIIwMZvQWDlqmd_MT188Y9yzBs_mD7yZTl4w";
+// const testAPIKeyForPolicyEndpoint = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1aWQiOiJ0ZXN0X3VzZXIiLCJzY29wZXMiOlsiUE9MIiwiQyIsIkwiXX0.Eei4pegcIIwMZvQWDlqmd_MT188Y9yzBs_mD7yZTl4w";
 
 const claims: object = {
     client_id: "client4",

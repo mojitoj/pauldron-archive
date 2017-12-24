@@ -39,6 +39,7 @@ export class IntrospectionEndpoint {
         res.status(200).send(introspectionResponseObject);
     } catch (e) {
       if (e instanceof InvalidRPTError || e instanceof ExpiredRPTError) {
+        console.log(`RPT introspection: ${e.message}`);
         res.status(200).send({active: false});
       } else {
         GenericErrorHandler.handle(e, res, req);
@@ -54,11 +55,11 @@ export class IntrospectionEndpoint {
 
   private static validatePermissions(permissions: TimeStampedPermissions, user: APIUser): void {
     if (!permissions) {
-      throw new InvalidRPTError();
+      throw new InvalidRPTError("Invalid RPT.");
     } else if (permissions.isExpired()) {
-      throw new ExpiredRPTError();
+      throw new ExpiredRPTError("RPT Expired.");
     } else if (! _.isEqual(permissions.user, user)) {
-      throw new InvalidRPTError();
+      throw new InvalidRPTError("Invalid RPT.");
     }
   }
 

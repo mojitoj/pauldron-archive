@@ -80,14 +80,18 @@ export class AuthorizationEndpoint {
           }
         );
       } else if (e instanceof UMAIntrospectionError) {
-        res.status(403).send({
+        res.status(403)
+        .set("Warning", "199 - \"UMA Authorization Server Unreachable\"")
+        .send({
             message: `Failed at introspecting an RPT: ${e.message}`,
             error: "not_authorized",
             status: 403
           }
         );
       } else if (e instanceof UMARedirectError) {
-        res.status(403).send({
+        res.status(403)
+        .set("Warning", "199 - \"UMA Authorization Server Unreachable\"")
+        .send({
             message: `Need approval from ${e.umaServerParams.uri} but failed at communicating with this server.`,
             error: "need_info",
             status: 403

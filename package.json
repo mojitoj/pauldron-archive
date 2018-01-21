@@ -12,7 +12,7 @@
     "npm": "5.6.0"
   },
   "scripts": {
-    "build": "npm run-script lint && ./node_modules/.bin/tsc --outDir dist/ && cp src/*.json dist/",
+    "build": "./node_modules/.bin/tsc --outDir dist/ && cp src/*.json dist/",
     "start": "node dist/index.js",
     "clean": "rimraf ./dist",
     "lint": "tslint --project tsconfig.json",

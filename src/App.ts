@@ -42,13 +42,6 @@ export class App {
         const authorizationEndpoint = new AuthorizationEndpoint();
         const policyEndpoint = new PolicyEndpoint();
 
-        const router = express.Router();
-        router.get("/", (req, res) => {
-          res.json({
-            path: "root"
-          });
-        });
-        this.express.use("/", router);
         this.express.use(permissionEndpointURI, permissionEndpoint.router);
         this.express.use(introspectionEndpointURI, introspectionEndpoint.router);
         this.express.use(authorizationEndpointURI, authorizationEndpoint.router);

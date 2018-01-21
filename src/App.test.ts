@@ -12,20 +12,6 @@ chai.use(chaiHttp);
 
 const app = new App(theServerConfig).express;
 
-describe("routs", () => {
-
-    it("should be json", async () => {
-        const res = await chai.request(app).get("/");
-        chai.assert.equal(res.type, "application/json");
-    });
-
-    it("should have a message prop", async () => {
-        const res = await chai.request(app).get("/");
-        chai.assert.exists(res.body.path);
-        chai.assert.equal(res.body.path, "root");
-    });
-});
-
 describe("permissionsEndpoint", () => {
     it("should be a json object", async () => {
         const res = await chai.request(app)

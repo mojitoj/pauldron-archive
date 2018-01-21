@@ -19,7 +19,8 @@ export function instantiateServer (port: number, serverConfig: any) {
     return server;
 }
 const theServerConfig = require("./config.json");
-export const serverInstance = instantiateServer (3000, theServerConfig);
+const port = Number(process.env.PORT) || 3000;
+export const serverInstance = instantiateServer (port, theServerConfig);
 
 function onError(error: NodeJS.ErrnoException): void {
     if (error.syscall !== "listen") throw error;

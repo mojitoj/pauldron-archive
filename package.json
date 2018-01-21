@@ -7,11 +7,16 @@
   "files": [
     "dist/"
   ],
+  "engines": {
+    "node": "8.9.1",
+    "npm": "5.6.0"
+  },
   "scripts": {
-    "build": "npm run-script lint && tsc && cp src/*.json dist/",
+    "build": "npm run-script lint && ./node_modules/.bin/tsc --outDir dist/ && cp src/*.json dist/",
     "start": "node dist/index.js",
     "clean": "rimraf ./dist",
     "lint": "tslint --project tsconfig.json",
+    "postinstall": "npm run build",    
     "prepublishOnly": "npm run clean && npm run build && npm run lint && npm run test",
     "test": "mocha --exit --timeout 5000 --recursive --throw-deprecation --full-trace --require ts-node/register --require source-map-support/register --require dotenv/config \"src/**/*.test.ts\""
   },

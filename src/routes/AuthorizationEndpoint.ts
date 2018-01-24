@@ -7,6 +7,7 @@ import {request} from "http";
 import { ClaimsError, ValidationError, InvalidTicketError, ExpiredTicketError, NotAuthorizedByPolicyError, UMARedirect, UMARedirectError, UMAIntrospectionError, APIAuthorizationError } from "../model/Exceptions";
 import { inspect } from "util";
 import * as jwt from "jsonwebtoken";
+import * as hash from "object-hash";
 import { PolicyDecision, AuthorizationDecision, Obligations, SimplePolicyDecisionCombinerEngine, PolicyEngine, Claims, Policy } from "pauldron-policy";
 import { policyTypeToEnginesMap, ActivePolicies} from "./PolicyEndpoint";
 import * as rp from "request-promise";
@@ -184,17 +185,21 @@ export class AuthorizationEndpoint {
     if (deniedScopes) {
       return permissions.map((permission) => (
         {
-          resource_id: permission.resource_id,
-          resource_scopes: (permission.resource_scopes || []).filter((scope) => (
-            ! deniedScopes.includes(scope)
+          resource_set_id: permission.resource_set_id,
+          scopes: (permission.scopes || []).filter((scope) => (
+            ! AuthorizationEndpoint.arrayDeepIncludes (deniedScopes, scope)
           ))
         }
       )).filter((permission) => (
-        ((permission.resource_scopes.length || 0) !== 0)
+        ((permission.scopes.length || 0) !== 0)
       ));
     } else {
       return permissions;
     }
+  }
+  private static arrayDeepIncludes(array: Array<any>, thing: any): boolean {
+    const arrayHashes = array.map((element) => (hash(element)));
+    return arrayHashes.includes(hash(thing));
   }
 
   private static async introspectRPT(server: UMAServerInfo, rpt: string, serverConfig: any): Promise<Permission[]> {

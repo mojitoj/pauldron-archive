@@ -1,15 +1,12 @@
 export class Permission {
-    resource_id: string;
-    resource_scopes: string[];
+    resource_set_id: any;
+    scopes: any[];
 
     public static validate(object: any): boolean {
         const permission: Permission = object;
-        if (permission.resource_id
-            && permission.resource_scopes
-            && permission.resource_scopes instanceof Array) {
-             return true;
-          }
-        return false;
+        return (permission.resource_set_id
+            && permission.scopes
+            && permission.scopes instanceof Array);
     }
 
     public static validateArray (object: any): boolean {

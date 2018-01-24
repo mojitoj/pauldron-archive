@@ -25,7 +25,7 @@ describe("permissionsEndpoint", () => {
             .post(permissionEndpointURI)
             .set("content-type", "application/json")
             .set("Authorization", `Bearer ${testConfigs.testProtectionAPIKey}`)
-            .send({resource_id: "test_res_id", resource_scopes: ["s1", "s2"]});
+            .send({resource_set_id: "test_res_id", scopes: ["s1", "s2"]});
         chai.assert.exists(res.body.ticket);
         const ticket = res.body.ticket;
 
@@ -45,7 +45,7 @@ describe("permissionsEndpoint", () => {
             .post(permissionEndpointURI)
             .set("content-type", "application/json")
             .set("Authorization", `Bearer ${testConfigs.testProtectionAPIKey}`)
-            .send([{resource_id: "test_res_id", resource_scopes: ["s1", "s2"]}]);
+            .send([{resource_set_id: "test_res_id", scopes: ["s1", "s2"]}]);
         chai.assert.exists(res.body.ticket);
     });
 
@@ -82,7 +82,7 @@ describe("permissionsEndpoint", () => {
                 .post(permissionEndpointURI)
                 .set("content-type", "application/json")
                 .set("Authorization", `Bearer ${testConfigs.testProtectionAPIKey}`)
-                .send({resource_id: "test_res_id", resource_scopes: "ScopeA"});
+                .send({resource_set_id: "test_res_id", scopes: "ScopeA"});
         } catch (e) {
             chai.assert.equal(e.status, 400);
             chai.assert.equal(e.response.body.error, "bad_request");
@@ -95,7 +95,7 @@ describe("permissionsEndpoint", () => {
                 .post(permissionEndpointURI)
                 .set("content-type", "application/json")
                 .set("Authorization", `Bearer ${testConfigs.testProtectionAPIKey}`)
-                .send([{resource_id: "test_res_id", resource_scopes: "s1"}]);
+                .send([{resource_set_id: "test_res_id", scopes: "s1"}]);
         } catch (e) {
             chai.assert.equal(e.status, 400);
             chai.assert.equal(e.response.body.error, "bad_request");

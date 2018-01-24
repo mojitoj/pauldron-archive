@@ -2,6 +2,10 @@
   "name": "pauldron",
   "version": "0.0.1",
   "description": "UMA/OAuth Server with extensions",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/mojitoholic/pauldron"
+  },
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "files": [

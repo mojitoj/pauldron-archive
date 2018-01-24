@@ -31,10 +31,10 @@ const claims: object = {
 };
 const otherAssertions: object = {
     rpts: {
-            "http://localhost:3001/": [{resource_id: "test_res_id", resource_scopes: ["s1", "s2"]}]
+            "http://localhost:3001/": [{resource_set_id: "test_res_id", scopes: ["s1", "s2"]}]
         }
 };
-const permissions: Permission[] = [{resource_id: "test_res_id", resource_scopes: ["s1", "s2"]}];
+const permissions: Permission[] = [{resource_set_id: "test_res_id", scopes: ["s1", "s2"]}];
 
 
 describe("happyFlow", () => {
@@ -91,7 +91,7 @@ describe("happyFlow", () => {
         chai.assert.exists(introspectionRes.body.active);
         chai.assert.exists(introspectionRes.body.iat);
         chai.assert.exists(introspectionRes.body.exp);
-        chai.assert.deepEqual(introspectionRes.body.permissions, [{resource_id: "test_res_id", resource_scopes: ["s2"]}]);
+        chai.assert.deepEqual(introspectionRes.body.permissions, [{resource_set_id: "test_res_id", scopes: ["s2"]}]);
     });
 
     it("should be able to get an RPT for an authorized client after redirecting to upstream UMA.", async () => {
@@ -176,7 +176,7 @@ describe("happyFlow", () => {
         chai.assert.exists(introspectionRes.body.active);
         chai.assert.exists(introspectionRes.body.iat);
         chai.assert.exists(introspectionRes.body.exp);
-        chai.assert.deepEqual(introspectionRes.body.permissions, [{resource_id: "test_res_id", resource_scopes: ["s2"]}]);
+        chai.assert.deepEqual(introspectionRes.body.permissions, [{resource_set_id: "test_res_id", scopes: ["s2"]}]);
     });
 });
 describe("unhappy flow", () => {

@@ -5,7 +5,7 @@ This is an experimental server for the purpose of testing new ideas and extensio
 
 ## Current Features
 
-###Extensions
+### Extensions
 The following extensions are currently implemented:
 
 - **Cascaded Authorization**: The ability to require another UMA server's approval as a pre-requisite to the approval of this server. For an introduction to the idea of Cascaded Authorization see this HL7 draft [white paper](https://gforge.hl7.org/gf/project/security/docman/Security%20FHIR/FHIR%20Security%20Connectathon/Cascaded_Authorization-2018-01-15.pdf). The introspection response from the upstream Pauldron server is treated as a Claims Token and these claims can be referenced in the server's authorization policy to make authorization decisions. 

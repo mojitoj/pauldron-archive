@@ -1,6 +1,8 @@
 # Pauldron
 Pauldron is an experimental authorization server based on [User-Managed Access (UMA)](https://docs.kantarainitiative.org/uma/ed/uma-core-2.0-01.html) profile of OAuth 2.0 with some additional extensions. 
 
+Pauldron is the name of the piece of armor which covers the shoulder and connects the body piece and arm piece. Just like the armor piece, the goal of Pauldron is to protect and integrate.
+
 This is an experimental server for the purpose of testing new ideas and extensions, so do not use it in a production environment. Note that, like the project itself, this documentation is a work in progress.
 
 ## Current Features

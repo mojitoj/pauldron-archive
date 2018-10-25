@@ -39,7 +39,7 @@
                         "DENY_SCOPES": ["s1"]
                     }
                 },
-                "condition": "rpts['http://localhost:3001'].length > 0"
+                "condition": "rpts['https://upstream-uma-server'].length > 0"
             },
             "upstreamClientsWithoutRPT": {
                 "name": "Redirect to upstream if client doesn't have the right RPT.",
@@ -51,14 +51,14 @@
                     "obligations": {
                             "UMA_REDIRECT": {
                                 "realm": "Upstream UMA Server",
-                                "uri": "http://localhost:3001",
+                                "uri": "https://upstream-uma-server",
                                 "authroization_endpoint": "/authorization",
                                 "introspection_endpoint": "/protection/introspection",
                                 "permission_registration_endpoint": "/protection/permissions"
                             }
                     }
                 },
-                "condition": "!rpts.hasOwnProperty('http://localhost:3001')"
+                "condition": "!rpts.hasOwnProperty('https://upstream-uma-server')"
             },
             "deniedClients":{ 
                 "name": "Denied Clients",            

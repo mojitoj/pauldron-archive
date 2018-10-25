@@ -1,6 +1,7 @@
-dist/
 .DS_Store
-
+.env
+.env.test
+coverage/
 # Node stuff
 node_modules/
 *.log

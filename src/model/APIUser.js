@@ -1,3 +1,3 @@
 export class APIUser {
-    id: string;
+    id;
 }

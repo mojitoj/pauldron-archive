@@ -41,6 +41,14 @@ Aside from the main sever, there are a number of additional Pauldron components 
 - [Pauldron Policy](https://github.com/mojitoholic/pauldron-policy): A simple JSON-based policy format for expressing authorization policies. 
 
 ## Change Log
+
+### 0.0.2 
+- Move away from `TypeScript` and use plain `JavaScript`.
+- Switch to `Jest` for tests and improve test coverage.
+- Move all configurations to `.env`.
+- Switch to using `redis` for storing tokens and policies.
+- Various refactoring.
+
 ### 0.0.1 
 - Basic Authorization, Permission Registration, Introspection, and Policy Endpoints.
 - Cascaded Authorization by specifying in the policy that the decision depends on submitting an Access Token from an upstream Pauldron server. The introspection result for that Access Token is treated as a claims token and its claims can be referenced in the policy. 

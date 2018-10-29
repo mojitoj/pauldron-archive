@@ -6,11 +6,11 @@ const APIAuthorization = require("../lib/api-authorization");
 const GenericErrorHandler = require("./error-handler");
 
 const policyTypeToEnginesMap = {
-    "pauldron:simple-policy": new SimplePolicyEngine()
+    "pauldron:simple-policy": SimplePolicyEngine
 };
 
 const policyTypeToValidator = {
-    "pauldron:simple-policy": SimplePolicy.validatePolicy
+    "pauldron:simple-policy": SimplePolicy.validate
 };
 
 async function create(req, res, next) {

@@ -42,6 +42,10 @@ Aside from the main sever, there are a number of additional Pauldron components 
 
 ## Change Log
 
+### 0.0.3 (to be released)
+- Bump up to the latest version of [Pauldron Policy](https://github.com/mojitoholic/pauldron-policy).
+- Upgrade dependencies.
+
 ### 0.0.2 
 - Move away from `TypeScript` and use plain `JavaScript`.
 - Switch to `Jest` for tests and improve test coverage.

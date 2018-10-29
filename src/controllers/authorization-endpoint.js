@@ -11,7 +11,7 @@ const APIAuthorization = require("../lib/api-authorization");
 const GenericErrorHandler = require("./error-handler");
 
 
-const {AuthorizationDecision, SimplePolicyDecisionCombinerEngine} = require ("pauldron-policy");
+const {SimplePolicyDecisionCombinerEngine} = require ("pauldron-policy");
 const {policyTypeToEnginesMap} = require("./policy-endpoint");
 
 const UMA_REDIRECT_OBLIGATION_ID = "UMA_REDIRECT";
@@ -73,17 +73,16 @@ async function create(req, res, next) {
 
 async function checkPolicies(claims, permissions, policies) {
     const policyArray = Object.keys(policies).map((id) => policies[id]);
-    const decision = new SimplePolicyDecisionCombinerEngine()
-                          .evaluate(claims, policyArray, policyTypeToEnginesMap);
+    const decision = SimplePolicyDecisionCombinerEngine.evaluate(claims, policyArray, policyTypeToEnginesMap);
     
-    if (decision.authorization === AuthorizationDecision.Deny) {
+    if (decision.authorization === "Deny") {
       throw {error: "policy_forbidden"};
-    } else if (decision.authorization === AuthorizationDecision.NotApplicable) {
+    } else if (decision.authorization === "NotApplicable") {
       // failing safe on Deny if no applicable policies were found. This could be a configuration setting.
       throw {error: "policy_forbidden"};
-    } else if (decision.authorization === AuthorizationDecision.Permit) {
+    } else if (decision.authorization === "Permit") {
       return reconcilePermissionsAndObligations(permissions, decision.obligations);
-    } else if (decision.authorization === AuthorizationDecision.Indeterminate) {
+    } else if (decision.authorization === "Indeterminate") {
       let ticket = "";
       
       const server =  decision.obligations[UMA_REDIRECT_OBLIGATION_ID];

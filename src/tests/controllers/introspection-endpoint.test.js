@@ -2,12 +2,10 @@ const request = require("supertest");
 const _ = require("lodash");
 const jwt = require("jsonwebtoken");
 const db = require("../../lib/db");
-const ClaimIssuers = require("../../lib/claims-issuers");
 
 const { 
     app,
-    INTROSPECTION_ENDPOINT_URI,
-    POLICY_ENDPOINT_URI
+    INTROSPECTION_ENDPOINT_URI
 } = require("../../app");
 
 const PROTECTION_API_TOKEN = {

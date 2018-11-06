@@ -85,9 +85,9 @@ async function del(req, res, next) {
     try {
         const user = APIAuthorization.validate(req, ["POL:D"]);
         const id = req.params.id;
-        const policy = await db.Policies.get(user, id);
-        if (policy) {
-            await db.Policies.del(user, id);
+        const deleted = await db.Policies.del(user, id);
+
+        if (deleted) {
             res.status(204).send();
         } else {
             throw {

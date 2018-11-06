@@ -6,29 +6,39 @@ const PERMISSIONS_HASH = "pauldron-permissions";
 const RPTS_HASH = "pauldron-rpts";
 const POLICIES_HASH = "pauldron-policies";
 
-
 async function getAllObjects(hashName, user) {
-    const usersObjectHashName = `${hashName}/${hash(user)}`;
-    const rawObjects = await redisClient.hgetall(usersObjectHashName) || {};
-    const objects = _.mapValues(rawObjects, (value) => (JSON.parse(value)));
+    const keyPattern = `${hashName}/${hash(user)}/*`;
+    const keys = await redisClient.keys(keyPattern) || {};
+
+    const rawObjectsPromises = keys.map( (keyName) => redisClient.get(keyName));
+    const rawObjects = await Promise.all(rawObjectsPromises);
+
+    const userFacingKeys = keys.map( (key) => {
+        const parts = key.split("/");
+        return parts[parts.length - 1] || "";
+    });
+
+    const rawObjectsObject = _.zipObject(userFacingKeys, rawObjects);
+    const objects = _.mapValues(rawObjectsObject, (value) => (JSON.parse(value)));
     return objects;
 }
 
 async function getObject(hashName, user, objectId) {
-    const usersObjectHashName = `${hashName}/${hash(user)}`;
-    const rawObject = await redisClient.hget(usersObjectHashName, objectId);
+    const keyname = `${hashName}/${hash(user)}/${objectId}`;
+    const rawObject = await redisClient.get(keyname);
     return rawObject ? JSON.parse(rawObject) : rawObject;
 }
 
 //todo: add automatic expiration as another parameter
 async function addObject(hashName, user, objectId, object) {
-    const usersObjectHashName = `${hashName}/${hash(user)}`;
-    await redisClient.hset(usersObjectHashName, objectId, JSON.stringify(object));
+    //client.set('foo', 'bar', 'px', 100, helper.isString('OK'));
+    const keyname = `${hashName}/${hash(user)}/${objectId}`;
+    await redisClient.set(keyname, JSON.stringify(object));
 }
 
 async function deleteObject(hashName, user, objectId) {
-    const usersObjectHashName = `${hashName}/${hash(user)}`;
-    await redisClient.hdel(usersObjectHashName, objectId);
+    const keyname = `${hashName}/${hash(user)}/${objectId}`;
+    return await redisClient.del(keyname);
 }
 
 async function getAllPermissions(user) {
@@ -44,7 +54,7 @@ async function addPermission(user, permissionId, permission) {
 }
 
 async function deletePermission(user, permissionId) {
-    await deleteObject(PERMISSIONS_HASH, user, permissionId);
+    return await deleteObject(PERMISSIONS_HASH, user, permissionId);
 }
 
 async function getAllRPTs(user) {
@@ -60,7 +70,7 @@ async function addRPT(user, permissionId, permission) {
 }
 
 async function deleteRPT(user, permissionId) {
-    await deleteObject(RPTS_HASH, user, permissionId);
+    return await deleteObject(RPTS_HASH, user, permissionId);
 }
 
 async function getAllPolicies(user) {
@@ -76,7 +86,7 @@ async function addPolicy(user, policyId, policy) {
 }
 
 async function deletePolicy(user, policyId) {
-    await deleteObject(POLICIES_HASH, user, policyId);
+    return await deleteObject(POLICIES_HASH, user, policyId);
 }
 
 const Permissions = {

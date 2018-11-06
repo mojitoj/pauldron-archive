@@ -6,11 +6,10 @@ function validatePermission(permission) {
         && permission.scopes instanceof Array);
 }
 
-function validatePermissionArray(object){
-    if (object instanceof Array && object.length > 0) {
-        return object.reduce (
-            (previousValue, currentValue, currentIndex) => (previousValue && validatePermission(currentValue)),
-            true
+function validatePermissionArray(permissions){
+    if (permissions instanceof Array && permissions.length > 0) {
+        return permissions.every (
+            (permission) => (validatePermission(permission))
         );
     }
     return false;

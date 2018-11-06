@@ -38,10 +38,10 @@ function validate(request, requiredScopes) {
             message: "Malformed API key. Missing or empty 'uid'.",
         };
     }
-    const hasSufficientScopes = requiredScopes.map((requiredScope) => (payload.scopes.includes(requiredScope)))
-                    .reduce((sofar, thisOne) => (
-                        sofar && thisOne
-                    ), true);
+    const hasSufficientScopes = requiredScopes.every(
+        (requiredScope) => (payload.scopes.includes(requiredScope))
+    );
+
     if (!hasSufficientScopes) {
         throw {
             error: "api_forbidden",

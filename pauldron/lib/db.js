@@ -29,11 +29,13 @@ async function getObject(hashName, user, objectId) {
     return rawObject ? JSON.parse(rawObject) : rawObject;
 }
 
-//todo: add automatic expiration as another parameter
-async function addObject(hashName, user, objectId, object) {
-    //client.set('foo', 'bar', 'px', 100, helper.isString('OK'));
+async function addObject(hashName, user, objectId, object, ttlInMs) {
     const keyname = `${hashName}/${hash(user)}/${objectId}`;
-    await redisClient.set(keyname, JSON.stringify(object));
+    if (ttlInMs > 0) {
+        return await redisClient.set(keyname, JSON.stringify(object), "px", ttlInMs);
+    } else {
+        return await redisClient.set(keyname, JSON.stringify(object));
+    }
 }
 
 async function deleteObject(hashName, user, objectId) {
@@ -49,8 +51,9 @@ async function getPermission(user, permissionId) {
     return getObject(PERMISSIONS_HASH, user, permissionId);
 }
 
+const TICKET_TTL  = parseInt(process.env.PERMISSION_TICKET_TTL) || 20;
 async function addPermission(user, permissionId, permission) {
-    await addObject(PERMISSIONS_HASH, user, permissionId, permission)
+    return await addObject(PERMISSIONS_HASH, user, permissionId, permission, TICKET_TTL * 1000);
 }
 
 async function deletePermission(user, permissionId) {
@@ -65,8 +68,9 @@ async function getRPT(user, permissionId) {
     return getObject(RPTS_HASH, user, permissionId);
 }
 
+const RPT_TTL  = parseInt(process.env.RPT_TTL) || 20;
 async function addRPT(user, permissionId, permission) {
-    await addObject(RPTS_HASH, user, permissionId, permission)
+    return await addObject(RPTS_HASH, user, permissionId, permission, RPT_TTL * 1000);
 }
 
 async function deleteRPT(user, permissionId) {
@@ -82,7 +86,7 @@ async function getPolicy(user, policyId) {
 }
 
 async function addPolicy(user, policyId, policy) {
-    await addObject(POLICIES_HASH, user, policyId, policy);
+    return await addObject(POLICIES_HASH, user, policyId, policy, -1);
 }
 
 async function deletePolicy(user, policyId) {

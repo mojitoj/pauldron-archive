@@ -1,4 +1,8 @@
 {
     "private": true,
-    "workspaces": ["pauldron", "pauldron-clients"]
+    "workspaces": [
+        "pauldron", 
+        "pauldron-clients",
+        "pauldron-fhir-proxy"
+    ]
 }

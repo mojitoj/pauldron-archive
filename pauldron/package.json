@@ -11,10 +11,6 @@
   "contributors": [
     "Mohammad Jafari <jafarim@gmail.com> (https://github.com/mojitoholic/)"
   ],
-  "engines": {
-    "node": "^10.11.0",
-    "yarn": "^1.10.0"
-  },
   "scripts": {
     "start": "node server.js",
     "test": "jest --runInBand --forceExit"

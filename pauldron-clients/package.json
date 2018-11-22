@@ -1,6 +1,6 @@
 {
   "name": "pauldron-clients",
-  "version": "0.5.0",
+  "version": "0.5.1",
   "description": "Clients for using different UMA/OAuth endpoints of a Pauldron Server",
   "main": "index.js",
   "repository": "https://github.com/mojitoholic/pauldron.git",

@@ -1,0 +1,165 @@
+{
+    "resourceType": "Bundle",
+    "id": "5393e7f9-f690-4934-b2be-595bc72dd819",
+    "meta": {
+      "lastUpdated": "2018-11-21T00:55:17.760+00:00"
+    },
+    "type": "searchset",
+    "total": 2,
+    "link": [
+      {
+        "relation": "self",
+        "url": "https://mock-fhir-server/base/Specimen?_pretty=true"
+      },
+      {
+        "relation": "next",
+        "url": "https://mock-fhir-server/base?_getpages=5393e7f9-f690-4934-b2be-595bc72dd819&_getpagesoffset=20&_count=20&_pretty=true&_bundletype=searchset"
+      }
+    ],
+    "entry": [
+      {
+        "fullUrl": "https://mock-fhir-server/base/Specimen/3116",
+        "resource": {
+          "resourceType": "Specimen",
+          "id": "1",
+          "meta": {
+            "versionId": "1",
+            "lastUpdated": "2018-09-30T17:30:56.959+00:00"
+          },
+          "text": {
+            "status": "generated",
+            "div": "<div xmlns=\"http://www.w3.org/1999/xhtml\">Lung biopsy from Everywoman, Eve. SSN:\n      444222222</div>"
+          },
+          "identifier": [
+            {
+              "system": "http://ehr.edenmedicalcenter.org/identifiers/collections",
+              "value": "123456789"
+            }
+          ],
+          "accessionIdentifier": {
+            "system": "http://lab.edenmedicalcenter.org/specimens/2018",
+            "value": "123456"
+          },
+          "status": "available",
+          "type": {
+            "coding": [
+              {
+                "system": "http://snomed.info/sct",
+                "code": "438543000",
+                "display": "Specimen from liver obtained by biopsy"
+              }
+            ]
+          },
+          "subject": {
+            "reference": "Patient/1",
+            "display": "Eve Everywoman"
+          },
+          "receivedTime": "2011-03-04T07:03:00Z",
+          "collection": {
+            "collector": {
+              "reference": "Practitioner/3114",
+              "display": "Dr Peter Practitioner"
+            },
+            "collectedDateTime": "2011-05-30T06:15:00Z",
+            "method": {
+              "coding": [
+                {
+                  "system": "http://hl7.org/fhir/v2/0488",
+                  "code": "BIO"
+                }
+              ]
+            },
+            "bodySite": {
+              "coding": [
+                {
+                  "system": "http://snomed.info/sct",
+                  "code": "10200004",
+                  "display": "Liver structure (body structure)"
+                }
+              ],
+              "text": "Liver"
+            }
+          }
+        },
+        "search": {
+          "mode": "match"
+        },
+        "response": {
+          "status": "201 Created",
+          "etag": "W/\"1\""
+        }
+      },
+      {
+        "fullUrl": "https://mock-fhir-server/base/Specimen/3119",
+        "resource": {
+          "resourceType": "Specimen",
+          "id": "3119",
+          "meta": {
+            "versionId": "1",
+            "lastUpdated": "2018-09-30T17:37:50.567+00:00"
+          },
+          "text": {
+            "status": "generated",
+            "div": "<div xmlns=\"http://www.w3.org/1999/xhtml\">Lung biopsy from Everywoman, Eve. SSN:\n      444222222</div>"
+          },
+          "identifier": [
+            {
+              "system": "http://ehr.edenmedicalcenter.org/identifiers/collections",
+              "value": "123456789"
+            }
+          ],
+          "accessionIdentifier": {
+            "system": "http://lab.edenmedicalcenter.org/specimens/2018",
+            "value": "123456"
+          },
+          "status": "available",
+          "type": {
+            "coding": [
+              {
+                "system": "http://snomed.info/sct",
+                "code": "438543000",
+                "display": "Specimen from liver obtained by biopsy"
+              }
+            ]
+          },
+          "subject": {
+            "reference": "Patient/1",
+            "display": "Eve Everywoman"
+          },
+          "receivedTime": "2011-03-04T07:03:00Z",
+          "collection": {
+            "collector": {
+              "reference": "Practitioner/3117",
+              "display": "Dr Peter Practitioner"
+            },
+            "collectedDateTime": "2011-05-30T06:15:00Z",
+            "method": {
+              "coding": [
+                {
+                  "system": "http://hl7.org/fhir/v2/0488",
+                  "code": "BIO"
+                }
+              ]
+            },
+            "bodySite": {
+              "coding": [
+                {
+                  "system": "http://snomed.info/sct",
+                  "code": "10200004",
+                  "display": "Liver structure (body structure)"
+                }
+              ],
+              "text": "Liver"
+            }
+          }
+        },
+        "search": {
+          "mode": "match"
+        },
+        "response": {
+          "status": "201 Created",
+          "etag": "W/\"1\""
+        }
+      }
+    ]
+}

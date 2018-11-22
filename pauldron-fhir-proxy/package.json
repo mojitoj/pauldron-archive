@@ -1,0 +1,30 @@
+{
+  "name": "pauldron-fhir-proxy",
+  "version": "0.0.2",
+  "description": "FHIR proxy to enforce UMA/OAuth Authorizaton using a Pauldron Server",
+  "main": "src/index.js",
+  "repository": "https://github.com/mojitoholic/pauldron.git",
+  "author": "mojitoholic",
+  "license": "MIT",
+  "private": false,
+  "scripts": {
+    "start": "node server.js",
+    "test": "jest --runInBand --forceExit --coverage"
+  },
+  "devDependencies": {
+    "jest": "^23.6.0",
+    "jsonwebtoken": "^8.3.0",
+    "nock": "^10.0.1",
+    "pauldron": "0.0.2",
+    "supertest": "^3.3.0"
+  },
+  "dependencies": {
+    "express": "^4.16.4",
+    "lodash": "^4.17.11",
+    "morgan": "^1.9.1",
+    "pauldron-clients": "0.5.0",
+    "request": "^2.88.0",
+    "request-promise": "^4.2.2",
+    "winston": "^3.1.0"
+  }
+}

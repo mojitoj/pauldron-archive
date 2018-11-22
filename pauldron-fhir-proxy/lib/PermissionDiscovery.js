@@ -2,18 +2,6 @@ const rp = require("request-promise");
 const hash = require("object-hash");
 const _ = require("lodash");
 
-
-
-// export class FHIRResourceIdentifier {
-//     use: string;
-//     system: string;
-//     value: string;
-// }
-
-// export class FHIRSecurityLabel {
-//     system: string;
-//     code: string;
-// }
 const FHIR_SERVER_BASE = process.env.FHIR_SERVER_BASE;
 const designatedPatientIdentifierSystems = ["urn:official:id"]; // read this from configs
 const CONFIDENTIALITY_CODE_SYSTEM = "http://hl7.org/fhir/v3/Confidentiality"

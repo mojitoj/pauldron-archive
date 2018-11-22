@@ -3,7 +3,10 @@ const hash = require("object-hash");
 const _ = require("lodash");
 
 const FHIR_SERVER_BASE = process.env.FHIR_SERVER_BASE;
-const designatedPatientIdentifierSystems = ["urn:official:id"]; // read this from configs
+
+const DESIGNATED_PATIENT_ID_SYSTEMS = (process.env.DESIGNATED_PATIENT_ID_SYSTEMS || "")
+                                        .split(",")
+                                        .map(res => res.trim());
 const CONFIDENTIALITY_CODE_SYSTEM = "http://hl7.org/fhir/v3/Confidentiality"
 const CODE_SYSTEMS_OF_INTEREST = [CONFIDENTIALITY_CODE_SYSTEM];
 
@@ -142,7 +145,7 @@ async function getPatientId(plainResource) { // the input is a primitive FHIR re
         };
     }
     const theIdentifiers = identifiers.filter((identifier) => (
-        designatedPatientIdentifierSystems.includes(identifier.system)
+        DESIGNATED_PATIENT_ID_SYSTEMS.includes(identifier.system)
     ));
 
     if (theIdentifiers.length !== 1) {

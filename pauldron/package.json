@@ -29,7 +29,7 @@
     "lodash": "^4.17.11",
     "morgan": "^1.9.1",
     "object-hash": "^1.3.0",
-    "pauldron-policy": "^0.2.2",
+    "pauldron-policy": "0.2.3",
     "redis": "^2.8.0",
     "request": "^2.88.0",
     "request-promise": "^4.2.2",

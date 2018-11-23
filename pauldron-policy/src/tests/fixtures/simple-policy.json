@@ -1,0 +1,79 @@
+{
+    "type": "pauldron:simple-policy",
+    "name": "Organizational Policy1",
+    "content": {
+        "rules": {
+            "permittedClientsBasedOnClientId": {
+                "name": "Permitted Clients based on client_id",
+                "matchAnyOf":[
+                    {"client_id":"client1"}
+                ],
+                "decision": {
+                    "authorization": "Permit", 
+                    "obligations": {
+                        "DENY_SCOPES": ["s1"]
+                    }
+                }
+            },
+            "permittedClientsBasedOnPurpose": {
+                "name": "Permitted Clients Based on pou",
+                "matchAnyOf":[
+                    {"client_id":"client4"}
+                ],
+                "decision": {
+                    "authorization": "Permit", 
+                    "obligations": {
+                        "DENY_SCOPES": ["s1"]
+                    }
+                },
+                "condition": "pous.filter((pou)=>(pou.system==='http://hl7.org/fhir/v3/ActReason' && pou.code==='TREAT')).length>0"            
+            },
+            "upstreamClientsWithRPT": {
+                "name": "Permitted only if upstream UMA server approves.",
+                "matchAnyOf":[
+                    {"client_id":"client3"}
+                ],
+                "decision": {
+                    "authorization": "Permit", 
+                    "obligations": {
+                        "DENY_SCOPES": ["s1"]
+                    }
+                },
+                "condition": "rpts['http://localhost:3001'].length > 0"
+            },
+            "upstreamClientsWithoutRPT": {
+                "name": "Redirect to upstream if client doesn't have the right RPT.",
+                "matchAnyOf":[
+                    {"client_id":"client3"}
+                ],
+                "decision": {
+                    "authorization": "Indeterminate",
+                    "obligations": {
+                            "UMA_REDIRECT": {
+                                "realm": "Upstream UMA Server",
+                                "uri": "http://localhost:3001",
+                                "authroization_endpoint": "/authorization",
+                                "introspection_endpoint": "/protection/permissions",
+                                "permission_registration_endpoint": "/protection/introspection"
+                            }
+                    }
+                },
+                "condition": "!rpts.hasOwnProperty('http://localhost:3001')"
+            },
+            "deniedClients":{ 
+                "name": "Denied Clients",            
+                "matchAnyOf": [
+                    {"client_id":"client2", "organization": "org1"}
+                ],
+                "decision": {
+                    "authorization": "Deny", 
+                    "obligations": {}
+                }
+            }
+        },
+        "default": {
+            "authorization": "Deny", 
+            "obligations": {}
+        }
+    }
+}

@@ -3154,13 +3154,14 @@ pathval@^1.1.0:
   resolved "https://registry.yarnpkg.com/pathval/-/pathval-1.1.0.tgz#b942e6d4bde653005ef6b71361def8727d0645e0"
   integrity sha1-uULm1L3mUwBe9rcTYd74cn0GReA=
 
-pauldron-policy@^0.2.2:
-  version "0.2.2"
-  resolved "https://registry.yarnpkg.com/pauldron-policy/-/pauldron-policy-0.2.2.tgz#a81af6a70bfd3a2106c76cf6591f8b3d717e008b"
-  integrity sha512-guL0/Xn4h9+UkkX39DN65OeVBRS4YKJ9nYsI/0vc4luIFY6qW1GdezpCwuyLRNBnKPZIvK9Bnwu+lhoGDooIOw==
+pauldron-clients@0.5.0:
+  version "0.5.0"
+  resolved "https://registry.yarnpkg.com/pauldron-clients/-/pauldron-clients-0.5.0.tgz#ebfa69eb12aef0d66fa9c84e27aca93591ba079e"
+  integrity sha512-n1Oq+n/SEJovLugyKp5LvuzF+jvTISTBWHojUxGuYkwFzXLdRTwCmRP0bNXiW23c3e9hEjJZ1PSVeXBfIKIC3A==
   dependencies:
-    esprima "^4.0.1"
     lodash "^4.17.11"
+    request "^2.88.0"
+    request-promise "^4.2.2"
 
 performance-now@^2.1.0:
   version "2.1.0"

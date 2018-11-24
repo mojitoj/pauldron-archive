@@ -1,14 +1,13 @@
-const jwt = require("jsonwebtoken");
 const hash = require("object-hash");
 const rp = require("request-promise");
 const db = require("../lib/db");
 const logger = require ("../lib/logger");
 
 const TimeStampedPermission = require("../model/TimeStampedPermission");
-const ClaimIssuers = require("../lib/claims-issuers");
 const UpstreamServers = require("../lib/upstream-servers");
 const APIAuthorization = require("../lib/api-authorization");
 const GenericErrorHandler = require("./error-handler");
+const JWTClaimsToken = require("../lib/jwt-claims-token");
 
 
 const {SimplePolicyDecisionCombinerEngine} = require ("pauldron-policy");
@@ -202,7 +201,7 @@ async function parseAndValidateClaimTokens(claimTokens) {
       const claimToken = claimTokens [index];
       if (claimToken.format === "jwt") {
         allClaims = {
-          ...parseJWTClaimToken(claimToken.token),
+          ...JWTClaimsToken.parse(claimToken.token),
           ...allClaims
         };
       } else if (claimToken.format === "rpt") {
@@ -229,48 +228,6 @@ async function parseAndValidateClaimTokens(claimTokens) {
       }
     }
     return allClaims;
-}
-
-function parseJWTClaimToken(claimsString) {
-    const claimChunks = claimsString.split(".", 3);
-    if (claimChunks.length !== 3) {
-      throw {
-        error: "claims_error",
-        message: "Submitted claim token not in JWT format."
-      };
-    }
-    let payload = {};
-    try {
-      payload = JSON.parse(Buffer.from(claimChunks[1], "base64").toString());
-    } catch (e) {
-      throw {
-        error: "claims_error",
-        message: `Malformed claims token: ${e.message}`
-      }; 
-    }
-    const issuer = payload.iss;
-    if (!issuer) {
-      throw {
-        error: "claims_error",
-        message: "Submitted claims must have 'iss'."
-      };
-    }
-    const key = ClaimIssuers.keyOf(issuer);
-    if (!key) {
-      throw {
-        error: "claims_error",
-        message: `Unknown issuer ${issuer}.`
-      };
-    }
-
-    try {
-      return jwt.verify(claimsString, key);
-    } catch (e) {
-      throw {
-        error: "claims_error",
-        message: `Invalid calims token: ${e.message}.`
-      };
-    }
 }
 
 function validatePermissions(permissions) {

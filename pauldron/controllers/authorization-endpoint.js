@@ -26,132 +26,132 @@ const DENY_SCOPES_OBLIGATION_ID = "DENY_SCOPES";
 const rptTTL = parseInt(process.env.RPT_TTL) || 20;
 
 async function create(req, res, next) {
-    try {
-        const user = APIAuthorization.validate(req, ["AUTH:C"]);
+  try {
+      const user = APIAuthorization.validate(req, ["AUTH:C"]);
 
-        await validateRPTRequest(req);
+      await validateRPTRequest(req);
 
-        const policies = await db.Policies.list(user);
+      const policies = await db.Policies.list(user);
 
-        const ticket = req.body.ticket;
+      const ticket = req.body.ticket;
 
-        const claimsTokens = req.body.claim_tokens;
-        const claims = await parseAndValidateClaimTokens(claimsTokens);
+      const claimsTokens = req.body.claim_tokens;
+      const claims = await parseAndValidateClaimTokens(claimsTokens);
 
-        const permission = await db.Permissions.get(user, ticket);
-        validatePermissions(permission);
+      const permission = await db.Permissions.get(user, ticket);
+      validatePermissions(permission);
 
-        const permissionsAfterReconciliationWithPolicies = 
-          await checkPolicies(claims, permission.permissions, policies);
+      const permissionsAfterReconciliationWithPolicies = 
+        await checkPolicies(claims, permission.permissions, policies);
 
-        const rpt = TimeStampedPermission.issue(
-          rptTTL, 
-          permissionsAfterReconciliationWithPolicies, 
-          permission.user
-        );
+      const rpt = TimeStampedPermission.issue(
+        rptTTL, 
+        permissionsAfterReconciliationWithPolicies, 
+        permission.user
+      );
 
-        await db.RPTs.add(user, rpt.id, rpt);
+      await db.RPTs.add(user, rpt.id, rpt);
 
-        await db.Permissions.del(user, ticket);
+      await db.Permissions.del(user, ticket);
 
-        res.status(201).send({rpt: rpt.id});
-    } catch (e) {
-      if (e && e.error === "uma_redirect") {
-        res.status(401)
-        .set("WWW-Authenticate", `UMA realm=\"${e.umaServerParams.realm}\", as_uri=\"${e.umaServerParams.uri}\", ticket=\"${e.ticket}\"`)
-        .send({
-            message: `Need approval from ${e.umaServerParams.uri}.`,
-            error: "uma_redirect",
-            status: 401,
-            info: {"server": e.umaServerParams}
-          }
-        );
-      } else {
-        GenericErrorHandler.handle(e, res, req);
-      }
+      res.status(201).send({rpt: rpt.id});
+  } catch (e) {
+    if (e && e.error === "uma_redirect") {
+      res.status(401)
+      .set("WWW-Authenticate", `UMA realm=\"${e.umaServerParams.realm}\", as_uri=\"${e.umaServerParams.uri}\", ticket=\"${e.ticket}\"`)
+      .send({
+          message: `Need approval from ${e.umaServerParams.uri}.`,
+          error: "uma_redirect",
+          status: 401,
+          info: {"server": e.umaServerParams}
+        }
+      );
+    } else {
+      GenericErrorHandler.handle(e, res, req);
     }
+  }
 }
 
 async function checkPolicies(claims, permissions, policies) {
-    const policyArray = Object.keys(policies).map((id) => policies[id]);
-    const decision = SimplePolicyDecisionCombinerEngine.evaluate(claims, policyArray, policyTypeToEnginesMap);
+  const policyArray = _.values(policies);
+  const decision = SimplePolicyDecisionCombinerEngine.evaluate(claims, policyArray, policyTypeToEnginesMap);
     
-    if (decision.authorization === "Deny") {
-      throw {error: "policy_forbidden"};
-    } else if (decision.authorization === "NotApplicable") {
-      // failing safe on Deny if no applicable policies were found. This could be a configuration setting.
-      throw {error: "policy_forbidden"};
-    } else if (decision.authorization === "Permit") {
-      return reconcilePermissionsAndObligations(permissions, decision.obligations);
-    } else if (decision.authorization === "Indeterminate") {
-      let ticket = "";
-      
-      const server =  decision.obligations[UMA_REDIRECT_OBLIGATION_ID];
-      ticket = await registerUMAPermissions(server, permissions);
+  if (decision.authorization === "Deny") {
+    throw {error: "policy_forbidden"};
+  } else if (decision.authorization === "NotApplicable") {
+    // failing safe on Deny if no applicable policies were found. This could be a configuration setting.
+    throw {error: "policy_forbidden"};
+  } else if (decision.authorization === "Permit") {
+    return reconcilePermissionsAndObligations(permissions, decision.obligations);
+  } else if (decision.authorization === "Indeterminate") {
+    let ticket = "";
     
-      throw {
-        error: "uma_redirect",
-        ticket: ticket,
-        umaServerParams: server
-      };
-    }
+    const server =  decision.obligations[UMA_REDIRECT_OBLIGATION_ID];
+    ticket = await registerUMAPermissions(server, permissions);
+  
+    throw {
+      error: "uma_redirect",
+      ticket: ticket,
+      umaServerParams: server
+    };
+  }
 }
 
 async function registerUMAPermissions(server, permissions) {
-    const protectionAPIKeyForUpstreamServer = UpstreamServers.protectionAPITokenFor(server.uri);
-    const upstreamServerPermissionRegistrationEndpoint = server.uri + server.permission_registration_endpoint;
-    if (! protectionAPIKeyForUpstreamServer) {
-      throw {
-        error: "uma_redirect_error",
-        message: `Need approval from ${upstreamServerPermissionRegistrationEndpoint} but no API token found for communicating with this server.`
-      };
-    }
-    const options = {
-      method: "POST",
-      json: true,
-      uri: upstreamServerPermissionRegistrationEndpoint,
-      headers: {"Authorization": `Bearer ${protectionAPIKeyForUpstreamServer}`},
-      body: permissions
+  const protectionAPIKeyForUpstreamServer = UpstreamServers.protectionAPITokenFor(server.uri);
+  const upstreamServerPermissionRegistrationEndpoint = server.uri + server.permission_registration_endpoint;
+  if (! protectionAPIKeyForUpstreamServer) {
+    throw {
+      error: "uma_redirect_error",
+      message: `Need approval from ${upstreamServerPermissionRegistrationEndpoint} but no API token found for communicating with this server.`
     };
+  }
+  const options = {
+    method: "POST",
+    json: true,
+    uri: upstreamServerPermissionRegistrationEndpoint,
+    headers: {"Authorization": `Bearer ${protectionAPIKeyForUpstreamServer}`},
+    body: permissions
+  };
 
-    try {
-      const response = await rp(options);
-      if (! response.ticket) {
-        throw {
-          error: "uma_redirect_error",
-          message: `Need approval from ${upstreamServerPermissionRegistrationEndpoint} but no ticket was returned.`
-        };
-      }
-      return response.ticket;
-    } catch (e) {
+  try {
+    const response = await rp(options);
+    if (! response.ticket) {
       throw {
         error: "uma_redirect_error",
-        message: `Need approval from ${upstreamServerPermissionRegistrationEndpoint} but the following error occurred while contacting this server: ${e}.`
+        message: `Need approval from ${upstreamServerPermissionRegistrationEndpoint} but no ticket was returned.`
       };
     }
+    return response.ticket;
+  } catch (e) {
+    throw {
+      error: "uma_redirect_error",
+      message: `Need approval from ${upstreamServerPermissionRegistrationEndpoint} but the following error occurred while contacting this server: ${e}.`
+    };
+  }
 }
 
 function reconcilePermissionsAndObligations (permissions, obligations) {
-    const deniedScopes = obligations[DENY_SCOPES_OBLIGATION_ID];
-    if (deniedScopes) {
-      return permissions.map((permission) => (
-        {
-          resource_set_id: permission.resource_set_id,
-          scopes: (permission.scopes || []).filter((scope) => (
-            ! arrayDeepIncludes (deniedScopes, scope)
-          ))
-        }
-      )).filter((permission) => (
-        ((permission.scopes.length || 0) !== 0)
-      ));
-    } else {
-      return permissions;
-    }
+  const deniedScopes = obligations[DENY_SCOPES_OBLIGATION_ID];
+  if (deniedScopes) {
+    return permissions.map((permission) => (
+      {
+        resource_set_id: permission.resource_set_id,
+        scopes: (permission.scopes || []).filter((scope) => (
+          ! arrayDeepIncludes (deniedScopes, scope)
+        ))
+      }
+    )).filter((permission) => (
+      ((permission.scopes.length || 0) !== 0)
+    ));
+  } else {
+    return permissions;
+  }
 }
 
 function arrayDeepIncludes(array, thing) {
-    const arrayHashes = array.map((element) => (hash(element)));
-    return arrayHashes.includes(hash(thing));
+  const arrayHashes = array.map((element) => (hash(element)));
+  return arrayHashes.includes(hash(thing));
 }
 
 async function introspectRPT(server, rpt) {
@@ -229,15 +229,15 @@ async function parseAndValidateClaimTokens(claimTokens) {
 }
 
 function validatePermissions(permissions) {
-    if (!permissions) {
-      throw {
-        error: "invalid_ticket",
-      };
-    } else if (TimeStampedPermission.isExpired(permissions)) {
-      throw {
-        error: "expired_ticket",
-      };
-    }
+  if (!permissions) {
+    throw {
+      error: "invalid_ticket",
+    };
+  } else if (TimeStampedPermission.isExpired(permissions)) {
+    throw {
+      error: "expired_ticket",
+    };
+  }
 }
 
 const yup = require("yup");

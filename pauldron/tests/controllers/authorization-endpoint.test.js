@@ -61,7 +61,6 @@ it("should return 400 if a malformed claim_tokens is presented", async () => {
             claim_tokens: ""
         });
     expect(res.status).toEqual(400);
-    console.log(JSON.stringify(res.body));
 
     res = await request(app)
         .post(AUTHORIZATION_ENDPOINT_URI)
@@ -72,7 +71,6 @@ it("should return 400 if a malformed claim_tokens is presented", async () => {
             claim_tokens: []
         });
     expect(res.status).toEqual(400);
-    console.log(JSON.stringify(res.body));    
 
     res = await request(app)
         .post(AUTHORIZATION_ENDPOINT_URI)
@@ -83,5 +81,4 @@ it("should return 400 if a malformed claim_tokens is presented", async () => {
             claim_tokens: [{}]
         });
     expect(res.status).toEqual(400);
-    console.log(JSON.stringify(res.body));
 });

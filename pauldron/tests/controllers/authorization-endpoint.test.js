@@ -32,7 +32,6 @@ it("should return 400 if no ticket is presented", async () => {
         .set("Authorization", `Bearer ${TEST_AUTH_API_KEY}`)
         .send({});
     expect(res.status).toEqual(400);
-    console.log(JSON.stringify(res.body));
 });
 
 it("should return 400 if no claim_tokens is presented", async () => {
@@ -46,7 +45,6 @@ it("should return 400 if no claim_tokens is presented", async () => {
             ticket: "test_ticket"
         });
     expect(res.status).toEqual(400);
-    console.log(JSON.stringify(res.body));
 });
 
 it("should return 400 if a malformed claim_tokens is presented", async () => {

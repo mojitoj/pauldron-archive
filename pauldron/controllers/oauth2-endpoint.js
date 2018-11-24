@@ -48,7 +48,7 @@ async function create(req, res, next) {
 }
 
 async function checkPolicies(claims, permissions, policies) {
-    const policyArray = Object.keys(policies).map((id) => policies[id]);
+    const policyArray = _.values(policies);
     const decision = SimplePolicyDecisionCombinerEngine.evaluate(claims, policyArray, policyTypeToEnginesMap);
     
     if (decision.authorization === "Permit") {

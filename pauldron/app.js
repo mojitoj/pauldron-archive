@@ -6,10 +6,13 @@ const PermissionEndpoint = require("./controllers/permission-endpoint");
 const AuthorizationEndpoint = require("./controllers/authorization-endpoint");
 const IntrospectionEndpoint = require("./controllers/introspection-endpoint");
 const PolicyEndpoint = require("./controllers/policy-endpoint");
+const OAuth2AuthorizationEndpoint = require("./controllers/oauth2-endpoint");
+
 
 const PERMISSION_ENDPOINT_URI = "/protection/permissions";
 const INTROSPECTION_ENDPOINT_URI = "/protection/introspection";
 const AUTHORIZATION_ENDPOINT_URI = "/authorization";
+const OAUTH2_AUTHORIZATION_ENDPOINT_URI = "/oauth2/authorization";
 const POLICY_ENDPOINT_URI = "/policies";
 
 const app = express();
@@ -25,6 +28,8 @@ app.post(`${PERMISSION_ENDPOINT_URI}/`, PermissionEndpoint.create);
 app.post(`${AUTHORIZATION_ENDPOINT_URI}/`, AuthorizationEndpoint.create);
 app.post(`${INTROSPECTION_ENDPOINT_URI}/`, IntrospectionEndpoint.introspect);
 
+app.post(`${OAUTH2_AUTHORIZATION_ENDPOINT_URI}/`, OAuth2AuthorizationEndpoint.create);
+
 app.post(`${POLICY_ENDPOINT_URI}/`, PolicyEndpoint.create);
 app.get(`${POLICY_ENDPOINT_URI}/`, PolicyEndpoint.list);
 app.get(`${POLICY_ENDPOINT_URI}/:id`, PolicyEndpoint.get);
@@ -35,5 +40,6 @@ module.exports = {
     INTROSPECTION_ENDPOINT_URI,
     AUTHORIZATION_ENDPOINT_URI,
     POLICY_ENDPOINT_URI,
+    OAUTH2_AUTHORIZATION_ENDPOINT_URI,
     app
 };

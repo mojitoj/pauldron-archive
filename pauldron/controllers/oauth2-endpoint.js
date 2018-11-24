@@ -1,3 +1,4 @@
+const _ = require("lodash");
 const hash = require("object-hash");
 const db = require("../lib/db");
 const logger = require ("../lib/logger");
@@ -20,7 +21,7 @@ async function create(req, res, next) {
     try {
         const user = APIAuthorization.validate(req, ["AUTH:C"]);
 
-        validateRPTRequest(req);
+        await validateTokenRequest(req);
 
         const policies = await db.Policies.list(user);
 
@@ -50,15 +51,10 @@ async function checkPolicies(claims, permissions, policies) {
     const policyArray = Object.keys(policies).map((id) => policies[id]);
     const decision = SimplePolicyDecisionCombinerEngine.evaluate(claims, policyArray, policyTypeToEnginesMap);
     
-    if (decision.authorization === "Deny") {
-      throw {error: "policy_forbidden"};
-    } else if (decision.authorization === "NotApplicable") {
-      // failing safe on Deny if no applicable policies were found. This could be a configuration setting.
-      throw {error: "policy_forbidden"};
-    } else if (decision.authorization === "Permit") {
-      return reconcilePermissionsAndObligations(permissions, decision.obligations);
-    } else if (decision.authorization === "Indeterminate") {
-        throw {error: "policy_forbidden"};
+    if (decision.authorization === "Permit") {
+        return reconcilePermissionsAndObligations(permissions, decision.obligations);
+    } else {
+        throw {error: "policy_forbidden"}; //fail safe for anything other than an explicit permit
     }
 }
 
@@ -86,40 +82,32 @@ function arrayDeepIncludes(array, thing) {
     return arrayHashes.includes(hash(thing));
 }
 
-function validateRPTRequest(request) {
-    if (!request.body) {
-      throw {
-        error: "bad_request"
-      }
-    } else if (! request.body.client_assertion_type) {
-      throw {
-        error: "bad_request",
-        message: "Bad Request. Expecting 'client_assertion_type'.",
-      }
-    } else if (request.body.client_assertion_type !== JWT_BEARER_CLIENT_ASSERTION_TYPE) {
+const yup = require("yup");
+const schema = yup.object().shape({
+    grant_type: yup.string().required(),
+    client_assertion_type: yup.string().required(),
+    client_assertion: yup.string().required(),
+    scope: yup.string().required(),
+});
+
+async function validateTokenRequest(request) {  
+    try {
+        await schema.validate(request.body);
+    } catch (e) {
         throw {
             error: "bad_request",
-            message: `Bad Request. Only ${JWT_BEARER_CLIENT_ASSERTION_TYPE} is supported for 'client_assertion_type'.`,
-        }
-    } else if (! request.body.grant_type) {
+            message: `Bad Request. ${_.join(e.errors, ", ")}.`
+        }    
+    }
+    if (request.body.client_assertion_type !== JWT_BEARER_CLIENT_ASSERTION_TYPE) {
         throw {
             error: "bad_request",
-            message: "Bad Request. Expecting 'grant_type'.",
+            message: `Bad Request. Currently, only ${JWT_BEARER_CLIENT_ASSERTION_TYPE} is supported for 'client_assertion_type'.`,
         }
     } else if (request.body.grant_type !=="client_credentials") {
         throw {
-          error: "bad_request",
-          message: "Bad Request. Only 'client_credentials' is supported for 'client_assertion'.",
-        }
-    } else if (! request.body.client_assertion) {
-        throw {
-          error: "bad_request",
-          message: "Bad Request. Expecting 'client_assertion'.",
-        }
-    } else if (! request.body.scope) {
-        throw {
-          error: "bad_request",
-          message: "Bad Request. Expecting 'scope'.",
+            error: "bad_request",
+            message: "Bad Request. Currently, only 'client_credentials' is supported for 'grant_type'.",
         }
     }
 }

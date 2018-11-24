@@ -1,6 +1,8 @@
+const _ = require("lodash");
 const hash = require("object-hash");
 const rp = require("request-promise");
 const db = require("../lib/db");
+
 const logger = require ("../lib/logger");
 
 const TimeStampedPermission = require("../model/TimeStampedPermission");
@@ -16,7 +18,7 @@ const {policyTypeToEnginesMap} = require("./policy-endpoint");
 const UMA_REDIRECT_OBLIGATION_ID = "UMA_REDIRECT";
 const DENY_SCOPES_OBLIGATION_ID = "DENY_SCOPES";
 
-// class UMAClaimToken {
+// ClaimToken {
 //   format;
 //   token;
 //   info;
@@ -27,7 +29,7 @@ async function create(req, res, next) {
     try {
         const user = APIAuthorization.validate(req, ["AUTH:C"]);
 
-        validateRPTRequest(req);
+        await validateRPTRequest(req);
 
         const policies = await db.Policies.list(user);
 
@@ -190,44 +192,40 @@ async function introspectRPT(server, rpt) {
 }
 
 async function parseAndValidateClaimTokens(claimTokens) {
-    if (!claimTokens || !claimTokens.length) {
-      throw {
-        error: "claims_error",
-        message: "No claim tokens submitted.",
+  claimTokens = claimTokens || [];  
+
+  let allClaims = {rpts: {}};
+  for (let index = 0; index < claimTokens.length; index++) {
+    const claimToken = claimTokens [index];
+    if (claimToken.format === "jwt") {
+      allClaims = {
+        ...JWTClaimsToken.parse(claimToken.token),
+        ...allClaims
       };
-    }
-    let allClaims = {rpts: {}};
-    for (let index = 0; index < claimTokens.length; index++) {
-      const claimToken = claimTokens [index];
-      if (claimToken.format === "jwt") {
-        allClaims = {
-          ...JWTClaimsToken.parse(claimToken.token),
-          ...allClaims
-        };
-      } else if (claimToken.format === "rpt") {
-        const rpt = claimToken.token;
-        const serverInfo = claimToken.info;
-        if (!serverInfo || !serverInfo.introspection_endpoint) {
-          throw {
-            error: "claims_error",
-            message: "RPT claims must provide 'info.introspection_endpoint' to enable verificication."
-          };
-        }
-
-        const introspectedPermissions = await introspectRPT(serverInfo, rpt);
-
-        allClaims.rpts = {
-          ...allClaims.rpts,
-          [serverInfo.uri]: introspectedPermissions
-        };
-      } else {
+    } else if (claimToken.format === "rpt") {
+      const rpt = claimToken.token;
+      const serverInfo = claimToken.info;
+      if (!serverInfo || !serverInfo.introspection_endpoint) {
         throw {
           error: "claims_error",
-          message: `Unsupported claim format '${claimToken.format}'.`
+          message: "RPT claims must provide 'info.introspection_endpoint' to enable verificication."
         };
       }
+
+      const introspectedPermissions = await introspectRPT(serverInfo, rpt);
+
+      allClaims.rpts = {
+        ...allClaims.rpts,
+        [serverInfo.uri]: introspectedPermissions
+      };
+    } else {
+      throw {
+        error: "claims_error",
+        message: `Unsupported claim format '${claimToken.format}'.`
+      };
     }
-    return allClaims;
+  }
+  return allClaims;
 }
 
 function validatePermissions(permissions) {
@@ -242,17 +240,26 @@ function validatePermissions(permissions) {
     }
 }
 
-function validateRPTRequest(request) {
-    if (!request.body) {
-      throw {
-        error: "bad_request"
-      }
-    } else if (! request.body.ticket) {
-      throw {
-        error: "bad_request",
-        message: "Bad Request. Expecting a ticket.",
-      }
-    }
+const yup = require("yup");
+const schema = yup.object().shape({
+  ticket: yup.string().required(),
+  claim_tokens: yup.array().of(
+      yup.object().shape({ 
+          format: yup.string().required(),
+          token: yup.string().required()
+      })
+  ).required()
+});
+
+async function validateRPTRequest(request) {  
+  try {
+    await schema.validate(request.body);
+  } catch (e) {
+    throw {
+      error: "bad_request",
+      message: `Bad Request. ${_.join(e.errors, ", ")}.`
+    }    
+  }
 }
 
 module.exports = {

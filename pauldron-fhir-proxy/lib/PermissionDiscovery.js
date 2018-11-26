@@ -83,10 +83,7 @@ async function getRequiredPermissions(resource) {
 }
 
 function arrayMergeDeep(array1, array2) {
-    const nonRepeatedElementsOfArray2 = array2.filter((element) => (
-        array1.filter((theOtherElement) => (_.isEqual(element, theOtherElement))).length === 0
-    ));
-    return array1.concat(nonRepeatedElementsOfArray2);
+    return _.unionWith(array1, array2, _.isEqual);
 }
 
 function augmentSecurityLabel(labels) {

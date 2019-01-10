@@ -10,7 +10,7 @@ function validatePermissionCreationParams(object) {
   if (!Permission.validate(object)) {
     throw {
       error: "bad_request",
-      message: "Bad Request. Expecting a Permissin or Permission array."
+      message: "Bad Request. Expecting a Permission or Permission array."
     };
   }
 }

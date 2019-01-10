@@ -6,7 +6,7 @@ function handle(e, response, request) {
     } else if (e.error === "api_unauthorized") {
         response.status(401).send(
             {
-                message: `API Unauthorized: ${e.message}.`,
+                message: `API Unauthorized: ${e.message}`,
                 error: "api_unauthorized",
                 status: 401
             }
@@ -14,7 +14,7 @@ function handle(e, response, request) {
     } else if (e.error === "api_forbidden") {
         response.status(403).send(
             {
-                message: `API Forbidden: ${e.message}.`,
+                message: `API Forbidden: ${e.message}`,
                 error: "api_forbidden",
                 status: 403
             }
@@ -38,7 +38,7 @@ function handle(e, response, request) {
     } else if (e.error === "object_not_found") {
         response.status(404).send(
             {
-                message: `Object not found: ${e.message}.`,
+                message: `Object not found: ${e.message}`,
                 error: "object_not_found",
                 status: 404
             }

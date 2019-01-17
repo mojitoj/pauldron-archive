@@ -1,30 +1,5 @@
 const rp = require("request-promise");
-
-// export class UMAServerInfo {
-//     realm: string;
-//     uri: string;
-//     permission_endpoint: string;
-//     introspection_endpoint: string;
-// }
-
-// export class Permission {
-//     resource_set_id: any;
-//     scopes: any[];
-// }
-
-// export class Policy {
-//   type: string;
-//   name: string;
-//   content: any;
-// }
-
-// export class ClaimToken {
-//   format: string;
-//   token: any;
-// }
-
-
-
+const {genericErrorHandler} = require("./ErrorHandler");
 
 async function registerPermissions(permissions, url, apiKey) {
   const options = {
@@ -189,23 +164,6 @@ async function getPolicy(policyId, url, apiKey) {
   return response;
 }
 
-function genericErrorHandler(e) {
-  if (!e ) {
-    throw {
-      error: "invalid_response"
-    };
-  } else if (e.statusCode === 404) {
-    throw {
-      error: "object_not_found",
-      message: e.message
-    };
-  } else if (e.statusCode === 403 || e.statusCode === 401) {
-    throw {
-      error: "authorization_error",
-      message: e.message
-    };
-  }
-}
 
 const Policy = {
   add: addPolicy,

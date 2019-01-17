@@ -1,30 +1,5 @@
 const rp = require("request-promise");
-
-// export class UMAServerInfo {
-//     realm: string;
-//     uri: string;
-//     permission_endpoint: string;
-//     introspection_endpoint: string;
-// }
-
-// export class Permission {
-//     resource_set_id: any;
-//     scopes: any[];
-// }
-
-// export class Policy {
-//   type: string;
-//   name: string;
-//   content: any;
-// }
-
-// export class ClaimToken {
-//   format: string;
-//   token: any;
-// }
-
-
-
+const {genericErrorHandler} = require("./ErrorHandler");
 
 async function registerPermissions(permissions, url, apiKey) {
   const options = {
@@ -117,6 +92,39 @@ async function getRPT(ticket, claimTokens, url, apiKey) {
   return response.rpt;
 }
 
+async function getOAuth2Token(requestedScopes, claimsToken, url, apiKey) {
+  const scope = JSON.stringify(requestedScopes);
+  const options = {
+    method: "POST",
+    form: {
+      client_assertion_type: "urn:ietf:params:oauth:client-assertion-type:jwt-bearer",
+      grant_type: "client_credentials",
+      client_assertion: claimsToken,
+      scope
+    },
+    json: true,
+    headers: {"Authorization": `Bearer ${apiKey}`},
+    uri: url
+  };
+  let response = null;
+  try {
+    response = await rp(options);
+  } catch (e) {
+    genericErrorHandler(e);
+    throw {
+      error: "get_oauth2_token_error",
+      message: `Failed at requesting OAuth2 Token from ${url}: ${e.message}`
+    };
+  }
+  if (!response || !response.token) {
+    throw {
+      error: "get_oauth2_token_error",
+      message: `Failed at requesting OAuth2 Token from ${url}: Invalid response.`
+    };
+  }
+  return response.token;
+}
+
 async function addPolicy(policy, url, apiKey) {
   const options = {
     method: "POST",
@@ -189,23 +197,6 @@ async function getPolicy(policyId, url, apiKey) {
   return response;
 }
 
-function genericErrorHandler(e) {
-  if (!e ) {
-    throw {
-      error: "invalid_response"
-    };
-  } else if (e.statusCode === 404) {
-    throw {
-      error: "object_not_found",
-      message: e.message
-    };
-  } else if (e.statusCode === 403 || e.statusCode === 401) {
-    throw {
-      error: "authorization_error",
-      message: e.message
-    };
-  }
-}
 
 const Policy = {
   add: addPolicy,
@@ -222,8 +213,14 @@ const RPT = {
   introspect: introspectRPT
 };
 
+const OAuth2Token = {
+  get: getOAuth2Token,
+  introspect: introspectRPT
+}
+
 module.exports = {
   Policy,
   Permissions,
-  RPT
+  RPT,
+  OAuth2Token
 }

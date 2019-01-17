@@ -8,6 +8,7 @@ const {
     PERMISSION_ENDPOINT_URI,
     INTROSPECTION_ENDPOINT_URI,
     AUTHORIZATION_ENDPOINT_URI,
+    OAUTH2_AUTHORIZATION_ENDPOINT_URI,
     POLICY_ENDPOINT_URI
 } = require("pauldron");
 
@@ -110,6 +111,32 @@ describe("permission, rpt, introspection", () => {
         );
         expect(grantedPermissions).toEqual([{"resource_set_id":"test_res_id","scopes":["s2"]}]);
     });
+
+    it("happy path for oauth2 token.", async () => {
+        expect.assertions(2);
+
+        await PauldronClient.Policy.add(
+            POLICY, 
+            `${SERVER_BASE}${POLICY_ENDPOINT_URI}`, 
+            TEST_POLICY_API_KEY
+        );
+
+        const permissions = [{resource_set_id: "test_res_id", scopes: ["s1", "s2"]}];
+        const token = await PauldronClient.OAuth2Token.get(
+            permissions,
+            CLAIMS_TOKEN,
+            `${SERVER_BASE}${OAUTH2_AUTHORIZATION_ENDPOINT_URI}`, 
+            TEST_AUTH_API_KEY
+        );
+        expect(token).toBeTruthy();
+
+        const grantedPermissions = await PauldronClient.OAuth2Token.introspect(
+            token,
+            `${SERVER_BASE}${INTROSPECTION_ENDPOINT_URI}`, 
+            TEST_PROTECTION_API_KEY
+        );
+        expect(grantedPermissions).toEqual([{"resource_set_id":"test_res_id","scopes":["s2"]}]);
+    });
 });
 
 describe("error cases", () => {
@@ -149,6 +176,24 @@ describe("error cases", () => {
         } catch (e) {
             expect(e).toHaveProperty("error");
             expect(e.error).toEqual("get_rpt_error");
+        }
+    });
+
+    it ("get token", async () => {
+        expect.assertions(2);
+
+        MOCK_SERVER.post(OAUTH2_AUTHORIZATION_ENDPOINT_URI).reply(400, {error: "bad things happened"});
+        try {
+            const permissions = [{resource_set_id: "test_res_id", scopes: ["s1", "s2"]}];
+            await PauldronClient.OAuth2Token.get(
+                permissions,
+                CLAIMS_TOKEN,
+                `${MOCK_SERVER}${OAUTH2_AUTHORIZATION_ENDPOINT_URI}`, 
+                TEST_AUTH_API_KEY
+            );
+        } catch (e) {
+            expect(e).toHaveProperty("error");
+            expect(e.error).toEqual("get_oauth2_token_error");
         }
     });
 

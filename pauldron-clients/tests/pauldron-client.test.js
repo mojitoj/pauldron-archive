@@ -283,3 +283,89 @@ describe("policy", () => {
         }
     });
 });
+
+describe("http", () => {
+    const MOCK_WEB_SERVER_BASE = "http://mock-web-server";
+    const MOCK_WEB_SERVER = nock(MOCK_WEB_SERVER_BASE, {
+        reqheaders: {
+            "Authorization": 
+                (headerValue) => (headerValue.includes("Bearer "))
+        }
+    });
+    it("happy path for oauth2 token.", async () => {
+        expect.assertions(5);
+        MOCK_WEB_SERVER.get("/hello").twice().reply(200, {});
+
+        await PauldronClient.Policy.add(
+            POLICY, 
+            `${SERVER_BASE}${POLICY_ENDPOINT_URI}`, 
+            TEST_POLICY_API_KEY
+        );
+
+        const permissions = [{resource_set_id: "test_res_id", scopes: ["s1", "s2"]}];
+
+        const options = {
+            requestedScopes: permissions,
+            claimsToken: CLAIMS_TOKEN,
+            authEndpointUrl: `${SERVER_BASE}${OAUTH2_AUTHORIZATION_ENDPOINT_URI}`,
+            authApiKey: TEST_AUTH_API_KEY,
+            method: "GET",
+            json: true,
+            uri: `${MOCK_WEB_SERVER_BASE}/hello`
+        };
+
+        const {token, response} = await PauldronClient.HTTP.OAuth2.request(options);
+        expect(token).toBeTruthy();
+        expect(response).toEqual({});
+
+        const newOptions = {
+            ...options,
+            token
+        };
+
+        const newResponse = await PauldronClient.HTTP.OAuth2.request(newOptions);
+        expect(newResponse.token).toBeTruthy();
+        expect(newResponse.token).toEqual(token);
+        expect(newResponse.response).toEqual({});
+    });
+
+    it("calling with a bad oauth2 token.", async () => {
+        expect.assertions(6);
+        MOCK_WEB_SERVER.get("/hello").reply(401, {});
+        MOCK_WEB_SERVER.get("/hello").twice().reply(200, {});
+
+        await PauldronClient.Policy.add(
+            POLICY, 
+            `${SERVER_BASE}${POLICY_ENDPOINT_URI}`, 
+            TEST_POLICY_API_KEY
+        );
+
+        const permissions = [{resource_set_id: "test_res_id", scopes: ["s1", "s2"]}];
+
+        const options = {
+            requestedScopes: permissions,
+            claimsToken: CLAIMS_TOKEN,
+            authEndpointUrl: `${SERVER_BASE}${OAUTH2_AUTHORIZATION_ENDPOINT_URI}`,
+            authApiKey: TEST_AUTH_API_KEY,
+            method: "GET",
+            token: "bad_token",
+            json: true,
+            uri: `${MOCK_WEB_SERVER_BASE}/hello`
+        };
+
+        const {token, response} = await PauldronClient.HTTP.OAuth2.request(options);
+        expect(token).toBeTruthy();
+        expect(token).not.toEqual("bad_token");
+        expect(response).toEqual({});
+
+        const newOptions = {
+            ...options,
+            token
+        };
+
+        const newResponse = await PauldronClient.HTTP.OAuth2.request(newOptions);
+        expect(newResponse.token).toBeTruthy();
+        expect(newResponse.token).toEqual(token);
+        expect(newResponse.response).toEqual({});
+    });
+});

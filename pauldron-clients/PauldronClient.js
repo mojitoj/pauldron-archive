@@ -1,4 +1,5 @@
 const rp = require("request-promise");
+const _ = require("lodash");
 const {genericErrorHandler} = require("./ErrorHandler");
 
 async function registerPermissions(permissions, url, apiKey) {
@@ -197,6 +198,50 @@ async function getPolicy(policyId, url, apiKey) {
   return response;
 }
 
+async function httpRequestOAuth2(options) {
+  let newOptions = options;
+  let newToken = options.token;
+
+  const {
+      requestedScopes,
+      claimsToken,
+      authEndpointUrl,
+      authApiKey
+  } = options;
+
+  try {
+    newToken = newToken || await getOAuth2Token(
+          requestedScopes,
+          claimsToken,
+          authEndpointUrl, 
+          authApiKey
+      );
+      
+      newOptions = _.set(options, "headers['Authorization']", `Bearer ${newToken}`);
+      const response = await rp(newOptions);
+      return {
+          token: newToken,
+          response
+      };
+      
+  } catch (e) {
+      if (e.statusCode === 401) {
+          newToken = await getOAuth2Token(
+              requestedScopes,
+              claimsToken,
+              authEndpointUrl, 
+              authApiKey
+          );
+          newOptions = _.set(options, "headers['Authorization']", `Bearer ${newToken}`);
+          const response = await rp(newOptions);
+          return {
+              token: newToken,
+              response
+          };
+      }
+      throw e;
+  }
+}
 
 const Policy = {
   add: addPolicy,
@@ -216,11 +261,18 @@ const RPT = {
 const OAuth2Token = {
   get: getOAuth2Token,
   introspect: introspectRPT
-}
+};
+
+const HTTP = {
+  OAuth2 : {
+    request: httpRequestOAuth2
+  }
+};
 
 module.exports = {
   Policy,
   Permissions,
   RPT,
-  OAuth2Token
+  OAuth2Token,
+  HTTP
 }

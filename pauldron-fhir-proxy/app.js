@@ -1,17 +1,24 @@
 const express = require("express");
 const morgan = require("morgan");
-const bodyParser = require("body-parser");
+const proxy = require('http-proxy-middleware')
 
 const FHIRProxy = require("./controllers/FHIRProxy");
+
+const FHIR_SERVER_BASE = process.env.FHIR_SERVER_BASE;
 
 const app = express();
 
 //middlewares
 app.use(morgan("dev"));
-app.use(bodyParser.json({type: "application/json"}));
-app.use(bodyParser.urlencoded({ extended: false }));
 
-app.get("/*", FHIRProxy.get);
+const proxyOptions = {
+    target: FHIR_SERVER_BASE,
+    onProxyRes: FHIRProxy.onProxyRes,
+    xfwd: true,
+    selfHandleResponse: true
+};
+
+app.use("/", proxy(proxyOptions));
 
 module.exports = {
     app

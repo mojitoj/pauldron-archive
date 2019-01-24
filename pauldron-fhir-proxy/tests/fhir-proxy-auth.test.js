@@ -7,7 +7,9 @@ const PauldronClient = require("pauldron-clients");
 
 
 const FHIR_SERVER_BASE = process.env.FHIR_SERVER_BASE || "https://mock-fhir-server/base";
-const MOCK_FHIR_SERVER = nock(FHIR_SERVER_BASE);
+const MOCK_FHIR_SERVER = nock(FHIR_SERVER_BASE)
+                        .defaultReplyHeaders({"Content-Type": "application/json; charset=utf-8"})
+                        .replyContentLength();
 
 const POLICY_API_TOKEN = {
     uid: "test_user",

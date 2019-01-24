@@ -69,7 +69,7 @@ it("should return a 404 if the resources does not exists", async () => {
     expect.assertions(1);
     MOCK_FHIR_SERVER
         .get("/Patient/2")
-        .reply(404);
+        .reply(404, "{\"resourceType\": \"OperationOutcome\"}");
 
     let res = await request(app)
         .get("/Patient/2")

@@ -45,18 +45,20 @@ async function handleGet(rawBackendBody, proxyRes, req, res) {
     let backendResponseBytes = rawBackendBody;
     let backendResponse = null;
     try {
-        if (rawBackendBody.length) {
-            const encoding = proxyRes.headers['content-encoding'];
-            if (encoding === "gzip") {
-                backendResponseBytes = zlib.gunzipSync(rawBackendBody);
-            } else if (encoding === "deflate") {
-                backendResponseBytes = zlib.inflateSync(rawBackendBody);
-            } 
-            backendResponse = JSON.parse(backendResponseBytes.toString("utf8"));
-        }
-                
-        if (backendResponse && backendResponseIsProtected(backendResponse)) {
-            await processProtecetedResource(req, backendResponse);
+        const backendResponseStatus = proxyRes.statusCode;
+        if (backendResponseStatus ===200) {
+            if (rawBackendBody.length) {
+                const encoding = proxyRes.headers['content-encoding'];
+                if (encoding === "gzip") {
+                    backendResponseBytes = zlib.gunzipSync(rawBackendBody);
+                } else if (encoding === "deflate") {
+                    backendResponseBytes = zlib.inflateSync(rawBackendBody);
+                } 
+                backendResponse = JSON.parse(backendResponseBytes.toString("utf8"));
+            }
+            if (backendResponse && backendResponseIsProtected(backendResponse)) {
+                await processProtecetedResource(req, backendResponse);
+            }
         }
         res.set(proxyRes.headers);
         res.statusCode = proxyRes.statusCode;

@@ -1,3 +1,4 @@
+const zlib = require("zlib");
 const rp = require("request-promise");
 const PauldronClient = require("pauldron-clients");
 const _ = require("lodash");
@@ -17,64 +18,106 @@ const UMA_SERVER_INTROSPECTION_ENDPOINT = process.env.UMA_SERVER_INTROSPECTION_E
 const UMA_SERVER_PERMISSION_REGISTRATION_ENDPOINT = process.env.UMA_SERVER_PERMISSION_REGISTRATION_ENDPOINT;
 const UMA_SERVER_PROTECTION_API_KEY = process.env.UMA_SERVER_PROTECTION_API_KEY;
 
-async function get(req, res, next) {
-    const url = req.originalUrl;
+async function onProxyRes(proxyRes, req, res) {
+    let rawBackendBody = Buffer.from([]);
+    proxyRes.on("data", data => {
+        rawBackendBody = Buffer.concat([rawBackendBody, data]);
+    });
 
-    const options = {
-        method: "GET",
-        json: true,
-        uri: FHIR_SERVER_BASE + url,
-        simple: false,
-        resolveWithFullResponse: true
-    };
+    proxyRes.on("end", async () => {
+        const method = req.method;
+        if (method === "GET") {
+            handleGet(rawBackendBody, proxyRes, req, res);
+        } else {
+            sendIntactResponse (rawBackendBody, proxyRes, req, res);
+        }
+    });
+}
 
+function sendIntactResponse(rawBackendBody, proxyRes, req, res) {
+    res.set(proxyRes.headers);
+    res.statusCode = proxyRes.statusCode;
+    res.write(rawBackendBody);
+    res.end();
+}
+
+async function handleGet(rawBackendBody, proxyRes, req, res) {
+    let backendResponseBytes = rawBackendBody;
+    let backendResponse = null;
     try {
-        const backendRawResponse = await rp(options);
-        const backendResponse = backendRawResponse.body;
-
+        if (rawBackendBody.length) {
+            const encoding = proxyRes.headers['content-encoding'];
+            if (encoding === "gzip") {
+                backendResponseBytes = zlib.gunzipSync(rawBackendBody);
+            } else if (encoding === "deflate") {
+                backendResponseBytes = zlib.inflateSync(rawBackendBody);
+            } 
+            backendResponse = JSON.parse(backendResponseBytes.toString("utf8"));
+        }
+                
         if (backendResponse && backendResponseIsProtected(backendResponse)) {
             await processProtecetedResource(req, backendResponse);
         }
-        res.status(backendRawResponse.statusCode).send(backendResponse);
+        res.set(proxyRes.headers);
+        res.statusCode = proxyRes.statusCode;
+        res.write(rawBackendBody);
     } catch (e) {
         if (e.error === "uma_redirect" ||
             e.error === "invalid_rpt") {
-            res.status(e.status)
-            .set("WWW-Authenticate", `UMA realm=\"${e.umaServerParams.realm}\", as_uri=\"${e.umaServerParams.uri}\", ticket=\"${e.ticket}\"`)
-            .send({
-                    message: `Need approval from ${e.umaServerParams.uri}.`,
-                    error: e.error,
-                    status: e.status,
-                    ticket: e.ticket,
-                    info: {"server": e.umaServerParams}
-                }
-            );
+            res.statusCode = e.status;
+            res.set({
+                "WWW-Authenticate": `UMA realm=\"${e.umaServerParams.realm}\", as_uri=\"${e.umaServerParams.uri}\", ticket=\"${e.ticket}\"`
+            });
+            const responseBody = {
+                message: `Need approval from ${e.umaServerParams.uri}.`,
+                error: e.error,
+                status: e.status,
+                ticket: e.ticket,
+                info: {"server": e.umaServerParams}
+            };
+            res.write(Buffer.from(JSON.stringify(responseBody), "utf8"));
         } else if (
             e.error === "permission_registration_error" ||
             e.error === "introspection_error"
         ) {
-            res.status(403)
-            .set("Warning", "199 - \"UMA Authorization Server Unreachable\"")
-            .send({
-                    message: `Could not arrange authorization: ${e.message}.`,
-                    error: "authorization_error",
-                    status: 403,
+            res.statusCode = 403;
+            res.set({
+                "Warning": "199 - \"UMA Authorization Server Unreachable\""
             });
+            const responseBody = {
+                message: `Could not arrange authorization: ${e.message}.`,
+                error: "authorization_error",
+                status: 403
+            };
+            res.write(Buffer.from(JSON.stringify(responseBody), "utf8"));
         } else if (e.error === "patient_not_found") {
-            res.status(403)
-            .send({
-                    message: `Could not arrange authorization: ${e.message}.`,
-                    error: "authorization_error",
-                    status: 403,
-            });
+            res.statusCode = 403;
+            const responseBody = {
+                message: `Could not arrange authorization: ${e.message}.`,
+                error: "authorization_error",
+                status: 403,
+            };
+            res.write(Buffer.from(JSON.stringify(responseBody), "utf8"));
+        } else if (e instanceof SyntaxError) {
+            res.statusCode = 400;
+            const responseBody = {
+                message: "Invalid response from the FHIR server. FHIRProxy only supports JSON at this time.",
+                error: "unsupported_response",
+                status: 500
+            };
+            res.write(Buffer.from(JSON.stringify(responseBody), "utf8"));
         } else {
             logger.warn(e);
-            res.status(500).send({
-                message: `FHIRProxy encountered an error`,
+            res.statusCode = 500;
+            const responseBody = {
+                message: "FHIRProxy encountered an error",
                 error: "internal_error",
                 status: 500
-            });
+            };
+            res.write(Buffer.from(JSON.stringify(responseBody), "utf8"));
         }
+    } finally {
+        res.end();
     }
 }
 
@@ -183,5 +226,5 @@ function getRPTFromHeader (request) {
 }
 
 module.exports = {
-    get 
+    onProxyRes
 }

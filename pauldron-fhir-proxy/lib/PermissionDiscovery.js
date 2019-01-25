@@ -146,11 +146,12 @@ async function getPatientId(plainResource) { // the input is a primitive FHIR re
         DESIGNATED_PATIENT_ID_SYSTEMS.includes(identifier.system)
     ));
 
-    const identifier = _.sortBy(designatedIdentifiers, 
+    const identifier = _.sortBy(
+            designatedIdentifiers, 
             (did) => (DESIGNATED_PATIENT_ID_SYSTEMS.indexOf(did.system))
         )[0] || identifiers[0];
 
-    return identifier.value;
+    return _.pick(identifier, ["system", "value"]);
 }
 
 module.exports = {

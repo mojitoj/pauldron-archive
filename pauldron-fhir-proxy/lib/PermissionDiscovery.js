@@ -138,21 +138,20 @@ async function getPatientId(plainResource) { // the input is a primitive FHIR re
     if (!identifiers) {
         throw {
             error: "patient_not_found",
-            message: `Patient ${patientURL} does not have any identifier.`
+            message: `Patient ${patientURL} must have an identifier.`
         };
     }
-    const theIdentifiers = identifiers.filter((identifier) => (
+
+    const designatedIdentifiers = identifiers.filter((identifier) => (
         DESIGNATED_PATIENT_ID_SYSTEMS.includes(identifier.system)
     ));
 
-    if (theIdentifiers.length !== 1) {
-        throw {
-            error: "patient_not_found",
-            message: `Cannot find the designated identifier ${designatedIdentifier} for Patient ${patientURL}.`
-        };
-    }
-    const identifier = theIdentifiers[0]; //todo: we can do better here
-    return identifier.value;
+    const identifier = _.sortBy(
+            designatedIdentifiers, 
+            (did) => (DESIGNATED_PATIENT_ID_SYSTEMS.indexOf(did.system))
+        )[0] || identifiers[0];
+
+    return _.pick(identifier, ["system", "value"]);
 }
 
 module.exports = {

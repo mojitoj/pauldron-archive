@@ -241,7 +241,7 @@ describe("policy", () => {
             );
         } catch(e) {
             expect(e).toHaveProperty("error");
-            expect(e.error).toEqual("authorization_error");
+            expect(e.error).toEqual("add_policy_error");
         }
     });
 
@@ -279,7 +279,7 @@ describe("policy", () => {
             );
         } catch(e) {
             expect(e).toHaveProperty("error");
-            expect(e.error).toEqual("object_not_found");
+            expect(e.error).toEqual("get_policy_error");
         }
     });
 });

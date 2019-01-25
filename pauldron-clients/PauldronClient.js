@@ -21,10 +21,10 @@ async function registerPermissions(permissions, url, apiKey) {
     }
     return response.ticket;
   } catch (e) {
-    genericErrorHandler(e);
     throw {
       error: "permission_registration_error",
-      message: `Failed registration at ${url}: ${e.message}`
+      message: `Failed registration at ${url}: ${e.message}`,
+      cause: e
     };
   }
 }
@@ -43,10 +43,10 @@ async function introspectRPT(rpt, url, apiKey) {
   try {
     response = await rp(options);
   } catch (e) {
-    genericErrorHandler(e);
     throw {
       error: "introspection_error",
-      message: `Failed at introspection from ${url}: ${e.message}`
+      message: `Failed at introspection from ${url}: ${e.message}`,
+      cause: e
     };
   }
   if (!response) {
@@ -78,10 +78,10 @@ async function getRPT(ticket, claimTokens, url, apiKey) {
   try {
     response = await rp(options);
   } catch (e) {
-    genericErrorHandler(e);
     throw {
       error: "get_rpt_error",
-      message: `Failed at requesting RPT from ${url}: ${e.message}`
+      message: `Failed at requesting RPT from ${url}: ${e.message}`,
+      cause: e
     };
   }
   if (!response || !response.rpt) {
@@ -138,10 +138,10 @@ async function addPolicy(policy, url, apiKey) {
   try {
     response = await rp(options);
   } catch (e) {
-    genericErrorHandler(e);
     throw {
       error: "add_policy_error",
-      message: `Failed to add policy to ${url}: ${e.message}`
+      message: `Failed to add policy to ${url}: ${e.message}`,
+      cause: e
     };
   }
   if (!response || !response.id) {
@@ -164,10 +164,10 @@ async function deletePolicy(policyId, url, apiKey) {
   try {
     response = await rp(options);
   } catch (e) {
-    genericErrorHandler(e);
     throw {
       error: "delete_policy_error",
-      message: `Failed to delete policy at ${url}/${policyId}: ${e.message}`
+      message: `Failed to delete policy at ${url}/${policyId}: ${e.message}`,
+      cause: e
     };
   }
 }
@@ -183,10 +183,10 @@ async function getPolicy(policyId, url, apiKey) {
   try {
     response = await rp(options);
   } catch (e) {
-    genericErrorHandler(e);
     throw {
       error: "get_policy_error",
-      message: `Failed to delete policy at ${url}/${policyId}: ${e.message}`
+      message: `Failed to delete policy at ${url}/${policyId}: ${e.message}`,
+      cause: e
     };
   }
   if (!response || !response.id) {

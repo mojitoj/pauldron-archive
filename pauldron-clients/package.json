@@ -14,7 +14,7 @@
     "jest": "^23.6.0",
     "jsonwebtoken": "^8.3.0",
     "nock": "^10.0.1",
-    "pauldron": "0.0.2"
+    "pauldron": "0.1.0"
   },
   "dependencies": {
     "lodash": "^4.17.11",

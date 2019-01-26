@@ -10,6 +10,7 @@ const {
 
 const PROTECTION_API_TOKEN = {
     uid: "test_user",
+    realm: "example",
     scopes: ["INTR:R", "PERMS:C", "PERMS:R", "PERMS:L"]
 };
 

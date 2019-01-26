@@ -13,16 +13,19 @@ const MOCK_FHIR_SERVER = nock(FHIR_SERVER_BASE)
 
 const POLICY_API_TOKEN = {
     uid: "test_user",
+    realm: "example",
     scopes: ["POL:C", "POL:L", "POL:R", "POL:D"]
 };
 
 const AUTH_API_TOKEN = {
     uid: "test_user",
+    realm: "example",
     scopes: ["AUTH:C"]
 };
 
 const PROTECTION_API_TOKEN = {
     uid: "test_user",
+    realm: "example",
     scopes: ["INTR:R", "PERMS:C", "PERMS:R", "PERMS:L"]
 };
 

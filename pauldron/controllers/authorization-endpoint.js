@@ -27,18 +27,18 @@ const rptTTL = parseInt(process.env.RPT_TTL) || 20;
 
 async function create(req, res, next) {
   try {
-      const user = APIAuthorization.validate(req, ["AUTH:C"]);
+      const realm = APIAuthorization.validate(req, ["AUTH:C"]);
 
       await validateRPTRequest(req);
 
-      const policies = await db.Policies.list(user);
+      const policies = await db.Policies.list(realm);
 
       const ticket = req.body.ticket;
 
       const claimsTokens = req.body.claim_tokens;
       const claims = await parseAndValidateClaimTokens(claimsTokens);
 
-      const permission = await db.Permissions.get(user, ticket);
+      const permission = await db.Permissions.get(realm, ticket);
       validatePermissions(permission);
 
       const permissionsAfterReconciliationWithPolicies = 
@@ -47,12 +47,12 @@ async function create(req, res, next) {
       const rpt = TimeStampedPermission.issue(
         rptTTL, 
         permissionsAfterReconciliationWithPolicies, 
-        permission.user
+        permission.realm
       );
 
-      await db.RPTs.add(user, rpt.id, rpt);
+      await db.RPTs.add(realm, rpt.id, rpt);
 
-      await db.Permissions.del(user, ticket);
+      await db.Permissions.del(realm, ticket);
 
       res.status(201).send({rpt: rpt.id});
   } catch (e) {

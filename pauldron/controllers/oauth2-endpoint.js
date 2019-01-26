@@ -19,11 +19,11 @@ const TOKEN_TTL = parseInt(process.env.RPT_TTL) || 20;
 
 async function create(req, res, next) {
     try {
-        const user = APIAuthorization.validate(req, ["AUTH:C"]);
+        const realm = APIAuthorization.validate(req, ["AUTH:C"]);
 
         await validateTokenRequest(req);
 
-        const policies = await db.Policies.list(user);
+        const policies = await db.Policies.list(realm);
 
         const claimToken = req.body.client_assertion;
         const claims = JWTClaimsToken.parse(claimToken);
@@ -36,10 +36,10 @@ async function create(req, res, next) {
         const token = TimeStampedPermission.issue(
             TOKEN_TTL, 
             permissionsAfterReconciliationWithPolicies, 
-            user
+            realm
         );
 
-        await db.RPTs.add(user, token.id, token);
+        await db.RPTs.add(realm, token.id, token);
 
         res.status(201).send({token: token.id});
     } catch (e) {

@@ -50,26 +50,37 @@ async function create(req, res, next) {
 async function checkPolicies(claims, permissions, policies) {
     const policyArray = _.values(policies);
     const decision = SimplePolicyDecisionCombinerEngine.evaluate(claims, policyArray, policyTypeToEnginesMap);
-    
+
     if (decision.authorization === "Permit") {
-        return reconcilePermissionsAndObligations(permissions, decision.obligations);
+        const grantedPermissions = reconcilePermissionsAndObligations(permissions, decision.obligations);
+        if (!grantedPermissions || !grantedPermissions.length) {
+            throw {
+                error: "policy_forbidden"
+            };
+        }
+        return grantedPermissions;
     } else {
-        throw {error: "policy_forbidden"}; //fail safe for anything other than an explicit permit
+        throw {
+            error: "policy_forbidden"
+        }; //fail safe for anything other than an explicit permit
     }
 }
 
 function reconcilePermissionsAndObligations (permissions, obligations) {
     const deniedScopes = obligations[DENY_SCOPES_OBLIGATION_ID];
+
     if (deniedScopes) {
-      return permissions.map(
-          (permission) => (
-            {
-                resource_set_id: permission.resource_set_id,
-                scopes: (permission.scopes || []).filter(
-                    (scope) => (! arrayDeepIncludes (deniedScopes, scope))
-                )
-            }
-      )).filter((permission) => (
+        const grantedPermissions = permissions.map(
+            (permission) => (
+              {
+                  resource_set_id: permission.resource_set_id,
+                  scopes: (permission.scopes || []).filter(
+                      (scope) => (! arrayDeepIncludes (deniedScopes, scope))
+                  )
+              }
+        ));
+
+      return grantedPermissions.filter((permission) => (
         ((permission.scopes.length || 0) !== 0)
       ));
     } else {

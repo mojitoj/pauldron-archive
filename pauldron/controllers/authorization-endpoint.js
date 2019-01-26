@@ -1,9 +1,9 @@
 const _ = require("lodash");
-const hash = require("object-hash");
 const rp = require("request-promise");
 const db = require("../lib/db");
 
 const logger = require ("../lib/logger");
+const {reconcilePermissionsAndObligations, validatePermissions} = require("../lib/permission-handler");
 
 const TimeStampedPermission = require("../model/TimeStampedPermission");
 const UpstreamServers = require("../lib/upstream-servers");
@@ -16,7 +16,6 @@ const {SimplePolicyDecisionCombinerEngine} = require ("pauldron-policy");
 const {policyTypeToEnginesMap} = require("./policy-endpoint");
 
 const UMA_REDIRECT_OBLIGATION_ID = "UMA_REDIRECT";
-const DENY_SCOPES_OBLIGATION_ID = "DENY_SCOPES";
 
 // ClaimToken {
 //   format;
@@ -39,7 +38,7 @@ async function create(req, res, next) {
       const claims = await parseAndValidateClaimTokens(claimsTokens);
 
       const permission = await db.Permissions.get(realm, ticket);
-      validatePermissions(permission);
+      validatePermissions(permission, "ticket");
 
       const permissionsAfterReconciliationWithPolicies = 
         await checkPolicies(claims, permission.permissions, policies);
@@ -75,19 +74,26 @@ async function create(req, res, next) {
 async function checkPolicies(claims, permissions, policies) {
   const policyArray = _.values(policies);
   const decision = SimplePolicyDecisionCombinerEngine.evaluate(claims, policyArray, policyTypeToEnginesMap);
+
+  const authorizationDecision = decision.authorization;
     
-  if (decision.authorization === "Deny") {
-    throw {error: "policy_forbidden"};
-  } else if (decision.authorization === "NotApplicable") {
-    // failing safe on Deny if no applicable policies were found. This could be a configuration setting.
-    throw {error: "policy_forbidden"};
+  if (!authorizationDecision || authorizationDecision === "Deny" || authorizationDecision === "NotApplicable") {
+    // failing safe to Deny if no applicable policies were found. This could be a configuration setting.
+    throw {
+      error: "policy_forbidden"
+    };
   } else if (decision.authorization === "Permit") {
-    return reconcilePermissionsAndObligations(permissions, decision.obligations);
-  } else if (decision.authorization === "Indeterminate") {
-    let ticket = "";
-    
+    const grantedPermissions = reconcilePermissionsAndObligations(permissions, decision.obligations);
+    if (!grantedPermissions || !grantedPermissions.length) {
+        logger.debug("Rejecting RPT request because to permissions could be granted.");
+        throw {
+            error: "policy_forbidden"
+        };
+    }
+    return grantedPermissions;
+  } else if (decision.authorization === "Indeterminate") {    
     const server =  decision.obligations[UMA_REDIRECT_OBLIGATION_ID];
-    ticket = await registerUMAPermissions(server, permissions);
+    const ticket = await registerUMAPermissions(server, permissions);
   
     throw {
       error: "uma_redirect",
@@ -129,29 +135,6 @@ async function registerUMAPermissions(server, permissions) {
       message: `Need approval from ${upstreamServerPermissionRegistrationEndpoint} but the following error occurred while contacting this server: ${e}.`
     };
   }
-}
-
-function reconcilePermissionsAndObligations (permissions, obligations) {
-  const deniedScopes = obligations[DENY_SCOPES_OBLIGATION_ID];
-  if (deniedScopes) {
-    return permissions.map((permission) => (
-      {
-        resource_set_id: permission.resource_set_id,
-        scopes: (permission.scopes || []).filter((scope) => (
-          ! arrayDeepIncludes (deniedScopes, scope)
-        ))
-      }
-    )).filter((permission) => (
-      ((permission.scopes.length || 0) !== 0)
-    ));
-  } else {
-    return permissions;
-  }
-}
-
-function arrayDeepIncludes(array, thing) {
-  const arrayHashes = array.map((element) => (hash(element)));
-  return arrayHashes.includes(hash(thing));
 }
 
 async function introspectRPT(server, rpt) {
@@ -226,18 +209,6 @@ async function parseAndValidateClaimTokens(claimTokens) {
     }
   }
   return allClaims;
-}
-
-function validatePermissions(permissions) {
-  if (!permissions) {
-    throw {
-      error: "invalid_ticket",
-    };
-  } else if (TimeStampedPermission.isExpired(permissions)) {
-    throw {
-      error: "expired_ticket",
-    };
-  }
 }
 
 const yup = require("yup");

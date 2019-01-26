@@ -47,9 +47,7 @@ function validate(request, requiredScopes) {
             message: "Insufficient scopes on the API key.",
         };
     }
-    return {
-        id: payload.realm
-    };
+    return payload.realm;
     // todo: check validy period.
 }
 

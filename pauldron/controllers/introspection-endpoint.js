@@ -1,7 +1,8 @@
 const _ = require("lodash");
 const APIAuthorization = require("../lib/api-authorization");
+const {validatePermissions} = require("../lib/permission-handler");
+
 const GenericErrorHandler = require("./error-handler");
-const TimeStampedPermission = require("../model/TimeStampedPermission");
 
 const logger = require ("../lib/logger");
 const db = require("../lib/db");
@@ -13,7 +14,7 @@ async function introspect(req, res, next) {
       validateIntrospectionRequestParams(req.body);
       const token = req.body.token;
       const permission = await db.RPTs.get(realm, token);
-      validatePermission(permission);
+      validatePermissions(permission, "rpt");
 
       const introspectionResponseObject = {
         ...permission,
@@ -36,18 +37,6 @@ function validateIntrospectionRequestParams(object) {
     throw {
       error: "bad_request",
       message: "Expecting a token."
-    }
-  }
-}
-
-function validatePermission(permission) {
-  if (!permission) {
-    throw {
-      error: "invalid_rpt"
-    }
-  } else if (TimeStampedPermission.isExpired(permission)) {
-    throw {
-      error: "expired_rpt"
     }
   }
 }

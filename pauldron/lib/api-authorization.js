@@ -1,12 +1,5 @@
 const jwt = require("jsonwebtoken");
 
-// APIKey {
-//     uid;
-//     nbf;
-//     exp;
-//     scopes;
-// }
-
 function getAPIKeyFromHeader (request) {
     if (!request.get("authorization")
         || ! request.get("authorization").includes("Bearer ")
@@ -38,6 +31,12 @@ function validate(request, requiredScopes) {
             message: "Malformed API key. Missing or empty 'uid'.",
         };
     }
+    if (!payload.realm) {
+        throw {
+            error: "api_forbidden",
+            message: "Malformed API key. Missing or empty 'realm'.",
+        };
+    }
     const hasSufficientScopes = requiredScopes.every(
         (requiredScope) => (payload.scopes.includes(requiredScope))
     );
@@ -49,7 +48,7 @@ function validate(request, requiredScopes) {
         };
     }
     return {
-        id: payload.uid
+        id: payload.realm
     };
     // todo: check validy period.
 }

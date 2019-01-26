@@ -15,13 +15,13 @@ const policyTypeToValidator = {
 
 async function create(req, res, next) {
     try {
-        const user = APIAuthorization.validate(req, ["POL:C"]);
+        const realm = APIAuthorization.validate(req, ["POL:C"]);
         validateNewPolicyRequestParams(req.body);
         const policy = req.body;
         const id = hash(policy);
-        let maybeExistingPolicy = await db.Policies.get(user, id);
+        let maybeExistingPolicy = await db.Policies.get(realm, id);
         if (! maybeExistingPolicy) {
-            await db.Policies.add(user, id, policy);
+            await db.Policies.add(realm, id, policy);
             res.status(201).send(
                 {
                     "id": id,
@@ -44,8 +44,8 @@ async function create(req, res, next) {
 
 async function list(req, res, next) {
     try {
-        const user = APIAuthorization.validate(req, ["POL:L"], req.app.locals.serverConfig);
-        const policies = await db.Policies.list(user);
+        const realm = APIAuthorization.validate(req, ["POL:L"], req.app.locals.serverConfig);
+        const policies = await db.Policies.list(realm);
         res.status(200).send(Object.keys(policies)
             .map((id) => (
                 {
@@ -61,9 +61,9 @@ async function list(req, res, next) {
 
 async function get(req, res, next) {
     try {
-        const user = APIAuthorization.validate(req, ["POL:R"], req.app.locals.serverConfig);
+        const realm = APIAuthorization.validate(req, ["POL:R"], req.app.locals.serverConfig);
         const id = req.params.id;
-        const policy = await db.Policies.get(user, id);
+        const policy = await db.Policies.get(realm, id);
 
         if (policy) {
             res.status(200).send({
@@ -83,9 +83,9 @@ async function get(req, res, next) {
 
 async function del(req, res, next) {
     try {
-        const user = APIAuthorization.validate(req, ["POL:D"]);
+        const realm = APIAuthorization.validate(req, ["POL:D"]);
         const id = req.params.id;
-        const deleted = await db.Policies.del(user, id);
+        const deleted = await db.Policies.del(realm, id);
 
         if (deleted) {
             res.status(204).send();

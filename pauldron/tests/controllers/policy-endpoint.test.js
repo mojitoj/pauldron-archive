@@ -10,6 +10,7 @@ const {
 
 const POLICY_API_TOKEN = {
     uid: "test_user",
+    realm: "example",
     scopes: ["POL:C", "POL:L", "POL:R", "POL:D"]
 };
 const TEST_POLICY_API_KEY = jwt.sign(POLICY_API_TOKEN, process.env.SECRET_KEY);

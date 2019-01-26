@@ -10,6 +10,7 @@ const {
 
 const AUTH_API_TOKEN = {
     uid: "test_user",
+    realm: "example",
     scopes: ["AUTH:C"]
 };
 

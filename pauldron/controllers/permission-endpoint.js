@@ -17,11 +17,11 @@ function validatePermissionCreationParams(object) {
   
 async function list(req, res, next) {
   try {
-    const user = APIAuthorization.validate(req, ["PERMS:L"]);
-    const thisUsersPermissions = await db.Permissions.list(user);
+    const realm = APIAuthorization.validate(req, ["PERMS:L"]);
+    const thisRealmsPermissions = await db.Permissions.list(realm);
     res
       .status(200)
-      .send(Object.keys(thisUsersPermissions).map((id) => (thisUsersPermissions[id])));
+      .send(Object.keys(thisRealmsPermissions).map((id) => (thisRealmsPermissions[id])));
   } catch (e) {
     GenericErrorHandler.handle(e, res, req);
   }
@@ -31,11 +31,11 @@ const permissionTicketTTL = parseInt(process.env.PERMISSION_TICKET_TTL) || 20;
 
 async function create(req, res, next) {
   try {
-    const user = APIAuthorization.validate(req, ["PERMS:C"]);
+    const realm = APIAuthorization.validate(req, ["PERMS:C"]);
 
     validatePermissionCreationParams(req.body);
-    const ticket = TimeStampedPermission.issue(permissionTicketTTL, req.body, user);
-    await db.Permissions.add(user, ticket.id, ticket);
+    const ticket = TimeStampedPermission.issue(permissionTicketTTL, req.body, realm);
+    await db.Permissions.add(realm, ticket.id, ticket);
     res.status(201).send({ticket: ticket.id});
   } catch (e) {
     GenericErrorHandler.handle(e, res, req);

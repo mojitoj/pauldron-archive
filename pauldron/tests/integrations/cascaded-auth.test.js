@@ -19,28 +19,25 @@ const {
 
 const POLICY_API_TOKEN = {
     uid: "test_user",
+    realm: "example",
     scopes: ["POL:C", "POL:L", "POL:R", "POL:D"]
 };
 
 const AUTH_API_TOKEN = {
     uid: "test_user",
-    scopes: ["AUTH:C"]
-};
-
-const ANOTHER_AUTH_API_TOKEN = {
-    uid: "another_test_user",
+    realm: "example",
     scopes: ["AUTH:C"]
 };
 
 const PROTECTION_API_TOKEN = {
     uid: "test_user",
+    realm: "example",
     scopes: ["INTR:R", "PERMS:C", "PERMS:R", "PERMS:L"]
 };
 
 const TEST_POLICY_API_KEY = jwt.sign(POLICY_API_TOKEN, process.env.SECRET_KEY);
 const TEST_PROTECTION_API_KEY = jwt.sign(PROTECTION_API_TOKEN, process.env.SECRET_KEY);
 const TEST_AUTH_API_KEY = jwt.sign(AUTH_API_TOKEN, process.env.SECRET_KEY);
-const ANOTHER_TEST_AUTH_API_KEY = jwt.sign(ANOTHER_AUTH_API_TOKEN, process.env.SECRET_KEY);
 
 const POLICY = require("../fixtures/simple-policy.json");
 

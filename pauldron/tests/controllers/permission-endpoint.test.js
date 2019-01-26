@@ -12,16 +12,18 @@ const {
 
 const PROTECTION_API_TOKEN = {
     uid: "test_user",
+    realm: "example",
     scopes: ["INTR:R", "PERMS:C", "PERMS:R", "PERMS:L"]
 };
 
-const ANOTHER_PROTECTION_API_TOKEN = {
-    uid: "another_test_user",
+const ANOTHER_REALM_PROTECTION_API_TOKEN = {
+    uid: "test_user",
+    realm: "another-example",
     scopes: ["INTR:R", "PERMS:C", "PERMS:R", "PERMS:L"]
 };
 
 const TEST_PROTECTION_API_KEY = jwt.sign(PROTECTION_API_TOKEN, process.env.SECRET_KEY);
-const ANOTHER_TEST_PROTECTION_API_KEY = jwt.sign(ANOTHER_PROTECTION_API_TOKEN, process.env.SECRET_KEY);
+const ANOTHER_REALM_PROTECTION_API_KEY = jwt.sign(ANOTHER_REALM_PROTECTION_API_TOKEN, process.env.SECRET_KEY);
 
 beforeEach(async () => {
     await db.flush();
@@ -69,7 +71,7 @@ it("should return a 403 if called with an API token with insufficient scopes", a
     expect(res.status).toEqual(403);
 });
 
-it("should be able to create a ticket from a permission(list) it only with the right APIUser", async () => {
+it("should be able to create a ticket from a permission(list) only with the right realm", async () => {
     expect.assertions(7);
     
     let res = await request(app)
@@ -96,7 +98,7 @@ it("should be able to create a ticket from a permission(list) it only with the r
 
     res = await request(app)
         .get(PERMISSION_ENDPOINT_URI)
-        .set("Authorization", `Bearer ${ANOTHER_TEST_PROTECTION_API_KEY}`);
+        .set("Authorization", `Bearer ${ANOTHER_REALM_PROTECTION_API_KEY}`);
     
     expect(res.status).toEqual(200);
     expect(res.body).toHaveLength(0);

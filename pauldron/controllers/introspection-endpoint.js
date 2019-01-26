@@ -9,10 +9,10 @@ const db = require("../lib/db");
 
 async function introspect(req, res, next) {
   try {
-      const user = APIAuthorization.validate(req, ["INTR:R"]);
+      const realm = APIAuthorization.validate(req, ["INTR:R"]);
       validateIntrospectionRequestParams(req.body);
       const token = req.body.token;
-      const permission = await db.RPTs.get(user, token);
+      const permission = await db.RPTs.get(realm, token);
       validatePermission(permission);
 
       const introspectionResponseObject = {

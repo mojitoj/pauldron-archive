@@ -65,7 +65,8 @@ async function handleGet(rawBackendBody, proxyRes, req, res) {
         res.write(rawBackendBody);
     } catch (e) {
         if (e.error === "uma_redirect" ||
-            e.error === "invalid_rpt") {
+            e.error === "invalid_rpt" ||
+            e.error === "insufficient_scopes") {
             res.statusCode = e.status;
             res.set({
                 "WWW-Authenticate": `UMA realm=\"${e.umaServerParams.realm}\", as_uri=\"${e.umaServerParams.uri}\", ticket=\"${e.ticket}\"`

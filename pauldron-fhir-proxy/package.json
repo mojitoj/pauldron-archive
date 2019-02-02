@@ -1,5 +1,5 @@
 {
-  "name": "pauldron-fhir-proxy",
+  "name": "pauldron-hearth",
   "version": "0.1.0",
   "description": "FHIR proxy to enforce UMA/OAuth Authorizaton using a Pauldron Server",
   "main": "app.js",

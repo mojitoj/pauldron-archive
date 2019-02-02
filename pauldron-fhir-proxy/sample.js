@@ -1,8 +1,8 @@
 
 // this script works with the Pauldron FHIR Proxy deployed at:
-// https://pauldron-fhir-proxy.herokuapp.com and 
+// https://pauldron-hearth.herokuapp.com and 
 // the Pauldron server deployed at:
-// https://pauldron-uma.herokuapp.com/
+// https://pauldron.herokuapp.com/
 const jwt = require("jsonwebtoken");
 const PauldronClient = require("pauldron-clients");
 
@@ -66,7 +66,7 @@ const scopes = [
 async function testWithHttpClientWrapper() { 
     await PauldronClient.Policy.add(
         POLICY, 
-        "https://pauldron-uma.herokuapp.com/policies", 
+        "https://pauldron.herokuapp.com/policies", 
         // "http://localhost:3000/policies", 
         TEST_POLICY_API_KEY
     );
@@ -74,12 +74,12 @@ async function testWithHttpClientWrapper() {
     const options = {
         requestedScopes: scopes,
         claimsToken: CLAIMS_TOKEN,
-        authEndpointUrl: "https://pauldron-uma.herokuapp.com/oauth2/authorization",
+        authEndpointUrl: "https://pauldron.herokuapp.com/oauth2/authorization",
         // authEndpointUrl: "http://localhost:3000/oauth2/authorization",
         authApiKey: TEST_AUTH_API_KEY,
         method: "GET",
         json: true,
-        uri: "https://pauldron-fhir-proxy.herokuapp.com/Specimen/3125"
+        uri: "https://pauldron-hearth.herokuapp.com/Specimen/3125"
         // uri: "http://localhost:8080/Specimen/3125"
     };
     console.log(`${options.method} ${options.uri}`);

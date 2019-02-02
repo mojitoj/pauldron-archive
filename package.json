@@ -4,6 +4,6 @@
         "pauldron-policy",
         "pauldron",
         "pauldron-clients",
-        "pauldron-fhir-proxy"
+        "pauldron-hearth"
     ]
 }

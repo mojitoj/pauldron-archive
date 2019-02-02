@@ -1,5 +1,5 @@
 
-// this script works with the Pauldron FHIR Proxy deployed at:
+// this script works with the Pauldron Hearth deployed at:
 // https://pauldron-hearth.herokuapp.com and 
 // the Pauldron server deployed at:
 // https://pauldron.herokuapp.com/

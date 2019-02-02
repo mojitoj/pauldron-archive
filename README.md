@@ -42,7 +42,7 @@ Currently, the only accepted authorization policy format is simple JSON-based [P
 ## Other Pauldron Components
 Aside from the main sever, there are a number of additional Pauldron components to facilitate its use:
 
-- Pauldron FHIR Proxy: A simple experimental reverse proxy for protecting access to a [FHIR](https://www.hl7.org/fhir) server using a Pauldron server. 
+- Pauldron Hearth: A simple experimental reverse proxy for protecting access to a [FHIR](https://www.hl7.org/fhir) server using a Pauldron server. 
 - Pauldron Clients: A simple  client library to facilitate communicating with different endpoints of a Pauldron server.
 - Pauldron Policy: A simple JSON-based policy format for expressing authorization policies. 
 

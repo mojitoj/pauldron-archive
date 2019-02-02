@@ -104,7 +104,7 @@ async function handleGet(rawBackendBody, proxyRes, req, res) {
         } else if (e instanceof SyntaxError) {
             res.statusCode = 400;
             const responseBody = {
-                message: "Invalid response from the FHIR server. Pauldron FHIR Proxy only supports JSON at this time.",
+                message: "Invalid response from the FHIR server. Pauldron Hearth only supports JSON at this time.",
                 error: "unsupported_response",
                 status: 400
             };
@@ -113,7 +113,7 @@ async function handleGet(rawBackendBody, proxyRes, req, res) {
             logger.warn(e);
             res.statusCode = 500;
             const responseBody = {
-                message: "Pauldron FHIR Proxy encountered an error",
+                message: "Pauldron Hearth encountered an error",
                 error: "internal_error",
                 status: 500
             };

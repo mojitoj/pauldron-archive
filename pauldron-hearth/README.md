@@ -17,7 +17,12 @@ The proxy mediates between requests sent by a client and responses sent back by 
 Currently, inspecting other HTTP verbs is not supported and those requests will be simply passed on to the FHIR server.  
 
 ## Setup
-Pauldron Hearth is written as a simple [express](https://expressjs.com) server. The following environment variables must be configured:
+Pauldron Hearth is written as a simple [`express`](https://expressjs.com) app which can be started by:
+
+```
+node pauldron-hearth/server.js
+```
+The following environment variables must be configured:
 
 - `FHIR_SERVER_BASE`: The FHIR server's base URL. 
 - `UMA_SERVER_BASE`: The base URL for the Pauldron authorization server.
@@ -34,4 +39,4 @@ If you're using UMA, the following environment variables must also be configured
 - `UMA_SERVER_AUTHORIZATION_ENDPOINT`: The authorization endpoint for the  Pauldron server. If you have set up Pauldron server with default settings, set this to `/authorization`. Note that Hearth does not make any calls to this endpoint and simply includes this value in the UMA response to the client when the client is advised to obtain authorization from the Pauldron authorization endpoint.
 
 ## Demo Server
-There is a [Pauldron Hearth demo server](https://pauldron-hearth.herokuapp.com) which is configured to proxy the FHIR server at: [http://hapi.fhir.org/baseR4](http://hapi.fhir.org/baseR4)
+There is a Pauldron Hearth demo server deployed [here](https://pauldron-hearth.herokuapp.com) which is configured to proxy the FHIR server at: [http://hapi.fhir.org/baseR4](http://hapi.fhir.org/baseR4)

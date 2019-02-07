@@ -41,8 +41,7 @@ async function getRequiredPermissions(resource) {
             hash: hash(umaPermission.resource_set_id),
             value: umaPermission
         }
-    ))
-    .reduce((sofar, thisOne) => (
+    )).reduce((sofar, thisOne) => (
         sofar[thisOne.hash]
         ? (
             Object.assign(sofar,

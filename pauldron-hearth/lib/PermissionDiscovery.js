@@ -111,7 +111,7 @@ async function getPatientId(plainResource) { // the input is a primitive FHIR re
     if (!patientReference || !(patientReference.reference)) {
         throw {
             error: "patient_not_found",
-            message: `Unable to identify the patient for resource ${plainResource.id}.`
+            message: `Unable to identify the patient for resource ${plainResource.resourceType}(id: ${plainResource.id})`
         };
     }
     const patientURL = `${FHIR_SERVER_BASE}/${patientReference.reference}`;
@@ -138,7 +138,7 @@ async function getPatientId(plainResource) { // the input is a primitive FHIR re
     if (!identifiers) {
         throw {
             error: "patient_not_found",
-            message: `Patient ${patientURL} must have an identifier.`
+            message: `Patient ${patientURL} must have an identifier`
         };
     }
 

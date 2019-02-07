@@ -12,46 +12,27 @@ const CODE_SYSTEMS_OF_INTEREST = [CONFIDENTIALITY_CODE_SYSTEM];
 
 async function getRequiredPermissions(resource) {
     const theResourceType = resource.resourceType;
-    const fhirUMAPermissions = [];
-    if (theResourceType === "Bundle") {
-        if (resource.total > 0) { // non-empty bundle
-            fhirUMAPermissions.push.apply(fhirUMAPermissions, resource.entry.map( (entry) => (
-                new Promise(async function (resolve, reject) {
-                    try {
-                        resolve(
-                            {
-                                resource_set_id: {
-                                    patientId: await getPatientId(entry.resource),
-                                    resourceType: entry.resource.resourceType
-                                },
-                                scopes: securityLabelsToScopes(entry.resource.meta.security || [])
-                            }
-                        );
-                    } catch (e) {
-                        reject(e);
+    const resourceArray = (theResourceType === "Bundle") 
+        ? resource.entry.map( entry => (entry.resource)) 
+        : [resource];
+
+    const fhirUMAPermissions = resourceArray.map( (resource) =>(
+        new Promise(async function (resolve, reject) {
+            try {
+                resolve(
+                    {
+                        resource_set_id: {
+                            patientId: await getPatientId(resource),
+                            resourceType: resource.resourceType
+                        },
+                        scopes: securityLabelsToScopes(resource.meta.security || [])
                     }
-                })
-            )));
-        }
-    } else { // if it's just one single plain resource
-        fhirUMAPermissions.push(
-            new Promise(async function (resolve, reject) {
-                try {
-                    resolve(
-                        {
-                            resource_set_id: {
-                                patientId: await getPatientId(resource),
-                                resourceType: theResourceType
-                            },
-                            scopes: securityLabelsToScopes(resource.meta.security || [])
-                        }
-                    );
-                } catch (e) {
-                    reject(e);
-                }
-            })
-        );
-    }
+                );
+            } catch (e) {
+                reject(e);
+            }
+        })
+    )); 
 
     const resolvedPermissions = await Promise.all(fhirUMAPermissions);
 

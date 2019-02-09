@@ -23,7 +23,7 @@
   },
   "dependencies": {
     "esprima": "^4.0.1",
-    "lodash": "^4.17.11"
+    "lodash": ">=4.17.11"
   },
   "devDependencies": {
     "jest": "^23.6.0"

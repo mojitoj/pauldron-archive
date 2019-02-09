@@ -1,11 +1,10 @@
 const zlib = require("zlib");
-const rp = require("request-promise");
 const PauldronClient = require("pauldron-clients");
 const _ = require("lodash");
 const PermissionDiscovery = require("../lib/PermissionDiscovery");
 const logger = require("../lib/logger");
+const PermissionEvaluation = require("../lib/PermissionEvaluation");
 
-const FHIR_SERVER_BASE = process.env.FHIR_SERVER_BASE;
 const UNPROTECTED_RESOURCE_TYPES = (process.env.UNPROTECTED_RESOURCE_TYPES || "")
                                         .split(",")
                                         .map(res => res.trim());
@@ -166,16 +165,17 @@ function backendResponseIsProtected(backendResponse) {
     }
 }
 
-function deepIncludes(container, containee) {
-    return container.some(
-        (element) => (_.isEqual(element, containee))
-    );
-}
+// function deepIncludes(container, containee) {
+//     return container.some(
+//         (element) => (_.isEqual(element, containee))
+//     );
+// }
 
 function ensureSufficientPermissions(required, granted) {
-    const sufficientPermissions = required.every(
-        (requiredPermission) => (deepIncludes(granted, requiredPermission))
-    );
+    const sufficientPermissions = PermissionEvaluation.evaluateRequestedScopesAgainstGrantedScopes(granted, required);
+    // const sufficientPermissions = required.every(
+    //     (requiredPermission) => (deepIncludes(granted, requiredPermission))
+    // );
 
     if (!sufficientPermissions) {
         throw {

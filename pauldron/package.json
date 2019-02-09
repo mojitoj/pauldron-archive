@@ -20,7 +20,7 @@
   "devDependencies": {
     "jest": "^23.6.0",
     "nock": "^10.0.1",
-    "supertest": "^3.3.0"
+    "supertest": ">=3.4.2"
   },
   "dependencies": {
     "dotenv": "^6.0.0",

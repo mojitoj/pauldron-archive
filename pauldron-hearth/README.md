@@ -9,12 +9,31 @@ The proxy mediates between requests sent by a client and responses sent back by 
 
 1. If the client request does not have a token, Hearth sends back an error response directing the client to obtain authorization. If UMA-mode is enabled, it will also call the permission registration endpoint of the Pauldron server to register a set of permissions which were implied by the request. 
 2. If the client request includes a token, Hearth runs [Token Introspection](https://tools.ietf.org/html/rfc7662) with the Pauldron server to ensure that a) the token is valid and b) obtain the list of _granted scopes_ for that token. If the token is invalid it proceeds as discussed in (1).
-3. If the token provided by the client is valid, Hearth compares the list of _granted scopes_ with the implied set of _required scopes_ by the client's request, and accordingly, either permits the full response, redacts resources for which the required scopes were not granted, or denies the request altogether if none of the required scopes scopes for fulfilling the request are granted.
+3. If the token provided by the client is valid, Hearth compares the list of _granted scopes_ with the implied set of _required scopes_ by the client's request, and accordingly, either permits the full response, redacts resources for which the required scopes were not granted, or denies the request altogether if none of the required scopes for fulfilling the request are granted.
 
 ## Features
 - Enforce authorization on `GET` requests based on the response contents.
+- Support for wildcard and conjunctive grants in scopes.
+- Support for negative (denied) scopes. 
 
-Currently, inspecting other HTTP verbs is not supported and those requests will be simply passed on to the FHIR server.  
+Currently, inspecting other HTTP verbs is not supported and those requests will be simply passed on to the FHIR server.
+
+## Scope/Permission Structure
+Pauldron Hearth supports both UMA and OAuth 2.0 access tokens, issued by the respective endpoints of Pauldorn (see [here](https://github.com/mojitoholic/pauldron/blob/master/pauldron/README.md) for details). 
+
+Note that there is some terminology confusions between UMA and OAuth 2.0 here. While in OAuth 2.0 the authorization service grants a set of `scopes` to the client, in UMA, the authorization service grants a set of `permission`s which have the following structure (which confusingly overloads the term _scope_):
+
+```json
+{
+	"resource_set_id": "...",
+	"scopes": "..."
+}
+```
+
+As an extension to the specifications, instead of plain opaque strings Pauldron supports JSON scopes (see a discussion of this idea [here](https://medium.com/@jafarim/using-json-to-model-complex-oauth-scopes-fa8a054b2a28)), so to Pauldron, an UMA `permission` is just a complex JSON `scope` in the OAuth 2.0 sense, therefore, Pauldron supports these two types of structures transparently and interchangeably.
+
+In order to remain compatible with both UMA and OAuth 2.0 access tokens, Pauldron Hearth uses a scope structure compatible with UMA.
+
 
 ## Setup
 Pauldron Hearth is written as a simple [`express`](https://expressjs.com) app which can be started by:

@@ -165,17 +165,8 @@ function backendResponseIsProtected(backendResponse) {
     }
 }
 
-// function deepIncludes(container, containee) {
-//     return container.some(
-//         (element) => (_.isEqual(element, containee))
-//     );
-// }
-
 function ensureSufficientPermissions(required, granted) {
     const sufficientPermissions = PermissionEvaluation.evaluateRequestedScopesAgainstGrantedScopes(granted, required);
-    // const sufficientPermissions = required.every(
-    //     (requiredPermission) => (deepIncludes(granted, requiredPermission))
-    // );
 
     if (!sufficientPermissions) {
         throw {

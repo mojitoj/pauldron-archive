@@ -10,7 +10,7 @@ const DESIGNATED_PATIENT_ID_SYSTEMS = (process.env.DESIGNATED_PATIENT_ID_SYSTEMS
 const CONFIDENTIALITY_CODE_SYSTEM = "http://hl7.org/fhir/v3/Confidentiality"
 const CODE_SYSTEMS_OF_INTEREST = [CONFIDENTIALITY_CODE_SYSTEM];
 
-async function getRequiredPermissions(resource) {
+async function getRequiredPermissions(resource, action) {
     const theResourceType = resource.resourceType;
     const resourceArray = (theResourceType === "Bundle") 
         ? resource.entry.map( entry => (entry.resource)) 
@@ -25,7 +25,12 @@ async function getRequiredPermissions(resource) {
                             patientId: await getPatientId(resource),
                             resourceType: resource.resourceType
                         },
-                        scopes: securityLabelsToScopes(resource.meta.security || [])
+                        scopes: [
+                            {
+                                action,
+                                securityLabels: securityLabelsToScopes(resource.meta.security || [])
+                            }
+                        ]
                     }
                 );
             } catch (e) {

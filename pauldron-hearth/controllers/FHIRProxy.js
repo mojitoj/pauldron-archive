@@ -91,6 +91,7 @@ async function handleGet(rawBackendBody, proxyRes, req, res) {
                 error: "authorization_error",
                 status: 403
             };
+            logger.debug(e.message);
             res.write(Buffer.from(JSON.stringify(responseBody), "utf8"));
         } else if (e.error === "patient_not_found") {
             res.statusCode = 403;
@@ -123,8 +124,14 @@ async function handleGet(rawBackendBody, proxyRes, req, res) {
     }
 }
 
+const httpMethodToAction = {
+    "GET": "read",
+    "DELETE": "delete"
+};
+
 async function processProtecetedResource(request, backendResponse) {
-    const requiredPermissions = await PermissionDiscovery.getRequiredPermissions(backendResponse);
+    const action = httpMethodToAction[request.method]; //todo: this logic must be improved; e.g. a post request could be a search therefore a read. 
+    const requiredPermissions = await PermissionDiscovery.getRequiredPermissions(backendResponse, action);
     let grantedPermissions = [];
     try {
         grantedPermissions = await getGrantedPermissions(request);

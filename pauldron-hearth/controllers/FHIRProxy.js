@@ -130,7 +130,7 @@ const httpMethodToAction = {
 };
 
 async function processProtecetedResource(request, backendResponse) {
-    const action = httpMethodToAction[request.method] || read;
+    const action = httpMethodToAction[request.method]; //todo: this logic must be improved; e.g. a post request could be a search therefore a read. 
     const requiredPermissions = await PermissionDiscovery.getRequiredPermissions(backendResponse, action);
     let grantedPermissions = [];
     try {

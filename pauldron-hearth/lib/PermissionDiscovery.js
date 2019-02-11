@@ -41,34 +41,12 @@ async function getRequiredPermissions(resource, action) {
 
     const resolvedPermissions = await Promise.all(fhirUMAPermissions);
 
-    const consolidatedUmaPermissions = resolvedPermissions.map ((umaPermission) => (
-        {
-            hash: hash(umaPermission.resource_set_id),
-            value: umaPermission
-        }
-    )).reduce((sofar, thisOne) => (
-        sofar[thisOne.hash]
-        ? (
-            Object.assign(sofar,
-                {
-                    [thisOne.hash] : {
-                        resource_set_id : thisOne.value.resource_set_id,
-                        scopes: arrayMergeDeep(thisOne.value.scopes, sofar[thisOne.hash].scopes)
-                    }
-                })
-        )
-        : (
-            Object.assign(sofar,
-                {
-                    [thisOne.hash] : thisOne.value
-                })
-        )
-    ), {});
+    const consolidatedUmaPermissions = consolidatePermissions(resolvedPermissions);
     return ( Object.values(consolidatedUmaPermissions));
 }
 
-function arrayMergeDeep(array1, array2) {
-    return _.unionWith(array1, array2, _.isEqual);
+function consolidatePermissions(permissions) {
+    return _.unionWith(permissions, permissions, _.isEqual);
 }
 
 function augmentSecurityLabel(labels) {
@@ -80,6 +58,7 @@ function augmentSecurityLabel(labels) {
     }
     return labels;
 }
+
 function securityLabelsToScopes(labels) {
     const augmentedLabels = augmentSecurityLabel(labels)
     const filteredLabels = augmentedLabels.filter((label) => (

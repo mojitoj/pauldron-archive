@@ -56,7 +56,6 @@ var umaServer;
 const UMA_PORT = parseInt(process.env.UMA_SERVER_PORT || "3000");
 const UMA_SERVER_BASE = `http://localhost:${UMA_PORT}`;
 
-
 beforeAll(async() => {
     umaServer = Pauldron.app.listen(UMA_PORT);
 });
@@ -203,6 +202,62 @@ it("happy path with resource.", async () => {
         .set("authorization", `Bearer ${rpt}`);
     
     expect(res.body).toMatchObject(resourceResponse);
+});
+
+it("happy path with bundle, oauth2.", async () => {
+    expect.assertions(4);
+    const bundleRsponse = require("./fixtures/specimen-bundle.json");
+    const patient = require("./fixtures/patient.json");
+
+    MOCK_FHIR_SERVER.get("/Patient/1")
+        .times(4) //when caching fixed remove this 
+        .reply(200, patient); 
+
+    MOCK_FHIR_SERVER.get("/Specimen")
+        .times(2)
+        .reply(200, bundleRsponse);
+
+    const scope = JSON.stringify([
+        {
+            resource_set_id: {
+              patientId: {
+                system: "urn:official:id",
+                value: "10001"
+              },
+              resourceType: "Specimen"
+            },
+            scopes: [
+              {
+                action: "read",
+                securityLabels: "*"
+              }
+            ]
+          }
+    ]);
+
+    let res = await request(UMA_SERVER_BASE)
+        .post("/oauth2/authorization")
+        .set("content-type", "application/x-www-form-urlencoded")
+        .set("Authorization", `Bearer ${TEST_AUTH_API_KEY}`)
+        .send({
+            client_assertion_type: "urn:ietf:params:oauth:client-assertion-type:jwt-bearer",
+            grant_type: "client_credentials",
+            client_assertion: CLAIMS_TOKEN,
+            scope
+        });
+
+    expect(res.status).toEqual(201);
+    expect(res.body).toHaveProperty("token");
+    expect(res.body.token).toBeTruthy();
+
+    const token = res.body.token;
+
+    res = await request(app)
+        .get("/Specimen")
+        .set("content-type", "application/json")
+        .set("authorization", `Bearer ${token}`);    
+
+    expect(res.body).toMatchObject(bundleRsponse);
 });
 
 it("Should return 403 if a bad rpt is sent.", async () => {

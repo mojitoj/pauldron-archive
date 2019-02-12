@@ -32,8 +32,101 @@ Note that there is some terminology confusions between UMA and OAuth 2.0 here. W
 
 As an extension to the specifications, instead of plain opaque strings Pauldron supports JSON scopes (see a discussion of this idea [here](https://medium.com/@jafarim/using-json-to-model-complex-oauth-scopes-fa8a054b2a28)), so to Pauldron, an UMA `permission` is just a complex JSON `scope` in the OAuth 2.0 sense, therefore, Pauldron supports these two types of structures transparently and interchangeably.
 
-In order to remain compatible with both UMA and OAuth 2.0 access tokens, Pauldron Hearth uses a scope structure compatible with UMA.
+In order to remain compatible with both UMA and OAuth 2.0 access tokens, Pauldron Hearth uses a scope structure compatible with UMA, i.e. separating the scope structure into a `resource_set_id` and `scopes`. This is admittedly a bit confusing due to the overloading of the term scope, but it ensures that the structure remains consistent with UMA permissions.
 
+Currently, the `resource_set_id` is structured as follows:
+
+- `patientId`: the patient identifier (including `system` and `value`).
+- `resourceType`: the type of resource.
+
+The `scope` array must include elements of the following format:
+
+- `action`: the requested action, e.g. `read`, `create`, `update`, or `delete`.
+- `securityLabels`: an array of security labels each including a `system` and `code`. 
+
+Here is an example:
+
+```json
+{
+  "resource_set_id": {
+    "patientId": {
+      "system": "urn:official:id",
+      "value": "10001"
+    },
+    "resourceType": "Specimen"
+  },
+  "scopes": [
+    {
+      "action": "read",
+      "securityLabels": [
+        {
+          "system": "http://hl7.org/fhir/v3/Confidentiality",
+          "code": "N"
+        }
+      ]
+    }
+  ]
+}
+```
+When a request is received by the client, Pauldron-Hearth identifies the implied requested permissions by:
+
+- Identifying the patient(s) whose information is the subject of the request. The patient identifier is chosen based on the priorities defined in the `DESIGNATED_PATIENT_ID_SYSTEMS` environment variable.
+- Identifying the resource types affected by the request.
+- Identifying the implied actions. This is currently identified naively based on the HTTP method but it will be improved in future, since for example a `POST` request can be used either for creating a resource or searching.
+- Identify the security labels for each action-resource type. Only the security labels whose system is specified in the `DESIGNATED_SECURITY_LABEL_SYSTEMS` environment variable are included in the scope/permission construction.
+
+### Requesting and Granting Scopes
+When working in UMA mode, the client does not need to be aware of the scopes/permissions implied by its request or even know what their structure looks like. In UMA, the client's _attempts_ to access  triggers the resource server to identify and register the required permissions with the authorization server. This leads to issuing a _ticket_, as essentially the receipt for the registration of those permission, which the client can present at the time of requesting an access token. So, at no point the client has to deal with the details of the requested or granted scopes/permissions.
+
+In the two-legged OAuth 2.0 mode, however, the client needs to present a set of requested scopes at the time of requesting an access token. This can be tricky if the client does not know about the details of the scopes and its own access rights according to the policies and it is almost impossible for the client to request for a precise set of scopes without that knowledge. In such cases, it is very helpful if the client can request a maximal approximation of what it believes will suffice for its requests and leave it up the authorization server to refine the granted scopes after consulting the applicable policies. This is why Pauldron allows _wildcards_ and _arrays_ in scopes and also enables the Pauldron server to refine such scopes with _negative_ scopes which _deny_ a specific pattern of access.
+
+For example, if a client wants to access all observations and immunizations of a patient, it can request the following scope; note the use of an array in `resourceType` which implies a conjunction, and the wildcard in `securityLabels` which implied _any_:
+
+```json
+{
+  "resource_set_id": {
+    "patientId": {
+      "system": "urn:official:id",
+      "value": "10001"
+    },
+    "resourceType": ["Observations", "Immunization"]
+  },
+  "scopes": [
+    {
+      "action": "read",
+      {
+          "system": "http://hl7.org/fhir/v3/Confidentiality",
+          "code": "R"
+      }
+    }
+  ]
+}
+```
+Now assume that there is a policy that denies access to any restricted resources for this client. The Pauldron server, after examining the policies, grants the requested scope, but adds the following _negative_ scope as well:
+
+```json
+{
+  "deny": true,
+  "resource_set_id": {
+    "patientId": {
+      "system": "urn:official:id",
+      "value": "10001"
+    },
+    "resourceType": "*"
+  },
+  "scopes": [
+    {
+      "action": "read",
+      "securityLabels": "*"
+    }
+  ]
+}
+```
+Pauldron Hearth adjudicates these scopes based on the following rules:
+
+- Access to any resources matching an explicitly denied scopes is declined.
+- Access to any resources not matching any granted scopes is implicitly declined.
+- Access to any resources matching an explicitly granted scope but not any explicitly denied scopes is permitted.
 
 ## Setup
 Pauldron Hearth is written as a simple [`express`](https://expressjs.com) app which can be started by:

@@ -59,6 +59,4 @@ describe("permissions", () => {
         expect(result).toHaveLength(1);
         expect(result[0].resource_set_id).toEqual("test_res_id_1");
     });
-
-    
 });

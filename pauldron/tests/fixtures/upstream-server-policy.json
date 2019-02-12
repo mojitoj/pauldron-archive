@@ -12,7 +12,7 @@
                 "decision": {
                     "authorization": "Permit", 
                     "obligations": {
-                        "DENY_SCOPES": ["s1"]
+                        "DENY_SCOPES": [{"resource_set_id": "test_res_id", "scopes": ["s1"]}]
                     }
                 },
                 "condition": "pous.filter((pou)=>(pou.system==='http://hl7.org/fhir/v3/ActReason' && pou.code==='TREAT')).length>0"            

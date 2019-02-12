@@ -1,29 +1,31 @@
-const hash = require("object-hash");
 const TimeStampedPermission = require("../model/TimeStampedPermission");
+const _ = require("lodash");
 
 
 const DENY_SCOPES_OBLIGATION_ID = "DENY_SCOPES";
 
 function reconcilePermissionsAndObligations (permissions, obligations) {
-    const deniedScopes = obligations[DENY_SCOPES_OBLIGATION_ID];
+    const deniedPermissions = obligations[DENY_SCOPES_OBLIGATION_ID];
 
-    if (deniedScopes) {
-        const grantedPermissions = permissions.map(
-            (permission) => (
-              {
-                  resource_set_id: permission.resource_set_id,
-                  scopes: (permission.scopes || []).filter(
-                      (scope) => (! arrayDeepIncludes (deniedScopes, scope))
-                  )
-              }
-        ));
-
-      return grantedPermissions.filter((permission) => (
-        ((permission.scopes.length || 0) !== 0)
-      ));
-    } else {
-      return permissions;
-    }
+    const grantedPermissions = permissions.filter((permission)=>
+      ! deniedPermissions.some((deniedPermission)=>
+        _.isEqual(permission, deniedPermission)
+      )
+    );
+    const explicitlyDeniedPermissions = deniedPermissions.filter((deniedPermission)=>
+      ! permissions.some((permission) => 
+        _.isEqual(permission, deniedPermission)
+      )
+    ).map(
+      (explicitlyDeniedPermission) => (
+          {
+            ...explicitlyDeniedPermission, 
+            deny: true
+          }
+        )
+    );
+  //todo: we can do better here by also removing any permission which fully 'matches' a denied permission pattern.
+  return _.union(grantedPermissions, explicitlyDeniedPermissions);
 }
 
 function validatePermissions(permissions, permissionType) {
@@ -36,11 +38,6 @@ function validatePermissions(permissions, permissionType) {
         error: `expired_${permissionType}`,
       };
     }
-}
-
-function arrayDeepIncludes(array, thing) {
-    const arrayHashes = array.map((element) => (hash(element)));
-    return arrayHashes.includes(hash(thing));
 }
 
 module.exports = {

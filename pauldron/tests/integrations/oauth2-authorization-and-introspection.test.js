@@ -71,7 +71,7 @@ afterAll(async () => {
 });
 
 it("should issue a oauth2 token based on the policy and correctly introspect it.", async () => {
-    expect.assertions(9);
+    expect.assertions(10);
 
     const scope = JSON.stringify([{resource_set_id: "test_res_id", scopes: ["s1", "s2"]}]);
 
@@ -101,8 +101,9 @@ it("should issue a oauth2 token based on the policy and correctly introspect it.
     expect(res.body).toHaveProperty("iat");
     expect(res.body).toHaveProperty("exp");
     expect(res.body).toHaveProperty("permissions");
-    expect(res.body.permissions).toHaveLength(1);
-    expect(res.body.permissions[0]).toMatchObject({resource_set_id: "test_res_id", scopes: ["s2"]});
+    expect(res.body.permissions).toHaveLength(2);
+    expect(res.body.permissions[0]).toMatchObject({resource_set_id: "test_res_id", scopes: ["s1", "s2"]});
+    expect(res.body.permissions[1]).toMatchObject({deny: true, resource_set_id: "test_res_id", scopes: ["s1"]});
 });
 
 it("should NOT introspect a token if the token was issued based on another server's ", async () => {

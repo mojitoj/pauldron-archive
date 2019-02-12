@@ -78,7 +78,22 @@ The condition includes one varilable name `pous` whose value will be mapped to t
         "decision": {
           "authorization": "Permit", 
           "obligations": {
-            "DENY_SCOPES": ["s1"]
+            "DENY_SCOPES": [
+              {
+                "resource_set_id": "*", 
+                "scopes": [
+                    {
+                        "action": "read", 
+                        "labels": [
+                            {
+                                "system": "Confidentiality",
+                                "code": "R"
+                            }
+                        ]
+                    }
+                ]
+              }
+            ]
           },
         "condition": 
           "pous.filter((pou)=>(pou.system==='http://hl7.org/fhir/v3/ActReason' && pou.code==='TREAT')).length>0"            

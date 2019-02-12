@@ -1,5 +1,4 @@
 const rp = require("request-promise");
-const hash = require("object-hash");
 const _ = require("lodash");
 
 const FHIR_SERVER_BASE = process.env.FHIR_SERVER_BASE;
@@ -7,8 +6,10 @@ const FHIR_SERVER_BASE = process.env.FHIR_SERVER_BASE;
 const DESIGNATED_PATIENT_ID_SYSTEMS = (process.env.DESIGNATED_PATIENT_ID_SYSTEMS || "")
                                         .split(",")
                                         .map(res => res.trim());
-const CONFIDENTIALITY_CODE_SYSTEM = "http://hl7.org/fhir/v3/Confidentiality"
-const CODE_SYSTEMS_OF_INTEREST = [CONFIDENTIALITY_CODE_SYSTEM];
+const CONFIDENTIALITY_CODE_SYSTEM = "http://terminology.hl7.org/ValueSet/v3-ConfidentialityClassification"
+const CODE_SYSTEMS_OF_INTEREST = (process.env.DESIGNATED_SECURITY_LABEL_SYSTEMS || "")
+                                .split(",")
+                                .map(res => res.trim());
 
 async function getRequiredPermissions(resource, action) {
     const theResourceType = resource.resourceType;

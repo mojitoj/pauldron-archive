@@ -94,7 +94,7 @@ For example, if a client wants to access all observations and immunizations of a
   "scopes": [
     {
       "action": "read",
-      {
+      "securityLabels": {
           "system": "http://hl7.org/fhir/v3/Confidentiality",
           "code": "R"
       }

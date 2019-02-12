@@ -106,7 +106,10 @@ describe("permission, rpt, introspection", () => {
             `${SERVER_BASE}${INTROSPECTION_ENDPOINT_URI}`, 
             TEST_PROTECTION_API_KEY
         );
-        expect(grantedPermissions).toEqual([{"resource_set_id":"test_res_id","scopes":["s2"]}]);
+        expect(grantedPermissions).toEqual([
+            {resource_set_id: "test_res_id", scopes:["s1", "s2"]},
+            {deny: true, resource_set_id:"test_res_id", scopes:["s1"]}
+        ]);
     });
 
     it("happy path for oauth2 token.", async () => {
@@ -132,7 +135,10 @@ describe("permission, rpt, introspection", () => {
             `${SERVER_BASE}${INTROSPECTION_ENDPOINT_URI}`, 
             TEST_PROTECTION_API_KEY
         );
-        expect(grantedPermissions).toEqual([{"resource_set_id":"test_res_id","scopes":["s2"]}]);
+        expect(grantedPermissions).toEqual([
+            {resource_set_id: "test_res_id", scopes:["s1", "s2"]},
+            {deny: true, resource_set_id:"test_res_id", scopes:["s1"]}
+        ]);
     });
 });
 

@@ -76,7 +76,12 @@ const otherAssertions = {
             "https://upstream-uma-server/": [{resource_set_id: "test_res_id", scopes: ["s1", "s2"]}]
         }
 };
-const PERMISSIONS = [{resource_set_id: "test_res_id", scopes: ["s1", "s2"]}];
+const PERMISSIONS = [
+    {
+        resource_set_id: "test_res_id", 
+        scopes: ["s1", "s2"]
+    }
+];
 
 beforeAll(async () => {
     UPSTREAM_SERVER.post("/protection/permissions")
@@ -198,7 +203,7 @@ it("should return 403 if the rpt token provided cannot be introspected", async()
 
 
 it("happy path: should be able to get an RPT for an authorized client after redirecting to upstream UMA.", async () => {
-    expect.assertions(18);
+    expect.assertions(19);
 
     await request(app)
         .post(POLICY_ENDPOINT_URI)
@@ -274,6 +279,7 @@ it("happy path: should be able to get an RPT for an authorized client after redi
     expect(res.body).toHaveProperty("iat");
     expect(res.body).toHaveProperty("exp");
     expect(res.body).toHaveProperty("permissions");
-    expect(res.body.permissions).toHaveLength(1);
-    expect(res.body.permissions[0]).toMatchObject({resource_set_id: "test_res_id", scopes: ["s2"]});
+    expect(res.body.permissions).toHaveLength(2);
+    expect(res.body.permissions[0]).toMatchObject({resource_set_id: "test_res_id", scopes: ["s1", "s2"]});
+    expect(res.body.permissions[1]).toMatchObject({deny: true, resource_set_id: "test_res_id", scopes: ["s1"]});
 });

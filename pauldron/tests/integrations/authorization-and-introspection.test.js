@@ -71,7 +71,7 @@ afterAll(async () => {
 });
 
 it("should issue an RPT based on the policy and correctly introspect it.", async () => {
-    expect.assertions(11);
+    expect.assertions(12);
     let res = await request(app)
         .post(PERMISSION_ENDPOINT_URI)
         .set("content-type", "application/json")
@@ -109,8 +109,9 @@ it("should issue an RPT based on the policy and correctly introspect it.", async
     expect(res.body).toHaveProperty("iat");
     expect(res.body).toHaveProperty("exp");
     expect(res.body).toHaveProperty("permissions");
-    expect(res.body.permissions).toHaveLength(1);
-    expect(res.body.permissions[0]).toMatchObject({resource_set_id: "test_res_id", scopes: ["s2"]});
+    expect(res.body.permissions).toHaveLength(2);
+    expect(res.body.permissions[0]).toMatchObject({resource_set_id: "test_res_id", scopes: ["s1", "s2"]});
+    expect(res.body.permissions[1]).toMatchObject({deny: true, resource_set_id: "test_res_id", scopes: ["s1"]});
 });
 
 it("should NOT issue an RPT if the ticket was issued based on another server's permission reg request", async () => {
@@ -166,4 +167,50 @@ it("should reject a blacklisted client", async () => {
     expect(res.status).toEqual(403);
     expect(res.body).toHaveProperty("error");
     expect(res.body.error).toEqual("policy_forbidden");
+});
+
+it("should remove an explicitly denied requested permission from the introspection response.", async () => {
+    expect.assertions(11);
+    let res = await request(app)
+        .post(PERMISSION_ENDPOINT_URI)
+        .set("content-type", "application/json")
+        .set("Authorization", `Bearer ${TEST_PROTECTION_API_KEY}`)
+        .send([
+            {resource_set_id: "test_res_id", scopes: ["s1"]},
+            {resource_set_id: "test_res_id", scopes: ["s2"]}
+        ]);
+
+    expect(res.status).toEqual(201);
+    expect(res.body).toHaveProperty("ticket");
+    const ticket = res.body.ticket;
+
+    res = await request(app)
+        .post(AUTHORIZATION_ENDPOINT_URI)
+        .set("content-type", "application/json")
+        .set("Authorization", `Bearer ${TEST_AUTH_API_KEY}`)
+        .send({
+            "ticket": ticket,
+            "claim_tokens": [
+                {
+                    format: "jwt",
+                    token: CLAIMS_TOKEN
+                }
+        ]});
+    expect(res.status).toEqual(201);
+    expect(res.body).toHaveProperty("rpt");
+    expect(res.body.rpt).toBeTruthy();
+
+    const rpt = res.body.rpt;
+
+    res = await request(app)
+        .post(INTROSPECTION_ENDPOINT_URI)
+        .set("content-type", "application/x-www-form-urlencoded")
+        .set("Authorization", `Bearer ${TEST_PROTECTION_API_KEY}`)
+        .send({"token": rpt});
+    expect(res.body).toHaveProperty("active");
+    expect(res.body).toHaveProperty("iat");
+    expect(res.body).toHaveProperty("exp");
+    expect(res.body).toHaveProperty("permissions");
+    expect(res.body.permissions).toHaveLength(1);
+    expect(res.body.permissions[0]).toMatchObject({resource_set_id: "test_res_id", scopes: ["s2"]});
 });

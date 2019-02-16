@@ -9,6 +9,7 @@ const UNPROTECTED_RESOURCE_TYPES = (process.env.UNPROTECTED_RESOURCE_TYPES || ""
                                         .split(",")
                                         .map(res => res.trim());
 
+const UMA_MODE = process.env.UMA_MODE;
 const UMA_SERVER_BASE = process.env.UMA_SERVER_BASE;
 const UMA_SERVER_REALM = process.env.UMA_SERVER_REALM;
 const UMA_SERVER_AUTHORIZATION_ENDPOINT = process.env.UMA_SERVER_AUTHORIZATION_ENDPOINT;
@@ -63,7 +64,16 @@ async function handleGet(rawBackendBody, proxyRes, req, res) {
         res.statusCode = proxyRes.statusCode;
         res.write(rawBackendBody);
     } catch (e) {
-        if (e.error === "uma_redirect" ||
+        if (e.error === "unauthorized" || 
+            e.error === "forbidden") {
+            res.statusCode = e.status;
+            const responseBody = {
+                message: e.message,
+                error: "authorization_error",
+                status: e.status
+            };
+            res.write(Buffer.from(JSON.stringify(responseBody), "utf8"));
+        } else if (e.error === "uma_redirect" ||
             e.error === "invalid_rpt" ||
             e.error === "insufficient_scopes") {
             res.statusCode = e.status;
@@ -138,20 +148,45 @@ async function processProtecetedResource(request, backendResponse) {
         ensureSufficientPermissions(requiredPermissions, grantedPermissions);
     } catch (e) {
         if (e.error === "no_rpt") {
-            const redirectE = await registerPermissionsAndRedirect(requiredPermissions);
-            redirectE.error = "uma_redirect";
-            redirectE.status = 401;
-            throw redirectE;
+            if (UMA_MODE) {
+                const redirectE = await registerPermissionsAndRedirect(requiredPermissions);
+                redirectE.error = "uma_redirect";
+                redirectE.status = 401;
+                throw redirectE;
+            } else {
+                throw {
+                    error: "unauthorized",
+                    message: "Must provide a valid bearer token.",
+                    status: 401
+                };
+            }
         } else if (e.error === "insufficient_scopes") {
-            const redirectE = await registerPermissionsAndRedirect(requiredPermissions);
-            redirectE.error = e.error;
-            redirectE.status = 403;
-            throw redirectE;
+
+            if (UMA_MODE) {
+                const redirectE = await registerPermissionsAndRedirect(requiredPermissions);
+                redirectE.error = e.error;
+                redirectE.status = 403;
+                throw redirectE;
+            } else {
+                throw {
+                    error: "forbidden",
+                    message: "Insufficient scopes.",
+                    status: 403
+                };    
+            }
         } else if (e.error === "invalid_rpt") {
-            const redirectE = await registerPermissionsAndRedirect(requiredPermissions);
-            redirectE.error = e.error;
-            redirectE.status = 403;
-            throw redirectE;
+            if (UMA_MODE) {
+                const redirectE = await registerPermissionsAndRedirect(requiredPermissions);
+                redirectE.error = e.error;
+                redirectE.status = 403;
+                throw redirectE;
+            } else {
+                throw {
+                    error: "forbidden",
+                    message: "Invalid bearer token.",
+                    status: 403
+                };    
+            }
         }
         else {
             throw e;

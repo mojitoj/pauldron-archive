@@ -9,7 +9,7 @@ const UNPROTECTED_RESOURCE_TYPES = (process.env.UNPROTECTED_RESOURCE_TYPES || ""
                                         .split(",")
                                         .map(res => res.trim());
 
-const UMA_MODE = process.env.UMA_MODE;
+const UMA_MODE = (process.env.UMA_MODE !== "false");
 const UMA_SERVER_BASE = process.env.UMA_SERVER_BASE;
 const UMA_SERVER_REALM = process.env.UMA_SERVER_REALM;
 const UMA_SERVER_AUTHORIZATION_ENDPOINT = process.env.UMA_SERVER_AUTHORIZATION_ENDPOINT;
@@ -64,8 +64,7 @@ async function handleGet(rawBackendBody, proxyRes, req, res) {
         res.statusCode = proxyRes.statusCode;
         res.write(rawBackendBody);
     } catch (e) {
-        if (e.error === "unauthorized" || 
-            e.error === "forbidden") {
+        if (e.error === "unauthorized" || e.error === "forbidden") {
             res.statusCode = e.status;
             const responseBody = {
                 message: e.message,
@@ -90,8 +89,7 @@ async function handleGet(rawBackendBody, proxyRes, req, res) {
             res.write(Buffer.from(JSON.stringify(responseBody), "utf8"));
         } else if (
             e.error === "permission_registration_error" ||
-            e.error === "introspection_error"
-        ) {
+            e.error === "introspection_error") {
             res.statusCode = 403;
             res.set({
                 "Warning": "199 - \"UMA Authorization Server Unreachable\""

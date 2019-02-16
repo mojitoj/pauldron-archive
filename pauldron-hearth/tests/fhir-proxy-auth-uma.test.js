@@ -33,6 +33,7 @@ const TEST_POLICY_API_KEY = jwt.sign(POLICY_API_TOKEN, process.env.SECRET_KEY);
 const TEST_PROTECTION_API_KEY = jwt.sign(PROTECTION_API_TOKEN, process.env.SECRET_KEY);
 const TEST_AUTH_API_KEY = jwt.sign(AUTH_API_TOKEN, process.env.SECRET_KEY);
 
+process.env.UMA_MODE = "true";
 process.env.UMA_SERVER_PROTECTION_API_KEY = TEST_PROTECTION_API_KEY;
 const {app} = require("../app");
 
@@ -202,62 +203,6 @@ it("happy path with resource.", async () => {
         .set("authorization", `Bearer ${rpt}`);
     
     expect(res.body).toMatchObject(resourceResponse);
-});
-
-it("happy path with bundle, oauth2.", async () => {
-    expect.assertions(4);
-    const bundleRsponse = require("./fixtures/specimen-bundle.json");
-    const patient = require("./fixtures/patient.json");
-
-    MOCK_FHIR_SERVER.get("/Patient/1")
-        .times(4) //when caching fixed remove this 
-        .reply(200, patient); 
-
-    MOCK_FHIR_SERVER.get("/Specimen")
-        .times(2)
-        .reply(200, bundleRsponse);
-
-    const scope = JSON.stringify([
-        {
-            resource_set_id: {
-              patientId: {
-                system: "urn:official:id",
-                value: "10001"
-              },
-              resourceType: "Specimen"
-            },
-            scopes: [
-              {
-                action: "read",
-                securityLabels: "*"
-              }
-            ]
-          }
-    ]);
-
-    let res = await request(UMA_SERVER_BASE)
-        .post("/oauth2/authorization")
-        .set("content-type", "application/x-www-form-urlencoded")
-        .set("Authorization", `Bearer ${TEST_AUTH_API_KEY}`)
-        .send({
-            client_assertion_type: "urn:ietf:params:oauth:client-assertion-type:jwt-bearer",
-            grant_type: "client_credentials",
-            client_assertion: CLAIMS_TOKEN,
-            scope
-        });
-
-    expect(res.status).toEqual(201);
-    expect(res.body).toHaveProperty("token");
-    expect(res.body.token).toBeTruthy();
-
-    const token = res.body.token;
-
-    res = await request(app)
-        .get("/Specimen")
-        .set("content-type", "application/json")
-        .set("authorization", `Bearer ${token}`);    
-
-    expect(res.body).toMatchObject(bundleRsponse);
 });
 
 it("Should return 403 if a bad rpt is sent.", async () => {

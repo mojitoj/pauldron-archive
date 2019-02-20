@@ -1,27 +1,29 @@
- 
-function combineDecisionsDenyOverrides (decisions) {
-    const AuthzDecisionsPriorities = {
-        "Deny": 3,
-        "Indeterminate": 2,
-        "Permit": 1,
-        "NotApplicable": 0
-    };
-    const finalAuthorizationDecision = decisions
-        .map((decision) => decision.authorization)
-        .reduce((sofar, thisDecision) => (
-            (AuthzDecisionsPriorities[sofar] >= AuthzDecisionsPriorities[thisDecision]) ? sofar : thisDecision
-        ), "NotApplicable");
+const _ = require("lodash");
 
-    const finalObligations = decisions
-        .map((decision) => decision.obligations)
-        .reduce((sofar, thisObligation) => (
+const AuthzDecisionsPriorities = {
+    "Deny": 3,
+    "Indeterminate": 2,
+    "Permit": 1,
+    "NotApplicable": 0
+};
+
+function combineDecisionsDenyOverrides (decisions) {
+    const combinedAuthDecisions = _.maxBy(decisions, (decision) => (AuthzDecisionsPriorities[decision.authorization]));
+    const finalAuthorizationDecision = _.get(combinedAuthDecisions, "authorization") || "NotApplicable";
+    
+    let finalObligations = {};
+    if (finalAuthorizationDecision === "Indeterminate" || finalAuthorizationDecision === "Permit") {
+        const combinedObligations = decisions
+            .filter((decision) => decision.authorization !== "NotApplicable")
+            .map((decision) => decision.obligations);
+        finalObligations = _.flatten(combinedObligations).reduce((sofar, thisObligation) => (
             { ...sofar , ...thisObligation}
         ), {});
+    }
+    
     return {
         authorization: finalAuthorizationDecision,
-        obligations: (finalAuthorizationDecision === "Indeterminate" || finalAuthorizationDecision === "Permit")
-            ? finalObligations
-            : {}
+        obligations: finalObligations
     };
 }
 

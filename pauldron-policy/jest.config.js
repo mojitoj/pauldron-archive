@@ -1,5 +1,5 @@
 module.exports = {
-    globalSetup: "<rootDir>/src/setupTests.js",
-    modulePathIgnorePatterns: ["./src/tests/fixtures"],
+    globalSetup: "<rootDir>/setupTests.js",
+    modulePathIgnorePatterns: ["./tests/fixtures"],
     collectCoverage: true
 }

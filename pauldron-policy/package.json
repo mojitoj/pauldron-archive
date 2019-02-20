@@ -2,7 +2,7 @@
   "name": "pauldron-policy",
   "version": "0.2.3",
   "description": "Simple JSON-based Authorization Policy Engine",
-  "main": "src/index.js",
+  "main": "index.js",
   "repository": "https://github.com/mojitoholic/pauldron.git",
   "author": "mojitoholic",
   "license": "MIT",

@@ -24,14 +24,10 @@ async function getRequiredPermissions(resource, action) {
                     {
                         resource_set_id: {
                             patientId: await getPatientId(resource),
-                            resourceType: resource.resourceType
+                            resourceType: resource.resourceType,
+                            securityLabels: securityLabelsToScopes(resource.meta.security || [])
                         },
-                        scopes: [
-                            {
-                                action,
-                                securityLabels: securityLabelsToScopes(resource.meta.security || [])
-                            }
-                        ]
+                        scopes: [action]
                     }
                 );
             } catch (e) {

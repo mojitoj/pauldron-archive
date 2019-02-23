@@ -9,14 +9,15 @@ it("exact match.", () => {
               system: "urn:official:id",
               value: "10001"
             },
-            resourceType: "Specimen"
+            resourceType: "Specimen",
+            securityLabels: [
+              {
+                system: "http://hl7.org/fhir/v3/Confidentiality",
+                code: "N"
+              }
+            ]
           },
-          scopes: [
-            {
-              system: "http://hl7.org/fhir/v3/Confidentiality",
-              code: "N"
-            }
-          ]
+          scopes: ["read"]
         },
         {
             resource_set_id: {
@@ -24,14 +25,15 @@ it("exact match.", () => {
                 system: "urn:official:id",
                 value: "10001"
               },
-              resourceType: "Immunization"
+              resourceType: "Immunization",
+              securityLabels: [
+                {
+                  system: "http://hl7.org/fhir/v3/Confidentiality",
+                  code: "N"
+                }
+              ]
             },
-            scopes: [
-              {
-                system: "http://hl7.org/fhir/v3/Confidentiality",
-                code: "N"
-              }
-            ]
+            scopes: ["read"]
           }
       ];
 
@@ -49,14 +51,15 @@ it("denied scope.", () => {
               system: "urn:official:id",
               value: "10001"
             },
-            resourceType: "Specimen"
+            resourceType: "Specimen",
+            securityLabels: [
+              {
+                system: "http://hl7.org/fhir/v3/Confidentiality",
+                code: "N"
+              }
+            ]
           },
-          scopes: [
-            {
-              system: "http://hl7.org/fhir/v3/Confidentiality",
-              code: "N"
-            }
-          ],
+          scopes: ["read"],
           deny: true
         },
         {
@@ -65,14 +68,15 @@ it("denied scope.", () => {
                 system: "urn:official:id",
                 value: "10001"
               },
-              resourceType: "Immunization"
+              resourceType: "Immunization",
+              securityLabels: [
+                {
+                  system: "http://hl7.org/fhir/v3/Confidentiality",
+                  code: "N"
+                }
+              ]
             },
-            scopes: [
-              {
-                system: "http://hl7.org/fhir/v3/Confidentiality",
-                code: "N"
-              }
-            ]
+            scopes: "read"
           }
       ];
 
@@ -91,7 +95,8 @@ it("wildcard granted scope.", () => {
               system: "urn:official:id",
               value: "10001"
             },
-            resourceType: "*"
+            resourceType: "*",
+            securityLabels: "*"
           },
           scopes: "*"
         }
@@ -104,14 +109,15 @@ it("wildcard granted scope.", () => {
               system: "urn:official:id",
               value: "10001"
             },
-            resourceType: "Specimen"
+            resourceType: "Specimen",
+            securityLabels: [
+              {
+                system: "http://hl7.org/fhir/v3/Confidentiality",
+                code: "R"
+              }
+            ]
           },
-          scopes: [
-            {
-              system: "http://hl7.org/fhir/v3/Confidentiality",
-              code: "R"
-            }
-          ]
+          scopes: ["read"]
         },
         {
             resource_set_id: {
@@ -119,14 +125,15 @@ it("wildcard granted scope.", () => {
                 system: "urn:official:id",
                 value: "10001"
               },
-              resourceType: "Immunization"
+              resourceType: "Immunization",
+              securityLabels: [
+                {
+                  system: "http://hl7.org/fhir/v3/Confidentiality",
+                  code: "N"
+                }
+              ]
             },
-            scopes: [
-              {
-                system: "http://hl7.org/fhir/v3/Confidentiality",
-                code: "N"
-              }
-            ]
+            scopes: ["read"]
           }
       ];
     
@@ -142,14 +149,15 @@ it("wildcard denied scope.", () => {
               system: "urn:official:id",
               value: "10001"
             },
-            resourceType: "*"
+            resourceType: "*",
+            securityLabels: [
+              {
+                system: "http://hl7.org/fhir/v3/Confidentiality",
+                code: "N"
+              }
+            ]
           },
-          scopes: [
-            {
-              system: "http://hl7.org/fhir/v3/Confidentiality",
-              code: "N"
-            }
-          ]
+          scopes: ["read"]
         },
         {
             deny: true,
@@ -158,14 +166,15 @@ it("wildcard denied scope.", () => {
                 system: "urn:official:id",
                 value: "10001"
               },
-              resourceType: "*"
+              resourceType: "*",
+              securityLabels: [
+                {
+                  system: "http://hl7.org/fhir/v3/Confidentiality",
+                  code: "R"
+                }
+              ]
             },
-            scopes: [
-              {
-                system: "http://hl7.org/fhir/v3/Confidentiality",
-                code: "R"
-              }
-            ]
+            scopes: ["read"]
           }
       ];
 
@@ -176,14 +185,15 @@ it("wildcard denied scope.", () => {
               system: "urn:official:id",
               value: "10001"
             },
-            resourceType: "Specimen"
+            resourceType: "Specimen",
+            securityLabels: [
+              {
+                system: "http://hl7.org/fhir/v3/Confidentiality",
+                code: "N"
+              }
+            ]
           },
-          scopes: [
-            {
-              system: "http://hl7.org/fhir/v3/Confidentiality",
-              code: "N"
-            }
-          ]
+          scopes: ["read"]
         },
         {
             resource_set_id: {
@@ -191,14 +201,15 @@ it("wildcard denied scope.", () => {
                 system: "urn:official:id",
                 value: "10001"
               },
-              resourceType: "Immunization"
+              resourceType: "Immunization",
+              securityLabels: [
+                {
+                  system: "http://hl7.org/fhir/v3/Confidentiality",
+                  code: "N"
+                }
+              ]
             },
-            scopes: [
-              {
-                system: "http://hl7.org/fhir/v3/Confidentiality",
-                code: "N"
-              }
-            ]
+            scopes: ["read"]
           }
     ];
     
@@ -212,14 +223,15 @@ it("wildcard denied scope.", () => {
               system: "urn:official:id",
               value: "10001"
             },
-            resourceType: "Specimen"
+            resourceType: "Specimen",
+            securityLabels: [
+              {
+                system: "http://hl7.org/fhir/v3/Confidentiality",
+                code: "N"
+              }
+            ]
           },
-          scopes: [
-            {
-              system: "http://hl7.org/fhir/v3/Confidentiality",
-              code: "N"
-            }
-          ]
+          scopes: ["read"]
         },
         {
             resource_set_id: {
@@ -227,14 +239,15 @@ it("wildcard denied scope.", () => {
                 system: "urn:official:id",
                 value: "10001"
               },
-              resourceType: "Immunization"
+              resourceType: "Immunization",
+              securityLabels: [
+                {
+                  system: "http://hl7.org/fhir/v3/Confidentiality",
+                  code: "R"
+                }
+              ]
             },
-            scopes: [
-              {
-                system: "http://hl7.org/fhir/v3/Confidentiality",
-                code: "R"
-              }
-            ]
+            scopes: ["read"]
           }
     ];
 
@@ -248,18 +261,19 @@ it("wildcard denied scope.", () => {
               system: "urn:official:id",
               value: "10001"
             },
-            resourceType: "Specimen"
-          },
-          scopes: [
-            {
-              system: "http://hl7.org/fhir/v3/Confidentiality",
-              code: "N"
-            },
-            {
+            resourceType: "Specimen",
+            securityLabels: [
+              {
                 system: "http://hl7.org/fhir/v3/Confidentiality",
-                code: "R"
-              }
-          ]
+                code: "N"
+              },
+              {
+                  system: "http://hl7.org/fhir/v3/Confidentiality",
+                  code: "R"
+                }
+            ]
+          },
+          scopes: ["read"]
         }
     ];
 
@@ -275,18 +289,19 @@ it("array match.", () => {
               system: "urn:official:id",
               value: "10001"
             },
-            resourceType: "Specimen"
+            resourceType: "Specimen",
+            securityLabels: [
+              {
+                  system: "http://hl7.org/fhir/v3/Confidentiality",
+                  code: "N"
+              },
+              {
+                  system: "http://hl7.org/fhir/v3/Confidentiality",
+                  code: "R"
+              }
+            ]
           },
-          scopes: [
-            {
-                system: "http://hl7.org/fhir/v3/Confidentiality",
-                code: "N"
-            },
-            {
-                system: "http://hl7.org/fhir/v3/Confidentiality",
-                code: "R"
-            }
-          ]
+          scopes: ["read"]
         }
     ];
 
@@ -297,14 +312,15 @@ it("array match.", () => {
                 system: "urn:official:id",
                 value: "10001"
             },
-            resourceType: "Specimen"
+            resourceType: "Specimen",
+            securityLabels: [
+              {
+                  system: "http://hl7.org/fhir/v3/Confidentiality",
+                  code: "N"
+              }
+            ]
           },
-          scopes: [
-            {
-                system: "http://hl7.org/fhir/v3/Confidentiality",
-                code: "N"
-            }
-          ]
+          scopes: ["read"]
         }
     ];
 
@@ -321,18 +337,19 @@ it("array match with single element.", () => {
               system: "urn:official:id",
               value: "10001"
             },
-            resourceType: ["Specimen", "Immunization"]
+            resourceType: ["Specimen", "Immunization"],
+            securityLabels: [
+              {
+                  system: "http://hl7.org/fhir/v3/Confidentiality",
+                  code: "N"
+              },
+              {
+                  system: "http://hl7.org/fhir/v3/Confidentiality",
+                  code: "R"
+              }
+            ]
           },
-          scopes: [
-            {
-                system: "http://hl7.org/fhir/v3/Confidentiality",
-                code: "N"
-            },
-            {
-                system: "http://hl7.org/fhir/v3/Confidentiality",
-                code: "R"
-            }
-          ]
+          scopes: ["read"]
         }
     ];
 
@@ -342,13 +359,14 @@ it("array match with single element.", () => {
             patientId: {
                     system: "urn:official:id",
                     value: "10001"
-                },
-                resourceType: "Specimen"
             },
-            scopes: {
-                system: "http://hl7.org/fhir/v3/Confidentiality",
-                code: "N"
+            resourceType: "Specimen",
+            securityLabels: {
+              system: "http://hl7.org/fhir/v3/Confidentiality",
+              code: "N"
             }
+          },
+            scopes: "read"
         }
     ];
 
@@ -365,14 +383,15 @@ it("mix recursive array and wildcard match", () => {
               system: "urn:official:id",
               value: "10001"
             },
-            resourceType: ["Specimen", "Immunization"]
+            resourceType: ["Specimen", "Immunization"],
+            securityLabels: [
+              {
+                  system: "http://hl7.org/fhir/v3/Confidentiality",
+                  code: "*"
+              }
+            ]
           },
-          scopes: [
-            {
-                system: "http://hl7.org/fhir/v3/Confidentiality",
-                code: "*"
-            }
-          ]
+          scopes: ["read"]
         },
         {
             deny: true,
@@ -381,14 +400,15 @@ it("mix recursive array and wildcard match", () => {
                 system: "urn:official:id",
                 value: "10001"
               },
-              resourceType: "*"
+              resourceType: "*",
+              securityLabels: [
+                {
+                    system: "http://hl7.org/fhir/v3/Confidentiality",
+                    code: "R"
+                }
+              ]
             },
-            scopes: [
-              {
-                  system: "http://hl7.org/fhir/v3/Confidentiality",
-                  code: "R"
-              }
-            ]
+            scopes: ["read"]
         }
     ];
 
@@ -399,12 +419,13 @@ it("mix recursive array and wildcard match", () => {
                     system: "urn:official:id",
                     value: "10001"
                 },
-                resourceType: "Specimen"
+                resourceType: "Specimen",
+                securityLabels: {
+                  system: "http://hl7.org/fhir/v3/Confidentiality",
+                  code: "N"
+              }
             },
-            scopes: {
-                system: "http://hl7.org/fhir/v3/Confidentiality",
-                code: "N"
-            }
+            scopes: "read"
         }
     ];
 
@@ -418,17 +439,18 @@ it("mix recursive array and wildcard match", () => {
                     system: "urn:official:id",
                     value: "10001"
                 },
-                resourceType: "Specimen"
+                resourceType: "Specimen",
+                securityLabels: [
+                  {
+                  system: "http://hl7.org/fhir/v3/Confidentiality",
+                  code: "R"
+                  }
+                ]
             },
-            scopes: [{
-                system: "http://hl7.org/fhir/v3/Confidentiality",
-                code: "R"
-            }]
+            scopes: ["read"]
         }
     ];
 
     result = PermissionEvaluation.evaluateRequestedScopesAgainstGrantedScopes(granted, required);
     expect(result).toEqual(false);
-
 });
-

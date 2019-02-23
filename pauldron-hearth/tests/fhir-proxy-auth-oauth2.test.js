@@ -110,14 +110,10 @@ it("happy path with bundle, oauth2.", async () => {
                 system: "urn:official:id",
                 value: "10001"
               },
-              resourceType: "Specimen"
+              resourceType: "Specimen",
+              securityLabels: "*"
             },
-            scopes: [
-              {
-                action: "read",
-                securityLabels: "*"
-              }
-            ]
+            scopes: ["read"]
           }
     ]);
 

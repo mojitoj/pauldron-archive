@@ -52,18 +52,25 @@ const scopes = [
                 system: "http://hl7.org/fhir/sid/us-ssn", 
                 value: "444222222"
             },
-            resourceType: "Specimen"
+            resourceType: "Specimen",
+            securityLabels: [
+                {
+                    system: "http://terminology.hl7.org/ValueSet/v3-ConfidentialityClassification",
+                    code: "N"
+                }
+            ]
         },
-        scopes:[
-            {
-                system: "http://hl7.org/fhir/v3/Confidentiality",
-                code: "N"
-            }
-        ]
+        scopes: ["read"]
     }
 ];
 
 async function testWithHttpClientWrapper() { 
+    const uri = process.argv[2];
+    if (!uri) {
+        console.error("Must provide a URL.");
+        return;
+    }
+
     await PauldronClient.Policy.add(
         POLICY, 
         "https://pauldron.herokuapp.com/policies", 
@@ -79,8 +86,9 @@ async function testWithHttpClientWrapper() {
         authApiKey: TEST_AUTH_API_KEY,
         method: "GET",
         json: true,
-        uri: "https://pauldron-hearth.herokuapp.com/Specimen/3125"
-        // uri: "http://localhost:8080/Specimen/3125"
+        uri: uri
+        // uri: "https://pauldron-hearth.herokuapp.com/Specimen/3116"
+        // uri: "http://localhost:8080/Specimen/3116"
     };
     console.log(`${options.method} ${options.uri}`);
     const {token, response} = await PauldronClient.HTTP.OAuth2.request(options);

@@ -38,11 +38,9 @@ Currently, the `resource_set_id` is structured as follows:
 
 - `patientId`: the patient identifier (including `system` and `value`).
 - `resourceType`: the type of resource.
+- `securityLabels`: an array of security labels each of which is composed of a `system` and `code` as defined by [FHIR](https://www.hl7.org/fhir/security-labels.html). 
 
-The `scope` array must include elements of the following format:
-
-- `action`: the requested action, e.g. `read`, `create`, `update`, or `delete`.
-- `securityLabels`: an array of security labels each including a `system` and `code`. 
+The `scopes` array must include the requested action, e.g. `read`, `create`, `update`, or `delete`. Currently these are simple opaque strings.
 
 Here is an example:
 
@@ -53,19 +51,15 @@ Here is an example:
       "system": "urn:official:id",
       "value": "10001"
     },
-    "resourceType": "Specimen"
-  },
-  "scopes": [
-    {
-      "action": "read",
-      "securityLabels": [
+    "resourceType": "Specimen",
+    "securityLabels": [
         {
           "system": "http://hl7.org/fhir/v3/Confidentiality",
           "code": "N"
         }
-      ]
-    }
-  ]
+    ]
+  },
+  "scopes": ["read"]
 }
 ```
 When a request is received by the client, Pauldron-Hearth identifies the implied requested permissions by:
@@ -89,17 +83,15 @@ For example, if a client wants to access all observations and immunizations of a
       "system": "urn:official:id",
       "value": "10001"
     },
-    "resourceType": ["Observations", "Immunization"]
-  },
-  "scopes": [
-    {
-      "action": "read",
-      "securityLabels": {
+    "resourceType": ["Observations", "Immunization"],
+    "securityLabels": [
+      {
           "system": "http://hl7.org/fhir/v3/Confidentiality",
           "code": "R"
       }
-    }
-  ]
+    ]
+  },
+  "scopes": ["read"]
 }
 ```
 Now assume that there is a policy that denies access to any restricted resources for this client. The Pauldron server, after examining the policies, grants the requested scope, but adds the following _negative_ scope as well:
@@ -112,14 +104,10 @@ Now assume that there is a policy that denies access to any restricted resources
       "system": "urn:official:id",
       "value": "10001"
     },
-    "resourceType": "*"
+    "resourceType": "*",
+    "securityLabels": "*"
   },
-  "scopes": [
-    {
-      "action": "read",
-      "securityLabels": "*"
-    }
-  ]
+  "scopes": ["read"]
 }
 ```
 Pauldron Hearth adjudicates these scopes based on the following rules:

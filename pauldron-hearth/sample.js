@@ -53,7 +53,7 @@ const scopes = [
                 value: "444222222"
             },
             resourceType: "Specimen",
-            securityLabels: [
+            securityLabel: [
                 {
                     system: "http://terminology.hl7.org/ValueSet/v3-ConfidentialityClassification",
                     code: "N"

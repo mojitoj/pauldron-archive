@@ -111,7 +111,7 @@ it("happy path with bundle, oauth2.", async () => {
                 value: "10001"
               },
               resourceType: "Specimen",
-              securityLabels: "*"
+              securityLabel: "*"
             },
             scopes: ["read"]
           }
@@ -167,7 +167,7 @@ it("should return 403 if insufficient scopes.", async () => {
             scopes: [
               {
                 action: "write",
-                securityLabels: "*"
+                securityLabel: "*"
               }
             ]
           }

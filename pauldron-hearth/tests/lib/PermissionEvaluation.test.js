@@ -10,7 +10,7 @@ it("exact match.", () => {
               value: "10001"
             },
             resourceType: "Specimen",
-            securityLabels: [
+            securityLabel: [
               {
                 system: "http://hl7.org/fhir/v3/Confidentiality",
                 code: "N"
@@ -26,7 +26,7 @@ it("exact match.", () => {
                 value: "10001"
               },
               resourceType: "Immunization",
-              securityLabels: [
+              securityLabel: [
                 {
                   system: "http://hl7.org/fhir/v3/Confidentiality",
                   code: "N"
@@ -52,7 +52,7 @@ it("denied scope.", () => {
               value: "10001"
             },
             resourceType: "Specimen",
-            securityLabels: [
+            securityLabel: [
               {
                 system: "http://hl7.org/fhir/v3/Confidentiality",
                 code: "N"
@@ -69,7 +69,7 @@ it("denied scope.", () => {
                 value: "10001"
               },
               resourceType: "Immunization",
-              securityLabels: [
+              securityLabel: [
                 {
                   system: "http://hl7.org/fhir/v3/Confidentiality",
                   code: "N"
@@ -96,7 +96,7 @@ it("wildcard granted scope.", () => {
               value: "10001"
             },
             resourceType: "*",
-            securityLabels: "*"
+            securityLabel: "*"
           },
           scopes: "*"
         }
@@ -110,7 +110,7 @@ it("wildcard granted scope.", () => {
               value: "10001"
             },
             resourceType: "Specimen",
-            securityLabels: [
+            securityLabel: [
               {
                 system: "http://hl7.org/fhir/v3/Confidentiality",
                 code: "R"
@@ -126,7 +126,7 @@ it("wildcard granted scope.", () => {
                 value: "10001"
               },
               resourceType: "Immunization",
-              securityLabels: [
+              securityLabel: [
                 {
                   system: "http://hl7.org/fhir/v3/Confidentiality",
                   code: "N"
@@ -150,7 +150,7 @@ it("wildcard denied scope.", () => {
               value: "10001"
             },
             resourceType: "*",
-            securityLabels: [
+            securityLabel: [
               {
                 system: "http://hl7.org/fhir/v3/Confidentiality",
                 code: "N"
@@ -167,7 +167,7 @@ it("wildcard denied scope.", () => {
                 value: "10001"
               },
               resourceType: "*",
-              securityLabels: [
+              securityLabel: [
                 {
                   system: "http://hl7.org/fhir/v3/Confidentiality",
                   code: "R"
@@ -186,7 +186,7 @@ it("wildcard denied scope.", () => {
               value: "10001"
             },
             resourceType: "Specimen",
-            securityLabels: [
+            securityLabel: [
               {
                 system: "http://hl7.org/fhir/v3/Confidentiality",
                 code: "N"
@@ -202,7 +202,7 @@ it("wildcard denied scope.", () => {
                 value: "10001"
               },
               resourceType: "Immunization",
-              securityLabels: [
+              securityLabel: [
                 {
                   system: "http://hl7.org/fhir/v3/Confidentiality",
                   code: "N"
@@ -224,7 +224,7 @@ it("wildcard denied scope.", () => {
               value: "10001"
             },
             resourceType: "Specimen",
-            securityLabels: [
+            securityLabel: [
               {
                 system: "http://hl7.org/fhir/v3/Confidentiality",
                 code: "N"
@@ -240,7 +240,7 @@ it("wildcard denied scope.", () => {
                 value: "10001"
               },
               resourceType: "Immunization",
-              securityLabels: [
+              securityLabel: [
                 {
                   system: "http://hl7.org/fhir/v3/Confidentiality",
                   code: "R"
@@ -262,7 +262,7 @@ it("wildcard denied scope.", () => {
               value: "10001"
             },
             resourceType: "Specimen",
-            securityLabels: [
+            securityLabel: [
               {
                 system: "http://hl7.org/fhir/v3/Confidentiality",
                 code: "N"
@@ -290,7 +290,7 @@ it("array match.", () => {
               value: "10001"
             },
             resourceType: "Specimen",
-            securityLabels: [
+            securityLabel: [
               {
                   system: "http://hl7.org/fhir/v3/Confidentiality",
                   code: "N"
@@ -313,7 +313,7 @@ it("array match.", () => {
                 value: "10001"
             },
             resourceType: "Specimen",
-            securityLabels: [
+            securityLabel: [
               {
                   system: "http://hl7.org/fhir/v3/Confidentiality",
                   code: "N"
@@ -338,7 +338,7 @@ it("array match with single element.", () => {
               value: "10001"
             },
             resourceType: ["Specimen", "Immunization"],
-            securityLabels: [
+            securityLabel: [
               {
                   system: "http://hl7.org/fhir/v3/Confidentiality",
                   code: "N"
@@ -361,7 +361,7 @@ it("array match with single element.", () => {
                     value: "10001"
             },
             resourceType: "Specimen",
-            securityLabels: {
+            securityLabel: {
               system: "http://hl7.org/fhir/v3/Confidentiality",
               code: "N"
             }
@@ -384,7 +384,7 @@ it("mix recursive array and wildcard match", () => {
               value: "10001"
             },
             resourceType: ["Specimen", "Immunization"],
-            securityLabels: [
+            securityLabel: [
               {
                   system: "http://hl7.org/fhir/v3/Confidentiality",
                   code: "*"
@@ -401,7 +401,7 @@ it("mix recursive array and wildcard match", () => {
                 value: "10001"
               },
               resourceType: "*",
-              securityLabels: [
+              securityLabel: [
                 {
                     system: "http://hl7.org/fhir/v3/Confidentiality",
                     code: "R"
@@ -420,7 +420,7 @@ it("mix recursive array and wildcard match", () => {
                     value: "10001"
                 },
                 resourceType: "Specimen",
-                securityLabels: {
+                securityLabel: {
                   system: "http://hl7.org/fhir/v3/Confidentiality",
                   code: "N"
               }
@@ -440,7 +440,7 @@ it("mix recursive array and wildcard match", () => {
                     value: "10001"
                 },
                 resourceType: "Specimen",
-                securityLabels: [
+                securityLabel: [
                   {
                   system: "http://hl7.org/fhir/v3/Confidentiality",
                   code: "R"

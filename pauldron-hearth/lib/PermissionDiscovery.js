@@ -25,7 +25,7 @@ async function getRequiredPermissions(resource, action) {
                         resource_set_id: {
                             patientId: await getPatientId(resource),
                             resourceType: resource.resourceType,
-                            securityLabels: securityLabelsToScopes(resource.meta.security || [])
+                            securityLabel: securityLabelsToScopes(resource.meta.security || [])
                         },
                         scopes: [action]
                     }

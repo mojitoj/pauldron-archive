@@ -32,10 +32,10 @@ it("correctly constructs permissions for a bundle with more than one security la
     expect(permissions).toHaveLength(2);
     expect(permissions[0]).toHaveProperty("resource_set_id");
     expect(permissions[0]).toHaveProperty("scopes");
-    expect(permissions[0].resource_set_id).toHaveProperty("securityLabels");
-    expect(permissions[0].resource_set_id.securityLabels).toHaveLength(1);
-    expect(permissions[1].resource_set_id).toHaveProperty("securityLabels");
-    expect(permissions[1].resource_set_id.securityLabels).toHaveLength(1);
+    expect(permissions[0].resource_set_id).toHaveProperty("securityLabel");
+    expect(permissions[0].resource_set_id.securityLabel).toHaveLength(1);
+    expect(permissions[1].resource_set_id).toHaveProperty("securityLabel");
+    expect(permissions[1].resource_set_id.securityLabel).toHaveLength(1);
     expect(permissions[0].resource_set_id).toMatchObject({patientId:{system:"urn:official:id",value:"10001"},resourceType:"Specimen"});
     expect(permissions[1].resource_set_id).toMatchObject({patientId:{system:"urn:official:id",value:"10001"},resourceType:"Specimen"});
     expect(permissions[0].scopes).toHaveLength(1);

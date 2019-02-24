@@ -38,7 +38,7 @@ Currently, the `resource_set_id` is structured as follows:
 
 - `patientId`: the patient identifier (including `system` and `value`).
 - `resourceType`: the type of resource.
-- `securityLabels`: an array of security labels each of which is composed of a `system` and `code` as defined by [FHIR](https://www.hl7.org/fhir/security-labels.html). 
+- `securityLabel`: A security label (or an array thereof) composed of a `system` and `code` as defined by [FHIR](https://www.hl7.org/fhir/security-labels.html). 
 
 The `scopes` array must include the requested action, e.g. `read`, `create`, `update`, or `delete`. Currently these are simple opaque strings.
 
@@ -52,7 +52,7 @@ Here is an example:
       "value": "10001"
     },
     "resourceType": "Specimen",
-    "securityLabels": [
+    "securityLabel": [
         {
           "system": "http://hl7.org/fhir/v3/Confidentiality",
           "code": "N"
@@ -74,7 +74,7 @@ When working in UMA mode, the client does not need to be aware of the scopes/per
 
 In the two-legged OAuth 2.0 mode, however, the client needs to present a set of requested scopes at the time of requesting an access token. This can be tricky if the client does not know about the details of the scopes and its own access rights according to the policies and it is almost impossible for the client to request for a precise set of scopes without that knowledge. In such cases, it is very helpful if the client can request a maximal approximation of what it believes will suffice for its requests and leave it up the authorization server to refine the granted scopes after consulting the applicable policies. This is why Pauldron allows _wildcards_ and _arrays_ in scopes and also enables the Pauldron server to refine such scopes with _negative_ scopes which _deny_ a specific pattern of access.
 
-For example, if a client wants to access all observations and immunizations of a patient, it can request the following scope; note the use of an array in `resourceType` which implies a conjunction, and the wildcard in `securityLabels` which implied _any_:
+For example, if a client wants to access all observations and immunizations of a patient, it can request the following scope; note the use of an array in `resourceType` which implies a _any of_ the values in the arary, and the wildcard in `securityLabel` which implies _any_ value:
 
 ```json
 {
@@ -84,7 +84,7 @@ For example, if a client wants to access all observations and immunizations of a
       "value": "10001"
     },
     "resourceType": ["Observations", "Immunization"],
-    "securityLabels": [
+    "securityLabel": [
       {
           "system": "http://hl7.org/fhir/v3/Confidentiality",
           "code": "R"
@@ -105,7 +105,7 @@ Now assume that there is a policy that denies access to any restricted resources
       "value": "10001"
     },
     "resourceType": "*",
-    "securityLabels": "*"
+    "securityLabel": "*"
   },
   "scopes": ["read"]
 }

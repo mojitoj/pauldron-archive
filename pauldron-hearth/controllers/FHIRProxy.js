@@ -4,19 +4,20 @@ const _ = require("lodash");
 const PermissionDiscovery = require("../lib/PermissionDiscovery");
 const logger = require("../lib/logger");
 const PermissionEvaluation = require("../lib/PermissionEvaluation");
+const RequestUtils = require("../lib/RequestUtils");
+
+const {
+    UMA_MODE,
+    UMA_SERVER_BASE,
+    UMA_SERVER_REALM,
+    UMA_SERVER_AUTHORIZATION_ENDPOINT,
+    UMA_SERVER_PERMISSION_REGISTRATION_ENDPOINT,
+    UMA_SERVER_PROTECTION_API_KEY
+} = require("../lib/UMAConfigs")
 
 const UNPROTECTED_RESOURCE_TYPES = (process.env.UNPROTECTED_RESOURCE_TYPES || "")
                                         .split(",")
                                         .map(res => res.trim());
-
-const UMA_MODE = (process.env.UMA_MODE !== "false");
-const UMA_SERVER_BASE = process.env.UMA_SERVER_BASE;
-const UMA_SERVER_REALM = process.env.UMA_SERVER_REALM;
-const UMA_SERVER_AUTHORIZATION_ENDPOINT = process.env.UMA_SERVER_AUTHORIZATION_ENDPOINT;
-
-const UMA_SERVER_INTROSPECTION_ENDPOINT = process.env.UMA_SERVER_INTROSPECTION_ENDPOINT;
-const UMA_SERVER_PERMISSION_REGISTRATION_ENDPOINT = process.env.UMA_SERVER_PERMISSION_REGISTRATION_ENDPOINT;
-const UMA_SERVER_PROTECTION_API_KEY = process.env.UMA_SERVER_PROTECTION_API_KEY;
 
 async function onProxyRes(proxyRes, req, res) {
     let rawBackendBody = Buffer.from([]);
@@ -142,7 +143,7 @@ async function processProtecetedResource(request, backendResponse) {
     const requiredPermissions = await PermissionDiscovery.getRequiredPermissions(backendResponse, action);
     let grantedPermissions = [];
     try {
-        grantedPermissions = await getGrantedPermissions(request);
+        grantedPermissions = await RequestUtils.getGrantedPermissions(request);
         ensureSufficientPermissions(requiredPermissions, grantedPermissions);
     } catch (e) {
         if (e.error === "no_rpt") {
@@ -215,17 +216,6 @@ function ensureSufficientPermissions(required, granted) {
     }
 }
 
-async function getGrantedPermissions (request) {
-    const rpt = getRPTFromHeader(request);
-
-    const grantedPermissions = await PauldronClient.RPT.introspect(
-        rpt,
-        `${UMA_SERVER_BASE}${UMA_SERVER_INTROSPECTION_ENDPOINT}`,
-        UMA_SERVER_PROTECTION_API_KEY
-    );
-    return grantedPermissions;
-}
-
 async function registerPermissionsAndRedirect(permissions) {
     const ticket = await PauldronClient.Permissions.register(
         permissions,
@@ -242,23 +232,7 @@ async function registerPermissionsAndRedirect(permissions) {
     };
 }
 
-function getRPTFromHeader (request) {
-    if (!request.get("authorization")
-        || ! request.get("authorization").includes("Bearer ")
-        || request.get("authorization").split(" ").length < 2) {
-        throw {
-            error: "no_rpt"
-        };
-    }
-    const rpt = request.get("authorization").split(" ")[1].trim();
-    if (!rpt) {
-        throw {
-            error: "no_rpt"
-        };
-    }
-    return rpt;
-}
-
 module.exports = {
-    onProxyRes
+    onProxyRes,
+    onProxyReq
 }

@@ -1,10 +1,13 @@
-const {} = require("./UMAConfigs")
+const PauldronClient = require("pauldron-clients");
+
 const {
     UMA_MODE,
     UMA_SERVER_BASE,
-    UMA_SERVER_REALM
+    UMA_SERVER_REALM,
+    UMA_SERVER_AUTHORIZATION_ENDPOINT,
+    UMA_SERVER_PERMISSION_REGISTRATION_ENDPOINT,
+    UMA_SERVER_PROTECTION_API_KEY
 } = require("./UMAConfigs");
-const RequestUtils = require("./RequestUtils");
 
 function umaHeader(ticket) {
     return `UMA realm=\"${UMA_SERVER_REALM}\", as_uri=\"${UMA_SERVER_BASE}\", ticket=\"${ticket}\"`;
@@ -32,7 +35,13 @@ function handleCommonExceptions(e, res) {
             error: e.error,
             status: e.status,
             ticket: e.ticket,
-            info: {"server": e.umaServerParams}
+            info: {
+                "server": {
+                    realm: UMA_SERVER_REALM,
+                    uri: UMA_SERVER_BASE,
+                    authorization_endpoint: UMA_SERVER_AUTHORIZATION_ENDPOINT
+                }
+            }
         };
         res.write(Buffer.from(JSON.stringify(responseBody), "utf8"));
         return true;
@@ -69,7 +78,7 @@ function handleCommonExceptions(e, res) {
 async function noRptException(requiredPermissions) {
     return (UMA_MODE) 
     ?{
-        ...await RequestUtils.registerPermissionsAndRedirect(requiredPermissions),
+        ...await registerPermissionsAndGetTicket(requiredPermissions),
         error: "uma_redirect",
         status: 401
     }
@@ -83,7 +92,7 @@ async function noRptException(requiredPermissions) {
 async function invalidRptException(requiredPermissions) {
     return (UMA_MODE) 
     ?{
-        ...await RequestUtils.registerPermissionsAndRedirect(requiredPermissions),
+        ...await registerPermissionsAndGetTicket(requiredPermissions),
         error: "invalid_rpt",
         status: 403
     }
@@ -97,7 +106,7 @@ async function invalidRptException(requiredPermissions) {
 async function insufficientScopesException(requiredPermissions) {
     return (UMA_MODE) 
     ?{
-        ...await RequestUtils.registerPermissionsAndRedirect(requiredPermissions),
+        ...await registerPermissionsAndGetTicket(requiredPermissions),
         error: "insufficient_scopes",
         status: 403
     }
@@ -105,6 +114,15 @@ async function insufficientScopesException(requiredPermissions) {
         error: "forbidden",
         message: "Insufficient scopes.",
         status: 403
+    };
+}
+
+async function registerPermissionsAndGetTicket(permissions) {
+    return {
+        ticket: await PauldronClient.Permissions.register(
+            permissions,
+            `${UMA_SERVER_BASE}${UMA_SERVER_PERMISSION_REGISTRATION_ENDPOINT}`,
+            UMA_SERVER_PROTECTION_API_KEY)
     };
 }
 

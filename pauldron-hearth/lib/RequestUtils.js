@@ -1,9 +1,12 @@
 const PauldronClient = require("pauldron-clients");
 const {
     UMA_SERVER_BASE,
+    UMA_SERVER_REALM,
     UMA_SERVER_INTROSPECTION_ENDPOINT,
-    UMA_SERVER_PROTECTION_API_KEY
-} = require("../lib/UMAConfigs")
+    UMA_SERVER_PROTECTION_API_KEY,
+    UMA_SERVER_PERMISSION_REGISTRATION_ENDPOINT,
+    UMA_SERVER_AUTHORIZATION_ENDPOINT
+} = require("../lib/UMAConfigs");
 
 async function getGrantedPermissions (request) {
     const rpt = getRPTFromHeader(request);
@@ -33,6 +36,24 @@ function getRPTFromHeader (request) {
     return rpt;
 }
 
+async function registerPermissionsAndRedirect(permissions) {
+    const ticket = await PauldronClient.Permissions.register(
+        permissions,
+        `${UMA_SERVER_BASE}${UMA_SERVER_PERMISSION_REGISTRATION_ENDPOINT}`,
+        UMA_SERVER_PROTECTION_API_KEY
+    );
+    return {
+        ticket: ticket,
+        umaServerParams: {
+            realm: UMA_SERVER_REALM,
+            uri: UMA_SERVER_BASE,
+            authorization_endpoint: UMA_SERVER_AUTHORIZATION_ENDPOINT
+        }
+    };
+}
+
+
 module.exports = {
-    getGrantedPermissions
+    getGrantedPermissions,
+    registerPermissionsAndRedirect
 }

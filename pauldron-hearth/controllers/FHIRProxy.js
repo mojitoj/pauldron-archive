@@ -1,23 +1,19 @@
 const zlib = require("zlib");
-const PauldronClient = require("pauldron-clients");
 const _ = require("lodash");
 const PermissionDiscovery = require("../lib/PermissionDiscovery");
 const logger = require("../lib/logger");
 const PermissionEvaluation = require("../lib/PermissionEvaluation");
 const RequestUtils = require("../lib/RequestUtils");
-
-const {
-    UMA_MODE,
-    UMA_SERVER_BASE,
-    UMA_SERVER_REALM,
-    UMA_SERVER_AUTHORIZATION_ENDPOINT,
-    UMA_SERVER_PERMISSION_REGISTRATION_ENDPOINT,
-    UMA_SERVER_PROTECTION_API_KEY
-} = require("../lib/UMAConfigs")
+const ErrorUtils = require("../lib/ErrorUtils");
+const BulkHandler = require("../controllers/BulkHandler");
 
 const UNPROTECTED_RESOURCE_TYPES = (process.env.UNPROTECTED_RESOURCE_TYPES || "")
                                         .split(",")
                                         .map(res => res.trim());
+
+async function onProxyReq(proxyReq, req, res) {
+    await BulkHandler.maybeHandleBulkExport(proxyReq, req, res);
+}
 
 async function onProxyRes(proxyRes, req, res) {
     let rawBackendBody = Buffer.from([]);
@@ -65,69 +61,26 @@ async function handleGet(rawBackendBody, proxyRes, req, res) {
         res.statusCode = proxyRes.statusCode;
         res.write(rawBackendBody);
     } catch (e) {
-        if (e.error === "unauthorized" || e.error === "forbidden") {
-            res.statusCode = e.status;
-            const responseBody = {
-                message: e.message,
-                error: "authorization_error",
-                status: e.status
-            };
-            res.write(Buffer.from(JSON.stringify(responseBody), "utf8"));
-        } else if (e.error === "uma_redirect" ||
-            e.error === "invalid_rpt" ||
-            e.error === "insufficient_scopes") {
-            res.statusCode = e.status;
-            res.set({
-                "WWW-Authenticate": `UMA realm=\"${e.umaServerParams.realm}\", as_uri=\"${e.umaServerParams.uri}\", ticket=\"${e.ticket}\"`
-            });
-            const responseBody = {
-                message: `Need approval from ${e.umaServerParams.uri}.`,
-                error: e.error,
-                status: e.status,
-                ticket: e.ticket,
-                info: {"server": e.umaServerParams}
-            };
-            res.write(Buffer.from(JSON.stringify(responseBody), "utf8"));
-        } else if (
-            e.error === "permission_registration_error" ||
-            e.error === "introspection_error") {
-            res.statusCode = 403;
-            res.set({
-                "Warning": "199 - \"UMA Authorization Server Unreachable\""
-            });
-            const responseBody = {
-                message: `Could not arrange authorization: ${e.message}.`,
-                error: "authorization_error",
-                status: 403
-            };
-            logger.debug(e.message);
-            res.write(Buffer.from(JSON.stringify(responseBody), "utf8"));
-        } else if (e.error === "patient_not_found") {
-            res.statusCode = 403;
-            const responseBody = {
-                message: `Could not arrange authorization: ${e.message}.`,
-                error: "authorization_error",
-                status: 403,
-            };
-            res.write(Buffer.from(JSON.stringify(responseBody), "utf8"));
-        } else if (e instanceof SyntaxError) {
-            res.statusCode = 400;
-            const responseBody = {
-                message: "Invalid response from the FHIR server. Pauldron Hearth only supports JSON at this time.",
-                error: "unsupported_response",
-                status: 400
-            };
-            res.write(Buffer.from(JSON.stringify(responseBody), "utf8"));
-        } else {
-            logger.warn(e);
-            res.statusCode = 500;
-            const responseBody = {
-                message: "Pauldron Hearth encountered an error",
-                error: "internal_error",
-                status: 500
-            };
-            res.write(Buffer.from(JSON.stringify(responseBody), "utf8"));
-        }
+        if (! ErrorUtils.handleCommonExceptions(e, res)) {
+            if (e instanceof SyntaxError) {
+                res.statusCode = 400;
+                const responseBody = {
+                    message: "Invalid response from the FHIR server. Pauldron Hearth only supports JSON at this time.",
+                    error: "unsupported_response",
+                    status: 400
+                };
+                res.write(Buffer.from(JSON.stringify(responseBody), "utf8"));
+            } else {
+                logger.warn(e);
+                res.statusCode = 500;
+                const responseBody = {
+                    message: "Pauldron Hearth encountered an error",
+                    error: "internal_error",
+                    status: 500
+                };
+                res.write(Buffer.from(JSON.stringify(responseBody), "utf8"));
+            }
+        }  
     } finally {
         res.end();
     }
@@ -147,47 +100,12 @@ async function processProtecetedResource(request, backendResponse) {
         ensureSufficientPermissions(requiredPermissions, grantedPermissions);
     } catch (e) {
         if (e.error === "no_rpt") {
-            if (UMA_MODE) {
-                const redirectE = await registerPermissionsAndRedirect(requiredPermissions);
-                redirectE.error = "uma_redirect";
-                redirectE.status = 401;
-                throw redirectE;
-            } else {
-                throw {
-                    error: "unauthorized",
-                    message: "Must provide a valid bearer token.",
-                    status: 401
-                };
-            }
+            throw await ErrorUtils.noRptException(requiredPermissions);
         } else if (e.error === "insufficient_scopes") {
-
-            if (UMA_MODE) {
-                const redirectE = await registerPermissionsAndRedirect(requiredPermissions);
-                redirectE.error = e.error;
-                redirectE.status = 403;
-                throw redirectE;
-            } else {
-                throw {
-                    error: "forbidden",
-                    message: "Insufficient scopes.",
-                    status: 403
-                };    
-            }
+            throw await ErrorUtils.insufficientScopesException(requiredPermissions);
         } else if (e.error === "invalid_rpt") {
-            if (UMA_MODE) {
-                const redirectE = await registerPermissionsAndRedirect(requiredPermissions);
-                redirectE.error = e.error;
-                redirectE.status = 403;
-                throw redirectE;
-            } else {
-                throw {
-                    error: "forbidden",
-                    message: "Invalid bearer token.",
-                    status: 403
-                };    
-            }
-        }
-        else {
+            throw await ErrorUtils.invalidRptException(requiredPermissions);
+        } else {
             throw e;
         }
     }
@@ -214,22 +132,6 @@ function ensureSufficientPermissions(required, granted) {
             error: "insufficient_scopes"
         };
     }
-}
-
-async function registerPermissionsAndRedirect(permissions) {
-    const ticket = await PauldronClient.Permissions.register(
-        permissions,
-        `${UMA_SERVER_BASE}${UMA_SERVER_PERMISSION_REGISTRATION_ENDPOINT}`,
-        UMA_SERVER_PROTECTION_API_KEY
-    );
-    return {
-        ticket: ticket,
-        umaServerParams: {
-            realm: UMA_SERVER_REALM,
-            uri: UMA_SERVER_BASE,
-            authorization_endpoint: UMA_SERVER_AUTHORIZATION_ENDPOINT
-        }
-    };
 }
 
 module.exports = {

@@ -15,6 +15,7 @@ app.use(morgan("dev"));
 const proxyOptions = {
     target: FHIR_SERVER_BASE,
     onProxyRes: FHIRProxy.onProxyRes,
+    onProxyReq: FHIRProxy.onProxyReq,
     xfwd: true,
     selfHandleResponse: true
 };

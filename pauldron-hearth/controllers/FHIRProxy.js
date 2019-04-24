@@ -11,8 +11,18 @@ const UNPROTECTED_RESOURCE_TYPES = (process.env.UNPROTECTED_RESOURCE_TYPES || ""
                                         .split(",")
                                         .map(res => res.trim());
 
+const FHIR_SERVER_BASE = process.env.FHIR_SERVER_BASE;
+const PROXY_PATH_PREFIX = new URL(FHIR_SERVER_BASE).pathname;
+
+async function requestPreprocess(req, res, next) {
+    if (await BulkHandler.maybeHandleBulkExport(req, res)) {
+        next();
+    }
+}
+
 async function onProxyReq(proxyReq, req, res) {
-    await BulkHandler.maybeHandleBulkExport(proxyReq, req, res);
+    proxyReq.path = (req.adjustedPath) ? (PROXY_PATH_PREFIX + req.adjustedPath) : proxyReq.path;
+    logger.info(`proxy -> backend: ${proxyReq.path}`);
 }
 
 async function onProxyRes(proxyRes, req, res) {
@@ -61,7 +71,8 @@ async function handleGet(rawBackendBody, proxyRes, req, res) {
         res.statusCode = proxyRes.statusCode;
         res.write(rawBackendBody);
     } catch (e) {
-        if (! ErrorUtils.handleCommonExceptions(e, res)) {
+        const handled = ErrorUtils.handleCommonExceptionsForProxyResponse(e, res);
+        if (! handled) {
             if (e instanceof SyntaxError) {
                 res.statusCode = 400;
                 const responseBody = {
@@ -80,7 +91,7 @@ async function handleGet(rawBackendBody, proxyRes, req, res) {
                 };
                 res.write(Buffer.from(JSON.stringify(responseBody), "utf8"));
             }
-        }  
+        }
     } finally {
         res.end();
     }
@@ -114,10 +125,10 @@ async function processProtecetedResource(request, backendResponse) {
 function backendResponseIsProtected(backendResponse) {
     const resourceType = backendResponse.resourceType;
 
-    if (resourceType === "Bundle" && backendResponse.entry.length > 0) {
+    if (resourceType === "Bundle" && backendResponse.entry && backendResponse.entry.length > 0) {
         const entries = backendResponse.entry;
         return !entries.every((entry) => (UNPROTECTED_RESOURCE_TYPES.includes(entry.resource.resourceType)));
-    } else if (resourceType) {
+    } else if (resourceType !== "Bundle") {
         return !UNPROTECTED_RESOURCE_TYPES.includes(resourceType);
     } else {
         return false;
@@ -136,5 +147,6 @@ function ensureSufficientPermissions(required, granted) {
 
 module.exports = {
     onProxyRes,
-    onProxyReq
+    onProxyReq,
+    requestPreprocess
 }

@@ -21,6 +21,7 @@ const proxyOptions = {
 };
 
 logger.info(`Starting the proxy with UMA mode turned ${ process.env.UMA_MODE !== "false" ? "on" : "off"}`);
+app.use("/", FHIRProxy.requestPreprocess);
 app.use("/", proxy(proxyOptions));
 
 module.exports = {

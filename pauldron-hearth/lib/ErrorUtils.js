@@ -1,4 +1,5 @@
 const PauldronClient = require("pauldron-clients");
+const logger = require("../lib/logger");
 
 const {
     UMA_MODE,
@@ -13,24 +14,24 @@ function umaHeader(ticket) {
     return `UMA realm=\"${UMA_SERVER_REALM}\", as_uri=\"${UMA_SERVER_BASE}\", ticket=\"${ticket}\"`;
 }
 
-function handleCommonExceptions(e, res) {
+function commonExceptions(e) {
+    const res = {};
     if (e.error === "unauthorized" || e.error === "forbidden") {
-        res.statusCode = e.status;
-        const responseBody = {
+        res.status = e.status;
+        res.body = {
             message: e.message,
             error: "authorization_error",
             status: e.status
         };
-        res.write(Buffer.from(JSON.stringify(responseBody), "utf8"));
-        return true;
+        return res;
     } else if (e.error === "uma_redirect" ||
         e.error === "invalid_rpt" ||
         e.error === "insufficient_scopes") {
-        res.statusCode = e.status;
-        res.set({
+        res.status = e.status;
+        res.headers={
             "WWW-Authenticate": umaHeader(e.ticket)
-        });
-        const responseBody = {
+        };
+        res.body = {
             message: `Need approval from ${UMA_SERVER_BASE}.`,
             error: e.error,
             status: e.status,
@@ -43,33 +44,46 @@ function handleCommonExceptions(e, res) {
                 }
             }
         };
-        res.write(Buffer.from(JSON.stringify(responseBody), "utf8"));
-        return true;
+        return res;
     } else if (
         e.error === "permission_registration_error" ||
         e.error === "introspection_error") {
-        res.statusCode = 403;
-        res.set({
+        res.status = 403;
+        res.headers={
             "Warning": "199 - \"UMA Authorization Server Unreachable\""
-        });
-        const responseBody = {
+        };
+        res.body = {
             message: `Could not arrange authorization: ${e.message}.`,
             error: "authorization_error",
             status: 403
         };
         logger.debug(e.message);
-        res.write(Buffer.from(JSON.stringify(responseBody), "utf8"));
-        return true;
+        return res;
     } else if (e.error === "patient_not_found") {
-        res.statusCode = 403;
-        const responseBody = {
+        res.status = 403;
+        res.body = {
             message: `Could not arrange authorization: ${e.message}.`,
             error: "authorization_error",
             status: 403,
         };
-        res.write(Buffer.from(JSON.stringify(responseBody), "utf8"));
+        return res;
+    }
+    //don't return anything if you didn't handle it.
+}
+
+function handleCommonExceptionsForProxyResponse(e, res) {
+    const errorResponse = commonExceptions(e);
+    if (errorResponse) {
+        res.statusCode = errorResponse.status;
+        res.set(
+            {
+                ... errorResponse.headers,
+                "Content-Type": "application/json"
+            }
+        );
+        res.write(Buffer.from(JSON.stringify(errorResponse.body), "utf8"));
         return true;
-    } else {
+    } else { 
         return false;
     }
 }
@@ -130,5 +144,6 @@ module.exports = {
     noRptException,
     invalidRptException,
     insufficientScopesException,
-    handleCommonExceptions
+    commonExceptions,
+    handleCommonExceptionsForProxyResponse
 };

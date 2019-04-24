@@ -1,52 +1,123 @@
 const _ = require("lodash");
+
+const logger = require("../lib/logger");
 const RequestUtils = require("../lib/RequestUtils");
 const ErrorUtils = require("../lib/ErrorUtils");
 const PermissionEvaluation = require("../lib/PermissionEvaluation");
 
-async function maybeHandleBulkExport(proxyReq, request, response) {
-    if (!isBulkExport(request))
-        return;
-    
+
+async function maybeHandleBulkExport(req, res) {
+    if (!isBulkExport(req))
+        return true;
+
     try {
-        const grantedPermissions = await checkBulkPermissions(request);
-        proxyReq.path = adjustRequestPath(request.path, grantedPermissions);
-        logger.info(`proxy -> backend: ${proxyReq.path}`);
+        const grantedPermissions = await checkBulkPermissions(req);
+        req.adjustedPath = adjustRequestPath(req.path, grantedPermissions);
+        return true;
     } catch (e) {
-        if (! ErrorUtils.handleCommonExceptions(e, response)) {            
+        const errorResponse = ErrorUtils.commonExceptions(e);
+        if (errorResponse) {
+            res.status(errorResponse.status)
+                .set(errorResponse.headers)
+                .json(errorResponse.body);
+        } else { 
+            console.log(e);
             logger.warn(e);
-            res.statusCode = 500;
-            const responseBody = {
+            res.status(500).json({
                 message: "Pauldron Hearth encountered an error",
                 error: "internal_error",
                 status: 500
-            };
-            res.write(Buffer.from(JSON.stringify(responseBody), "utf8"));
+            });
         }
-        res.end();
     }
 }
 
 function adjustRequestPath(path, grantedPermissions) {
-    return path;
+    const additionalFilters = permissionsToFilters(grantedPermissions).join(",");
+    const url = new URL("http://host" + path);
+    const filter = url.searchParams.get("_typeFilter");
+    url.searchParams.set('_typeFilter', (filter)? `${filter},${additionalFilters}` : additionalFilters);
+    return url.pathname + url.search;
+}
+
+function permissionsToFilters(grantedPermissions) {
+    return _.flatten(
+            grantedPermissions.map(
+                (permission) => permissionToFilters(permission)
+            )
+    );
+
+}
+function permissionToFilters(grantedPermission) {
+    return (grantedPermission.deny)
+        ? negativePermissionToFilters(grantedPermission)
+        : positivePermissionToFilters(grantedPermission)
+}
+
+function positivePermissionToFilters(grantedPermission) {
+    let labels = grantedPermission.resource_set_id.securityLabel;
+    
+    if (labels === "*") {
+        return [];
+    }
+
+    const labelFilterString = labels.map((label)=>label.code).join(",");
+    
+    let resourceTypes = grantedPermission.resource_set_id.resourceType;
+    resourceTypes = (resourceTypes==="*")? ["*"] : resourceTypes;
+    return resourceTypes.map( 
+        (resourceType) => (`${resourceType}?_security=${labelFilterString}`)
+    );
+}
+
+function negativePermissionToFilters(grantedPermission) {
+    const labels = grantedPermission.resource_set_id.securityLabel;
+    //labels = (labels==="*")? [] : labels;
+    //labels cannot be wildcard because the request would have been rejected 
+    // on the basis of resource type if that resource type is requested.
+
+    let resourceTypes = grantedPermission.resource_set_id.resourceType;
+    resourceTypes = (resourceTypes==="*")? ["*"] : resourceTypes;
+
+    return _.flatten(
+        resourceTypes.map(
+            (resourceType) => labels.map(
+                (label) => `${resourceType}?_security:not=${label.code}`
+            )
+        )
+    );
 }
 
 async function checkBulkPermissions(request) {
+    const requiredPermissions = requiredBulkPermissions(request);
+
     try {
-        const requiredPermissions = requiredBulkPermissions(request);
         const grantedPermissions = await RequestUtils.getGrantedPermissions(request);
         checkSufficientScopes(grantedPermissions, requiredPermissions);
         return grantedPermissions;
     } catch (e) {
+        const permissionsToRegister = adjustRequiredPermissionsForRegistration(requiredPermissions);
         if (e.error === "no_rpt") {
-            throw await ErrorUtils.noRptException(requiredPermissions);
+            throw await ErrorUtils.noRptException(permissionsToRegister);
         } else if (e.error === "insufficient_scopes") {
-            throw await ErrorUtils.insufficientScopesException(requiredPermissions);
+            throw await ErrorUtils.insufficientScopesException(permissionsToRegister);
         } else if (e.error === "invalid_rpt") {
-            throw await ErrorUtils.invalidRptException(requiredPermissions);
+            throw await ErrorUtils.invalidRptException(permissionsToRegister);
         } else {
             throw e;
         }
     }
+}
+
+function adjustRequiredPermissionsForRegistration(requiredPermissions) {
+    return requiredPermissions.map((permission) => 
+        (
+            {
+                ... permission,
+                securityLabel: "*"
+            }
+        )
+    );
 }
 
 function checkSufficientScopes(grantedPermissions, requiredPermissions) {
@@ -58,20 +129,18 @@ function checkSufficientScopes(grantedPermissions, requiredPermissions) {
 }
 
 function requiredBulkPermissions(request) {
-    path = new URL(request.path);
-    
-    allResourceTypes = path.searchParams.get("_type") || "*";
+    allResourceTypes = _.get(request.query, "_type") || "*";
     
     return allResourceTypes.split(",").map(res => res.trim())
         .map( (resourceType) => (
             {
                 resource_set_id: {
-                patientId: "*",
-                resourceType: resourceType,
-                securityLabel: []
+                    patientId: "*",
+                    resourceType: resourceType,
+                    securityLabel: []
                 },
                 scopes: [
-                "bulk-export"
+                    "bulk-export"
                 ]
             }
     ));
@@ -82,5 +151,6 @@ function isBulkExport(request) {
 }
 
 module.exports = {
-    maybeHandleBulkExport
+    maybeHandleBulkExport,
+    adjustRequestPath
 }

@@ -121,11 +121,36 @@ function adjustRequiredPermissionsForRegistration(requiredPermissions) {
 }
 
 function checkSufficientScopes(grantedPermissions, requiredPermissions) {
-    if (!PermissionEvaluation.evaluateRequestedScopesAgainstGrantedScopes(grantedPermissions, requiredPermissions)) {
+    //disregard labels because we will adjust it with redaction and filtering.
+    const grantedBulkPermissionsRegardlessOfLabels = permissionsRegardlessOfLabels(grantedPermissions);
+    if (!PermissionEvaluation.evaluateRequestedScopesAgainstGrantedScopes(grantedBulkPermissionsRegardlessOfLabels, requiredPermissions)) {
         throw {
             error: "insufficient_scopes"
         };
     }
+}
+
+function permissionsRegardlessOfLabels(grantedPermissions) {
+    const withoutSecurityLabels = grantedPermissions
+        .filter(
+            (permission) => (permission.scopes.includes("bulk-export"))
+        ).map( 
+            (permission) => (
+                { 
+                    ... _.omit(permission, "resource_set_id.securityLabel"), 
+                    scopes: ["bulk-export"]
+                }
+            )
+        );
+    const granted = withoutSecurityLabels.filter(
+        (permission) => !permission.deny
+    );
+    const modifiedDenied = withoutSecurityLabels.filter(
+        (permission) => 
+            permission.deny && 
+            !granted.some((aGranted) => _.isEqual(_.omit(permission, "deny"), aGranted))
+    );
+    return _.concat(granted, modifiedDenied);
 }
 
 function requiredBulkPermissions(request) {
@@ -136,8 +161,7 @@ function requiredBulkPermissions(request) {
             {
                 resource_set_id: {
                     patientId: "*",
-                    resourceType: resourceType,
-                    securityLabel: []
+                    resourceType: resourceType
                 },
                 scopes: [
                     "bulk-export"

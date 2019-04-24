@@ -1,5 +1,7 @@
 const request = require("supertest");
 const nock = require("nock");
+const _ = require("lodash");
+
 
 const BulkHandler = require("../../controllers/BulkHandler");
 
@@ -10,8 +12,6 @@ const FHIR_SERVER_BASE = process.env.FHIR_SERVER_BASE || "https://mock-fhir-serv
 const MOCK_FHIR_SERVER = nock(FHIR_SERVER_BASE);
 
 const {app} = require("../../app");
-
-
 
 const PERMISSIONS_WILDCARD_GRANT_WITH_LABEL_EXCEPTIONS = [
     {
@@ -100,8 +100,15 @@ describe ("proper adjustment of client query based on client's scopes on the out
     });
 
     it("sends a 403 with insufficient scopes", async () => {
-        const rpt = "BAD_RPT";
+        const rpt = "INSUFFICIENT_RPT";
+
+        const introspectionResponse = _.cloneDeep(INTROSPECTION_RESPONSE_TEMPLATE);
+        introspectionResponse.permissions = PERMISSIONS_WILDCARD_GRANT_WITH_RESOURCE_TYPE_AND_LABEL_EXCEPTIONS;
         
+        MOCK_AUTH_SERVER
+            .post(AUTH_SERVER_INTROSPECTION_ENDPOINT)
+            .reply(200, introspectionResponse);
+
         const res = await request(app)
             .get("/$export?_since=2019-04-20")
             .set("content-type", "application/json")
@@ -125,7 +132,7 @@ describe ("proper adjustment of client query based on client's scopes on the out
             .get("/$export?_since=2019-04-20")
             .set("content-type", "application/json")
             .set("authorization", `Bearer ${rpt}`);
-        
+                    
         expect(res.status).toEqual(202);
     });
 });

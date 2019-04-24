@@ -1,4 +1,7 @@
-const UMA_MODE = (process.env.UMA_MODE !== "false");
+function UMA_MODE() {
+    return (process.env.UMA_MODE !== "false");
+}
+
 const UMA_SERVER_BASE = process.env.UMA_SERVER_BASE;
 const UMA_SERVER_REALM = process.env.UMA_SERVER_REALM;
 const UMA_SERVER_AUTHORIZATION_ENDPOINT = process.env.UMA_SERVER_AUTHORIZATION_ENDPOINT;

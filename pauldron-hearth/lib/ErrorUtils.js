@@ -75,6 +75,7 @@ function handleCommonExceptionsForProxyResponse(e, res) {
     const errorResponse = commonExceptions(e);
     if (errorResponse) {
         res.statusCode = errorResponse.status;
+
         res.set(
             {
                 ... errorResponse.headers,
@@ -90,7 +91,7 @@ function handleCommonExceptionsForProxyResponse(e, res) {
 
 
 async function noRptException(requiredPermissions) {
-    return (UMA_MODE) 
+    return (UMA_MODE()) 
     ?{
         ...await registerPermissionsAndGetTicket(requiredPermissions),
         error: "uma_redirect",
@@ -104,7 +105,7 @@ async function noRptException(requiredPermissions) {
 }
 
 async function invalidRptException(requiredPermissions) {
-    return (UMA_MODE) 
+    return (UMA_MODE()) 
     ?{
         ...await registerPermissionsAndGetTicket(requiredPermissions),
         error: "invalid_rpt",
@@ -118,7 +119,8 @@ async function invalidRptException(requiredPermissions) {
 }
 
 async function insufficientScopesException(requiredPermissions) {
-    return (UMA_MODE) 
+
+    return (UMA_MODE()) 
     ?{
         ...await registerPermissionsAndGetTicket(requiredPermissions),
         error: "insufficient_scopes",

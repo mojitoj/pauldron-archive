@@ -1,8 +1,8 @@
 
 // this script works with the Pauldron Hearth deployed at:
-// https://pauldron-hearth.herokuapp.com and 
+// http://localhost:8080 and 
 // the Pauldron server deployed at:
-// https://pauldron.herokuapp.com/
+// http://localhost:3000
 const jwt = require("jsonwebtoken");
 const PauldronClient = require("pauldron-clients");
 

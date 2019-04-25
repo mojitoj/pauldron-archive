@@ -21,8 +21,9 @@ async function requestPreprocess(req, res, next) {
 }
 
 async function onProxyReq(proxyReq, req, res) {
+    const oldPath = proxyReq.path;
     proxyReq.path = (req.adjustedPath) ? (PROXY_PATH_PREFIX + req.adjustedPath) : proxyReq.path;
-    logger.info(`proxy -> backend: ${proxyReq.path}`);
+    logger.info(`proxy -> backend: was: ${oldPath}, is: ${proxyReq.path}`);
 }
 
 async function onProxyRes(proxyRes, req, res) {

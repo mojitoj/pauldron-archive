@@ -171,7 +171,10 @@ function requiredBulkPermissions(request) {
 }
 
 function isBulkExport(request) {
-    return (request.method==="GET" && request.path.includes("$export"));
+    return (
+        request.method==="GET" && 
+        (request.path.includes("$export") || request.path.includes("%24export"))
+        );
 }
 
 module.exports = {

@@ -12,7 +12,8 @@ const UNPROTECTED_RESOURCE_TYPES = (process.env.UNPROTECTED_RESOURCE_TYPES || ""
                                         .map(res => res.trim());
 
 const FHIR_SERVER_BASE = process.env.FHIR_SERVER_BASE;
-const PROXY_PATH_PREFIX = new URL(FHIR_SERVER_BASE).pathname;
+let PROXY_PATH_PREFIX = new URL(FHIR_SERVER_BASE).pathname;
+PROXY_PATH_PREFIX = PROXY_PATH_PREFIX.endsWith("/")? PROXY_PATH_PREFIX : (PROXY_PATH_PREFIX+"/");
 
 async function requestPreprocess(req, res, next) {
     if (await BulkHandler.maybeHandleBulkExport(req, res)) {

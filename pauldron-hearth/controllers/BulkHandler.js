@@ -37,7 +37,7 @@ function adjustRequestPath(path, grantedPermissions) {
     const url = new URL("http://host" + path);
     const filter = url.searchParams.get("_typeFilter");
     url.searchParams.set('_typeFilter', (filter)? `${filter},${additionalFilters}` : additionalFilters);
-    return url.pathname + url.search;
+    return (url.pathname).substring(1) + url.search;
 }
 
 function permissionsToFilters(grantedPermissions) {

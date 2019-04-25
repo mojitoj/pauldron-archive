@@ -131,17 +131,17 @@ Based on the general structure for Pauldron Hearth scopes, the scope structure f
 
 ```json
 {
-  resource_set_id: {
-  patientId: "*",
-  resourceType: "Specimen",
-  securityLabel: [
+  "resource_set_id": {
+  "patientId": "*",
+  "resourceType": "Specimen",
+  "securityLabel": [
     {
-      system: "http://terminology.hl7.org/ValueSet/v3-ConfidentialityClassification",
-      code: "N"
+      "system": "http://terminology.hl7.org/ValueSet/v3-ConfidentialityClassification",
+      "code": "N"
     }
    ]
   },
-  scopes: ["bulk-export"]
+  "scopes": ["bulk-export"]
 }
 ```
 The general rules for bulk scopes are as the following:
@@ -157,26 +157,26 @@ As an example, consider the following scope array:
 ```json
 [
  {
-   resource_set_id: {
-    patientId: "*",
-    resourceType: "*",
-    securityLabel: "*"
+   "resource_set_id": {
+    "patientId": "*",
+    "resourceType": "*",
+    "securityLabel": "*"
    },
-   scopes: ["bulk-export"]
+   "scopes": ["bulk-export"]
  },
  {
-   resource_set_id: {
-     patientId: "*",
-     resourceType: "*",
-     securityLabel: [
+   "resource_set_id": {
+     "patientId": "*",
+     "resourceType": "*",
+     "securityLabel": [
        {
-         system: "http://terminology.hl7.org/ValueSet/v3-ConfidentialityClassification",
-         code: "R"
+         "system": "http://terminology.hl7.org/ValueSet/v3-ConfidentialityClassification",
+         "code": "R"
        }
      ]
    },
-   deny: true,
-   scopes: ["bulk-export"]
+   "deny": true,
+   "scopes": ["bulk-export"]
  }
 ];
 ```

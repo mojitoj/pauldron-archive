@@ -125,7 +125,7 @@ describe ("proper adjustment of client query based on client's scopes on the out
             .reply(200, INTROSPECTION_RESPONSE_TEMPLATE);
         
         MOCK_FHIR_SERVER
-            .get("/$export?_typeFilter=*%3F_security%3Anot%3DR")
+            .get("/$export?_since=2019-04-20&_typeFilter=*%3F_security%3Anot%3DR")
             .reply(202, "");
 
         const res = await request(app)

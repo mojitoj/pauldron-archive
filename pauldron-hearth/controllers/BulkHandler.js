@@ -12,7 +12,7 @@ async function maybeHandleBulkExport(req, res) {
 
     try {
         const grantedPermissions = await checkBulkPermissions(req);
-        req.adjustedPath = adjustRequestPath(req.path, grantedPermissions);
+        req.adjustedPath = adjustRequestPath(req.url, grantedPermissions);
         return true;
     } catch (e) {
         const errorResponse = ErrorUtils.commonExceptions(e);

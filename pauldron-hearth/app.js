@@ -17,6 +17,7 @@ const proxyOptions = {
     onProxyRes: FHIRProxy.onProxyRes,
     onProxyReq: FHIRProxy.onProxyReq,
     xfwd: true,
+    changeOrigin: true,
     selfHandleResponse: true
 };
 

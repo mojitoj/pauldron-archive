@@ -118,7 +118,7 @@ it("happy path with bundle.", async () => {
     expect(res.header).toHaveProperty("www-authenticate");
     expect(res.header["www-authenticate"]).toEqual(redirectHeader);
 
-    const body = JSON.parse(res.text);
+    const body = res.body;
 
     expect(body).toHaveProperty("ticket");
     const ticket = body.ticket;
@@ -176,7 +176,7 @@ it("happy path with resource.", async () => {
     expect(res.header).toHaveProperty("www-authenticate");
     expect(res.header["www-authenticate"]).toEqual(redirectHeader);
 
-    const body = JSON.parse(res.text);
+    const body = res.body;
 
     expect(body).toHaveProperty("ticket");
     const ticket = body.ticket;

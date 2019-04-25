@@ -196,9 +196,8 @@ it("should return 403 if insufficient scopes.", async () => {
         .set("authorization", `Bearer ${token}`);    
     
     expect(res.status).toEqual(403);
-    const body = JSON.parse(res.text);
-    expect(body).toHaveProperty("error");
-    expect(body.error).toEqual("authorization_error");
+    expect(res.body).toHaveProperty("error");
+    expect(res.body.error).toEqual("authorization_error");
 });
 
 
@@ -225,7 +224,7 @@ it("Should return 403 if a bad rpt is sent.", async () => {
     expect(res.status).toEqual(403);
 });
 
-it("Should return 401 if a no rpt is sent.", async () => {
+it("Should return 401 if no rpt is sent.", async () => {
     expect.assertions(1);
     const bundleRsponse = require("./fixtures/specimen-bundle.json");
     const patient = require("./fixtures/patient.json");
@@ -241,6 +240,6 @@ it("Should return 401 if a no rpt is sent.", async () => {
     res = await request(app)
         .get("/Specimen")
         .set("content-type", "application/json");
-    
+        
     expect(res.status).toEqual(401);
 });

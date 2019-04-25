@@ -15,11 +15,13 @@ app.use(morgan("dev"));
 const proxyOptions = {
     target: FHIR_SERVER_BASE,
     onProxyRes: FHIRProxy.onProxyRes,
+    onProxyReq: FHIRProxy.onProxyReq,
     xfwd: true,
     selfHandleResponse: true
 };
 
 logger.info(`Starting the proxy with UMA mode turned ${ process.env.UMA_MODE !== "false" ? "on" : "off"}`);
+app.use("/", FHIRProxy.requestPreprocess);
 app.use("/", proxy(proxyOptions));
 
 module.exports = {

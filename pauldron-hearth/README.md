@@ -12,9 +12,10 @@ The proxy mediates between requests sent by a client and responses sent back by 
 3. If the token provided by the client is valid, Hearth compares the list of _granted scopes_ with the implied set of _required scopes_ by the client's request, and accordingly, either permits the full response, redacts resources for which the required scopes were not granted, or denies the request altogether if none of the required scopes for fulfilling the request are granted.
 
 ## Features
-- Enforce authorization on `GET` requests based on the response contents.
-- Support for wildcard and conjunctive grants in scopes.
-- Support for negative (denied) scopes. 
+- Authorization on `GET` requests based on the response contents.
+- Wildcard and conjunctive grants in scopes.
+- Negative (denied) scopes.
+- Authorization on bulk `$export` requests with automatic application of redaction filters on the client's request based on the client's granted security labels in its scopes.
 
 Currently, inspecting other HTTP verbs is not supported and those requests will be simply passed on to the FHIR server.
 
@@ -115,6 +116,78 @@ Pauldron Hearth adjudicates these scopes based on the following rules:
 - Access to any resources matching an explicitly denied scopes is declined.
 - Access to any resources not matching any granted scopes is implicitly declined.
 - Access to any resources matching an explicitly granted scope but not any explicitly denied scopes is permitted.
+
+### Authorization and Redaction for Bulk Access
+Support for enforcing authorization over bulk export requests is based on the [FHIR Bulk Data Transfer draft specifications](https://github.com/smart-on-fhir/fhir-bulk-data-docs/blob/master/export.md). Proper enforcement of redactions requires the server to support the `_typeFilter` parameter, including the experimental wildcard filters as proposed by [Hotaru Swarm](https://github.com/mojitoholic/hotaru-swarm).
+
+The following features are currently supported:
+
+- **Authorization:** Pauldron Hearth ensures that a client requesting bulk access has been granted suitable scopes for bulk access to the requested resource types to export. This is based on the scope structure discussed below. 
+- **Redaction:** By adding filters to the client's bulk export request, Pauldron Hearth ensures that clients can only export resources with security labels to which they have been granted access. 
+
+#### Bulk Export Scopes
+
+Based on the general structure for Pauldron Hearth scopes, the scope structure for bulk access is similar to the following. This scope, for example, authorizes the client to request bulk export of `Specimen` resources labeled as normal (`N`):
+
+```json
+{
+  resource_set_id: {
+  patientId: "*",
+  resourceType: "Specimen",
+  securityLabel: [
+    {
+      system: "http://terminology.hl7.org/ValueSet/v3-ConfidentialityClassification",
+      code: "N"
+    }
+   ]
+  },
+  scopes: ["bulk-export"]
+}
+```
+The general rules for bulk scopes are as the following:
+
+- The `patientId` must be set to `*`.
+- The `scopes` array must include `bulk-export`.
+- The `resourceType` array must specify the resource types which the client can export. If the client is allowed to make blanket bulk export requests for all resource types, this must be set to `*`. 
+
+Pauldron Hearth will allow the client request to go through if the client is authorized to make bulk export requests for the specified resources types. Any security-label restrictions stated in the `securityLabel` attribute is turned into filters which further narrow down the client's request.
+
+As an example, consider the following scope array: 
+
+```json
+[
+ {
+   resource_set_id: {
+    patientId: "*",
+    resourceType: "*",
+    securityLabel: "*"
+   },
+   scopes: ["bulk-export"]
+ },
+ {
+   resource_set_id: {
+     patientId: "*",
+     resourceType: "*",
+     securityLabel: [
+       {
+         system: "http://terminology.hl7.org/ValueSet/v3-ConfidentialityClassification",
+         code: "R"
+       }
+     ]
+   },
+   deny: true,
+   scopes: ["bulk-export"]
+ }
+];
+```
+The first scope grants the client bulk export on any or all resource types with any security labels. The second scope restricts the first one by denying bulk export of any resource labeled as restricted (`R`). This can be a common case where the client asks Pauldron for maximum access, and in response, Pauldron adds some exceptions in the form of denied scopes based on policies.
+ 
+When this client sends an export request, Pauldron Hearth permits the request but adds a filter to the request to omit any resources labeled as `R`, similar to the following:
+
+```
+/$export?_typeFilter=*%3F_security%3Anot%3DR
+```
+Note that the wildcard `_typeFilter` in this request is an extension to the Bulk Transfer draft specifications proposed by the [Hotaru Swarm](https://github.com/mojitoholic/hotaru-swarm) implementation.
 
 ## Setup
 Pauldron Hearth is written as a simple [`express`](https://expressjs.com) app which can be started by:

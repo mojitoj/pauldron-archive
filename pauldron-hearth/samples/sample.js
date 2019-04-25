@@ -74,7 +74,6 @@ async function testWithHttpClientWrapper() {
     await PauldronClient.Policy.add(
         POLICY, 
         "https://pauldron.herokuapp.com/policies", 
-        // "http://localhost:3000/policies", 
         TEST_POLICY_API_KEY
     );
 
@@ -82,13 +81,10 @@ async function testWithHttpClientWrapper() {
         requestedScopes: scopes,
         claimsToken: CLAIMS_TOKEN,
         authEndpointUrl: "https://pauldron.herokuapp.com/oauth2/authorization",
-        // authEndpointUrl: "http://localhost:3000/oauth2/authorization",
         authApiKey: TEST_AUTH_API_KEY,
         method: "GET",
         json: true,
         uri: uri
-        // uri: "https://pauldron-hearth.herokuapp.com/Specimen/3116"
-        // uri: "http://localhost:8080/Specimen/3116"
     };
     console.log(`${options.method} ${options.uri}`);
     const {token, response} = await PauldronClient.HTTP.OAuth2.request(options);

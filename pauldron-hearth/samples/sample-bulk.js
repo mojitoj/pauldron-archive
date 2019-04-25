@@ -1,4 +1,9 @@
 
+// this script works with the Pauldron Hearth deployed at:
+// https://pauldron-hearth-hotaru-swarm.herokuapp.com and 
+// the Pauldron server deployed at:
+// https://pauldron.herokuapp.com/
+
 const jwt = require("jsonwebtoken");
 const PauldronClient = require("pauldron-clients");
 
@@ -96,14 +101,14 @@ async function testWithHttpClientWrapper() {
 
     await PauldronClient.Policy.add(
         POLICY, 
-        "http://localhost:3000/policies", 
+        "https://pauldron.herokuapp.com/policies", 
         TEST_POLICY_API_KEY
     );
 
     const options = {
         requestedScopes: scopes,
         claimsToken: CLAIMS_TOKEN,
-        authEndpointUrl: "http://localhost:3000/oauth2/authorization",
+        authEndpointUrl: "https://pauldron.herokuapp.com/oauth2/authorization",
         authApiKey: TEST_AUTH_API_KEY,
         method: "GET",
         json: true,

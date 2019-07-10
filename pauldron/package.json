@@ -18,7 +18,7 @@
   "license": "MIT",
   "private": false,
   "devDependencies": {
-    "jest": "^23.6.0",
+    "jest": "^24.8.0",
     "nock": "^10.0.1",
     "supertest": ">=3.4.2"
   },

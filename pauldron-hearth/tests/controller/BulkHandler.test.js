@@ -87,7 +87,7 @@ afterAll(async () => {
 
 
 
-describe ("proper adjustment of client query based on client's scopes on the outgoing request", async () => {
+describe ("proper adjustment of client query based on client's scopes on the outgoing request", () => {
     it("sends a 403 with bad rpt", async () => {
         const rpt = "BAD_RPT";
         

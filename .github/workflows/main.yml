@@ -1,38 +1,51 @@
 name: CI
 on: [pull_request]
 jobs:
-  build:
-    env:
-      NODE_ENV: test
-      PORT: 3000
-      REDIS_URL: 'redis://localhost:6379'
-      FHIR_SERVER_BASE: https://mock-fhir-server/base
-      UNPROTECTED_RESOURCE_TYPES: Consent,Patient
-      DESIGNATED_PATIENT_ID_SYSTEMS: 'urn:official:id'
-      DESIGNATED_SECURITY_LABEL_SYSTEMS: http://terminology.hl7.org/ValueSet/v3-ConfidentialityClassification
-      UMA_SERVER_BASE: 'http://localhost:3000'
-      UMA_SERVER_REALM: example
-      UMA_SERVER_PERMISSION_REGISTRATION_ENDPOINT: /protection/permissions
-      UMA_SERVER_INTROSPECTION_ENDPOINT: /protection/introspection
-      UMA_SERVER_AUTHORIZATION_ENDPOINT: /authorization
-      UMA_MODE: true
-      UMA_SERVER_PORT: 3000
-      SECRET_KEY: secret
-      CLAIMS_ISSUER_KEYS: '{"sampleIssuer1":"secret1", "sampleIssuer2":"secret2"}'
-      EXPORTABLE_RESOURCES: MedicationRequest,Patient
-      PERMISSION_TICKET_TTL: 2000
-      RPT_TTL: 2000
-      UPSTREAM_SERVERS_PROTECTION_API_KEYS: '{"https://upstream-uma-server":"sample-api-key"}'
-    name: Test
+  container-job:
+    # Containers must run in Linux based operating systems
     runs-on: ubuntu-latest
+    # Docker Hub image that `container-job` executes in
+    container: node:10.18-jessie
+
+    # Service containers to run with `container-job`
+    services:
+      # Label used to access the service container
+      redis:
+        # Docker Hub image
+        image: redis
+        # Set health checks to wait until redis has started
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
     steps:
+      # Downloads a copy of the code in your repository before running CI tests
       - uses: actions/checkout@v1
       - uses: borales/actions-yarn@v2.0.0
         with:
           cmd: install # will run `yarn install` command
-      - uses: supercharge/redis-github-action@1.1.0
-        with:
-          redis-version: 5
       - uses: borales/actions-yarn@v2.0.0
         with:
           cmd: test # will run `yarn test` command
+        env:
+          NODE_ENV: test
+          PORT: 3000
+          REDIS_URL: redis
+          FHIR_SERVER_BASE: https://mock-fhir-server/base
+          UNPROTECTED_RESOURCE_TYPES: Consent,Patient
+          DESIGNATED_PATIENT_ID_SYSTEMS: 'urn:official:id'
+          DESIGNATED_SECURITY_LABEL_SYSTEMS: http://terminology.hl7.org/ValueSet/v3-ConfidentialityClassification
+          UMA_SERVER_BASE: 'http://localhost:3000'
+          UMA_SERVER_REALM: example
+          UMA_SERVER_PERMISSION_REGISTRATION_ENDPOINT: /protection/permissions
+          UMA_SERVER_INTROSPECTION_ENDPOINT: /protection/introspection
+          UMA_SERVER_AUTHORIZATION_ENDPOINT: /authorization
+          UMA_MODE: true
+          UMA_SERVER_PORT: 3000
+          SECRET_KEY: secret
+          CLAIMS_ISSUER_KEYS: '{"sampleIssuer1":"secret1", "sampleIssuer2":"secret2"}'
+          EXPORTABLE_RESOURCES: MedicationRequest,Patient
+          PERMISSION_TICKET_TTL: 2000
+          RPT_TTL: 2000
+          UPSTREAM_SERVERS_PROTECTION_API_KEYS: '{"https://upstream-uma-server":"sample-api-key"}'

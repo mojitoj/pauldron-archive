@@ -17,8 +17,8 @@
     "pauldron": "0.1.0"
   },
   "dependencies": {
-    "lodash": ">=4.17.11",
-    "request": ">=2.88.0",
-    "request-promise": ">=4.2.2"
+    "lodash": ">=4.17.15",
+    "request": ">=2.88.2",
+    "request-promise": ">=4.2.5"
   }
 }

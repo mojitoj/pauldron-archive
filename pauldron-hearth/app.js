@@ -1,6 +1,6 @@
 const express = require("express");
 const morgan = require("morgan");
-const proxy = require('http-proxy-middleware')
+const {createProxyMiddleware} = require('http-proxy-middleware')
 const logger = require("./lib/logger");
 
 const FHIRProxy = require("./controllers/FHIRProxy");
@@ -23,7 +23,7 @@ const proxyOptions = {
 
 logger.info(`Starting the proxy with UMA mode turned ${ process.env.UMA_MODE !== "false" ? "on" : "off"}`);
 app.use("/", FHIRProxy.requestPreprocess);
-app.use("/", proxy(proxyOptions));
+app.use("/", createProxyMiddleware(proxyOptions));
 
 module.exports = {
     app

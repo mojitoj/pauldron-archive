@@ -29,7 +29,7 @@ jobs:
         with:
           cmd: test # will run `yarn test` command
         env:
-          NODE_ENV: test
+          NODE_ENV: ci
           PORT: 3000
           REDIS_URL: redis
           FHIR_SERVER_BASE: https://mock-fhir-server/base

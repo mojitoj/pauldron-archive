@@ -1,9 +1,12 @@
 {
-    "private": true,
-    "workspaces": [
-        "pauldron-policy",
-        "pauldron",
-        "pauldron-clients",
-        "pauldron-hearth"
-    ]
+  "private": true,
+  "scripts": {
+    "test": "yarn workspace pauldron-policy test && yarn workspace pauldron-clients test && yarn workspace pauldron test && yarn workspace pauldron-hearth test"
+  },
+  "workspaces": [
+    "pauldron-policy",
+    "pauldron",
+    "pauldron-clients",
+    "pauldron-hearth"
+  ]
 }

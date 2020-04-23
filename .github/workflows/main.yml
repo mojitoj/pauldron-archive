@@ -31,7 +31,8 @@ jobs:
         env:
           NODE_ENV: ci
           PORT: 3000
-          REDIS_URL: redis
+          REDIS_HOST: redis
+          REDIS_PORT: 6379
           FHIR_SERVER_BASE: https://mock-fhir-server/base
           UNPROTECTED_RESOURCE_TYPES: Consent,Patient
           DESIGNATED_PATIENT_ID_SYSTEMS: 'urn:official:id'

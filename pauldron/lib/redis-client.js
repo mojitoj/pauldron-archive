@@ -25,5 +25,5 @@ module.exports = {
   get,
   del,
   keys,
-  flushdb,
+  flushdb
 };

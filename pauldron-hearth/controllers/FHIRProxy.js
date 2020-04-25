@@ -1,4 +1,3 @@
-const zlib = require("zlib");
 const _ = require("lodash");
 const PermissionDiscovery = require("../lib/PermissionDiscovery");
 const logger = require("../lib/logger");
@@ -51,24 +50,11 @@ function sendIntactResponse(rawBackendBody, proxyRes, req, res) {
   res.end();
 }
 
-function parseResponseBody(rawBody, contentEncoding) {
-  if (!rawBody.length) {
-    return null;
-  }
-  const backendResponseBytes =
-    contentEncoding === "gzip"
-      ? zlib.gunzipSync(rawBody)
-      : contentEncoding === "deflate"
-      ? zlib.inflateSync(rawBody)
-      : rawBody;
-  return JSON.parse(backendResponseBytes.toString("utf8"));
-}
-
 async function handleGet(rawBackendBody, proxyRes, req, res) {
   try {
     const backendResponseStatus = proxyRes.statusCode;
     if (backendResponseStatus === 200) {
-      const backendResponse = parseResponseBody(
+      const backendResponse = ResponseUtils.parseResponseBody(
         rawBackendBody,
         proxyRes.headers["content-encoding"]
       );

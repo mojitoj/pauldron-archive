@@ -1,3 +1,5 @@
+const zlib = require("zlib");
+
 const UNPROTECTED_RESOURCE_TYPES = (
   process.env.UNPROTECTED_RESOURCE_TYPES || ""
 )
@@ -30,6 +32,20 @@ function responseIsProtectedResource(response) {
   );
 }
 
+function parseResponseBody(rawBody, contentEncoding) {
+  if (!rawBody.length) {
+    return null;
+  }
+  const backendResponseBytes =
+    contentEncoding === "gzip"
+      ? zlib.gunzipSync(rawBody)
+      : contentEncoding === "deflate"
+      ? zlib.inflateSync(rawBody)
+      : rawBody;
+  return JSON.parse(backendResponseBytes.toString("utf8"));
+}
+
 module.exports = {
-  responseIsProtected
+  responseIsProtected,
+  parseResponseBody
 };

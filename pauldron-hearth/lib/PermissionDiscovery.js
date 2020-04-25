@@ -6,7 +6,7 @@ const FHIR_SERVER_BASE = process.env.FHIR_SERVER_BASE;
 const DESIGNATED_PATIENT_ID_SYSTEMS = (process.env.DESIGNATED_PATIENT_ID_SYSTEMS || "")
                                         .split(",")
                                         .map(res => res.trim());
-const CONFIDENTIALITY_CODE_SYSTEM = "http://terminology.hl7.org/ValueSet/v3-ConfidentialityClassification"
+const CONFIDENTIALITY_CODE_SYSTEM = "http://terminology.hl7.org/CodeSystem/v3-Confidentiality"
 const CODE_SYSTEMS_OF_INTEREST = (process.env.DESIGNATED_SECURITY_LABEL_SYSTEMS || "")
                                 .split(",")
                                 .map(res => res.trim());

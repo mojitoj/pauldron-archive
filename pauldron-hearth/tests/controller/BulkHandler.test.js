@@ -28,7 +28,7 @@ const PERMISSIONS_WILDCARD_GRANT_WITH_LABEL_EXCEPTIONS = [
             resourceType: "*",
             securityLabel: [
                 {
-                    system: "http://terminology.hl7.org/ValueSet/v3-ConfidentialityClassification",
+                    system: "http://terminology.hl7.org/CodeSystem/v3-Confidentiality",
                     code: "R"
                 }
             ]
@@ -53,7 +53,7 @@ const PERMISSIONS_WILDCARD_GRANT_WITH_RESOURCE_TYPE_AND_LABEL_EXCEPTIONS = [
             resourceType: ["MedicationRequest"],
             securityLabel: [
                 {
-                    system: "http://terminology.hl7.org/ValueSet/v3-ConfidentialityClassification",
+                    system: "http://terminology.hl7.org/CodeSystem/v3-Confidentiality",
                     code: "R"
                 }
             ]
@@ -154,7 +154,7 @@ describe ("proper adjustment of client query based on client's scopes", () => {
                     resourceType: ["MedicationRequest"],
                     securityLabel: [
                         {
-                            system: "http://terminology.hl7.org/ValueSet/v3-ConfidentialityClassification",
+                            system: "http://terminology.hl7.org/CodeSystem/v3-Confidentiality",
                             code: "N"
                         }
                     ]            
@@ -167,7 +167,7 @@ describe ("proper adjustment of client query based on client's scopes", () => {
                     resourceType: "*",
                     securityLabel: [
                         {
-                            system: "http://terminology.hl7.org/ValueSet/v3-ConfidentialityClassification",
+                            system: "http://terminology.hl7.org/CodeSystem/v3-Confidentiality",
                             code: "R"
                         }
                     ]
@@ -189,11 +189,11 @@ describe ("proper adjustment of client query based on client's scopes", () => {
                     resourceType: ["MedicationRequest"],
                     securityLabel: [
                         {
-                            system: "http://terminology.hl7.org/ValueSet/v3-ConfidentialityClassification",
+                            system: "http://terminology.hl7.org/CodeSystem/v3-Confidentiality",
                             code: "N"
                         },
                         {
-                            system: "http://terminology.hl7.org/ValueSet/v3-ConfidentialityClassification",
+                            system: "http://terminology.hl7.org/CodeSystem/v3-Confidentiality",
                             code: "R"
                         }
                     ]            

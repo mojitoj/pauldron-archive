@@ -40,7 +40,7 @@ const POLICY = {
                                   resourceType: "*",
                                   securityLabel: [
                                     {
-                                      system: "http://terminology.hl7.org/ValueSet/v3-ConfidentialityClassification",
+                                      system: "http://terminology.hl7.org/CodeSystem/v3-Confidentiality",
                                       code: "R"
                                     }
                                   ]

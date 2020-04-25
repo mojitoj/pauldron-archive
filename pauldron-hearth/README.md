@@ -136,7 +136,7 @@ Based on the general structure for Pauldron Hearth scopes, the scope structure f
   "resourceType": "Specimen",
   "securityLabel": [
     {
-      "system": "http://terminology.hl7.org/ValueSet/v3-ConfidentialityClassification",
+      "system": "http://terminology.hl7.org/CodeSystem/v3-Confidentiality",
       "code": "N"
     }
    ]
@@ -170,7 +170,7 @@ As an example, consider the following scope array:
      "resourceType": "*",
      "securityLabel": [
        {
-         "system": "http://terminology.hl7.org/ValueSet/v3-ConfidentialityClassification",
+         "system": "http://terminology.hl7.org/CodeSystem/v3-Confidentiality",
          "code": "R"
        }
      ]

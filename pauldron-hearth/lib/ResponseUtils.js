@@ -1,4 +1,5 @@
 const zlib = require("zlib");
+const _ = require("lodash");
 
 const UNPROTECTED_RESOURCE_TYPES = (
   process.env.UNPROTECTED_RESOURCE_TYPES || ""
@@ -14,9 +15,15 @@ function sendResponse(resObject, headers, statusCode, body) {
 
 function sendJsonResponse(resObject, headers, statusCode, jsonBody) {
   const bodyBytes = Buffer.from(JSON.stringify(jsonBody), "utf8");
+  _.unset(headers, "Content-Type");
+  _.unset(headers, "content-type");
+  _.unset(headers, "Content-Encoding");
+  _.unset(headers, "content-encoding");
+
   const newHeaders = {
-    ...headers,
-    "Content-Type": "application/json"
+    "Content-Type": "application/json",
+    "Content-Encoding": "identity",
+    ...headers
   };
   sendResponse(resObject, newHeaders, statusCode, bodyBytes);
 }

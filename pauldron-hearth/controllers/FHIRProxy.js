@@ -4,6 +4,7 @@ const logger = require("../lib/logger");
 const UMAUtils = require("../lib/UMAUtils");
 const ResponseUtils = require("../lib/ResponseUtils");
 const ErrorUtils = require("../lib/ErrorUtils");
+const LabelingService = require("../lib/LabelingService");
 const BulkHandler = require("../controllers/BulkHandler");
 
 const FHIR_SERVER_BASE = process.env.FHIR_SERVER_BASE;
@@ -56,20 +57,28 @@ async function handleGet(rawBackendBody, proxyRes, req, res) {
   try {
     const backendResponseStatus = proxyRes.statusCode;
     if (backendResponseStatus === 200) {
-      const parserBackendResponse = ResponseUtils.parseResponseBody(
+      const parsedBackendResponse = ResponseUtils.parseResponseBody(
         rawBackendBody,
         proxyRes.headers["content-encoding"]
       );
-      if (ResponseUtils.responseIsProtected(parserBackendResponse)) {
-        await UMAUtils.processProtecetedResource(req, parserBackendResponse);
+      if (ResponseUtils.responseIsProtected(parsedBackendResponse)) {
+        await UMAUtils.processProtecetedResource(req, parsedBackendResponse);
       }
+      const modifiedResponse = LabelingService.maybeLabelResponse(parsedBackendResponse);
+      ResponseUtils.sendJsonResponse(
+        res,
+        proxyRes.headers,
+        proxyRes.statusCode,
+        modifiedResponse
+      );
+    } else {
+      ResponseUtils.sendResponse(
+        res,
+        proxyRes.headers,
+        proxyRes.statusCode,
+        rawBackendBody
+      );
     }
-    ResponseUtils.sendResponse(
-      res,
-      proxyRes.headers,
-      proxyRes.statusCode,
-      rawBackendBody
-    );
   } catch (e) {
     const errorResponse = ErrorUtils.proxyResponseExceptionResponse(e);
     ResponseUtils.sendJsonResponse(

@@ -15,7 +15,7 @@ function umaHeader(ticket) {
 }
 
 function commonExceptions(e) {
-  !e.error || logger.debug(`${e.error}: ${e.message}`);
+  logger.debug(e);
 
   return e.error === "unauthorized" || e.error === "forbidden"
     ? {

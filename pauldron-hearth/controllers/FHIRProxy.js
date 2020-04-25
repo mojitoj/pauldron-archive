@@ -4,14 +4,9 @@ const PermissionDiscovery = require("../lib/PermissionDiscovery");
 const logger = require("../lib/logger");
 const PermissionEvaluation = require("../lib/PermissionEvaluation");
 const RequestUtils = require("../lib/RequestUtils");
+const ResponseUtils = require("../lib/ResponseUtils");
 const ErrorUtils = require("../lib/ErrorUtils");
 const BulkHandler = require("../controllers/BulkHandler");
-
-const UNPROTECTED_RESOURCE_TYPES = (
-  process.env.UNPROTECTED_RESOURCE_TYPES || ""
-)
-  .split(",")
-  .map((res) => res.trim());
 
 const FHIR_SERVER_BASE = process.env.FHIR_SERVER_BASE;
 let PROXY_PATH_PREFIX = new URL(FHIR_SERVER_BASE).pathname;
@@ -77,7 +72,7 @@ async function handleGet(rawBackendBody, proxyRes, req, res) {
         rawBackendBody,
         proxyRes.headers["content-encoding"]
       );
-      if (backendResponse && backendResponseIsProtected(backendResponse)) {
+      if (ResponseUtils.responseIsProtected(backendResponse)) {
         await processProtecetedResource(req, backendResponse);
       }
     }
@@ -137,25 +132,6 @@ async function processProtecetedResource(request, backendResponse) {
     } else {
       throw e;
     }
-  }
-}
-
-function backendResponseIsProtected(backendResponse) {
-  const resourceType = backendResponse.resourceType;
-
-  if (
-    resourceType === "Bundle" &&
-    backendResponse.entry &&
-    backendResponse.entry.length > 0
-  ) {
-    const entries = backendResponse.entry;
-    return !entries.every((entry) =>
-      UNPROTECTED_RESOURCE_TYPES.includes(entry.resource.resourceType)
-    );
-  } else if (resourceType !== "Bundle") {
-    return !UNPROTECTED_RESOURCE_TYPES.includes(resourceType);
-  } else {
-    return false;
   }
 }
 

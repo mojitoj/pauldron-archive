@@ -17,65 +17,60 @@ function umaHeader(ticket) {
 function commonExceptions(e) {
   !e.error || logger.debug(`${e.error}: ${e.message}`);
 
-  if (e.error === "unauthorized" || e.error === "forbidden") {
-    return {
-      status: e.status,
-      body: {
-        message: e.message,
-        error: "authorization_error",
-        status: e.status
-      }
-    };
-  } else if (
-    e.error === "uma_redirect" ||
-    e.error === "invalid_rpt" ||
-    e.error === "insufficient_scopes"
-  ) {
-    return {
-      status: e.status,
-      headers: {
-        "WWW-Authenticate": umaHeader(e.ticket)
-      },
-      body: {
-        message: `Need approval from ${UMA_SERVER_BASE}.`,
-        error: e.error,
+  return e.error === "unauthorized" || e.error === "forbidden"
+    ? {
         status: e.status,
-        ticket: e.ticket,
-        info: {
-          server: {
-            realm: UMA_SERVER_REALM,
-            uri: UMA_SERVER_BASE,
-            authorization_endpoint: UMA_SERVER_AUTHORIZATION_ENDPOINT
+        body: {
+          message: e.message,
+          error: "authorization_error",
+          status: e.status
+        }
+      }
+    : e.error === "uma_redirect" ||
+      e.error === "invalid_rpt" ||
+      e.error === "insufficient_scopes"
+    ? {
+        status: e.status,
+        headers: {
+          "WWW-Authenticate": umaHeader(e.ticket)
+        },
+        body: {
+          message: `Need approval from ${UMA_SERVER_BASE}.`,
+          error: e.error,
+          status: e.status,
+          ticket: e.ticket,
+          info: {
+            server: {
+              realm: UMA_SERVER_REALM,
+              uri: UMA_SERVER_BASE,
+              authorization_endpoint: UMA_SERVER_AUTHORIZATION_ENDPOINT
+            }
           }
         }
       }
-    };
-  } else if (
-    e.error === "permission_registration_error" ||
-    e.error === "introspection_error"
-  ) {
-    return {
-      status: 403,
-      headers: {
-        Warning: '199 - "UMA Authorization Server Unreachable"'
-      },
-      body: {
-        message: `Could not arrange authorization: ${e.message}.`,
-        error: "authorization_error",
-        status: 403
+    : e.error === "permission_registration_error" ||
+      e.error === "introspection_error"
+    ? {
+        status: 403,
+        headers: {
+          Warning: '199 - "UMA Authorization Server Unreachable"'
+        },
+        body: {
+          message: `Could not arrange authorization: ${e.message}.`,
+          error: "authorization_error",
+          status: 403
+        }
       }
-    };
-  } else if (e.error === "patient_not_found") {
-    return {
-      status: 403,
-      body: {
-        message: `Could not arrange authorization: ${e.message}.`,
-        error: "authorization_error",
-        status: 403
+    : e.error === "patient_not_found"
+    ? {
+        status: 403,
+        body: {
+          message: `Could not arrange authorization: ${e.message}.`,
+          error: "authorization_error",
+          status: 403
+        }
       }
-    };
-  }
-  //don't return anything if you didn't handle it.
+    : null;
 }
 
 function proxyResponseExceptionResponse(e) {

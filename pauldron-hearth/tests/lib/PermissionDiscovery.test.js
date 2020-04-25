@@ -14,8 +14,8 @@ it("correctly constructs permissions for a bundle with more than one security la
     expect.assertions(11);
 
     const DESIGNATED_SECURITY_LABEL_SYSTEMS = process.env.DESIGNATED_SECURITY_LABEL_SYSTEMS;
-    const CONF = "http://terminology.hl7.org/ValueSet/v3-ConfidentialityClassification";
-    const SENS = "http://terminology.hl7.org/ValueSet/v3-InformationSensitivityPolicy";
+    const CONF = "http://terminology.hl7.org/CodeSystem/v3-Confidentiality";
+    const SENS = "http://terminology.hl7.org/CodeSystem/v3-ActCode";
     process.env.DESIGNATED_SECURITY_LABEL_SYSTEMS = `${CONF},${SENS}`;
     let PermissionDiscovery = require("../../lib/PermissionDiscovery");
     

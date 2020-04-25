@@ -1,8 +1,7 @@
 const _ = require("lodash");
-const PermissionDiscovery = require("../lib/PermissionDiscovery");
+
 const logger = require("../lib/logger");
-const PermissionEvaluation = require("../lib/PermissionEvaluation");
-const RequestUtils = require("../lib/RequestUtils");
+const UMAUtils = require("../lib/UMAUtils");
 const ResponseUtils = require("../lib/ResponseUtils");
 const ErrorUtils = require("../lib/ErrorUtils");
 const BulkHandler = require("../controllers/BulkHandler");
@@ -54,12 +53,12 @@ async function handleGet(rawBackendBody, proxyRes, req, res) {
   try {
     const backendResponseStatus = proxyRes.statusCode;
     if (backendResponseStatus === 200) {
-      const backendResponse = ResponseUtils.parseResponseBody(
+      const parserBackendResponse = ResponseUtils.parseResponseBody(
         rawBackendBody,
         proxyRes.headers["content-encoding"]
       );
-      if (ResponseUtils.responseIsProtected(backendResponse)) {
-        await processProtecetedResource(req, backendResponse);
+      if (ResponseUtils.responseIsProtected(parserBackendResponse)) {
+        await UMAUtils.processProtecetedResource(req, parserBackendResponse);
       }
     }
     res.set(proxyRes.headers);
@@ -90,47 +89,6 @@ async function handleGet(rawBackendBody, proxyRes, req, res) {
     }
   } finally {
     res.end();
-  }
-}
-
-const httpMethodToAction = {
-  GET: "read",
-  DELETE: "delete"
-};
-
-async function processProtecetedResource(request, backendResponse) {
-  const action = httpMethodToAction[request.method]; //todo: this logic must be improved; e.g. a post request could be a search therefore a read.
-  const requiredPermissions = await PermissionDiscovery.getRequiredPermissions(
-    backendResponse,
-    action
-  );
-  let grantedPermissions = [];
-  try {
-    grantedPermissions = await RequestUtils.getGrantedPermissions(request);
-    ensureSufficientPermissions(requiredPermissions, grantedPermissions);
-  } catch (e) {
-    if (e.error === "no_rpt") {
-      throw await ErrorUtils.noRptException(requiredPermissions);
-    } else if (e.error === "insufficient_scopes") {
-      throw await ErrorUtils.insufficientScopesException(requiredPermissions);
-    } else if (e.error === "invalid_rpt") {
-      throw await ErrorUtils.invalidRptException(requiredPermissions);
-    } else {
-      throw e;
-    }
-  }
-}
-
-function ensureSufficientPermissions(required, granted) {
-  const sufficientPermissions = PermissionEvaluation.evaluateRequestedScopesAgainstGrantedScopes(
-    granted,
-    required
-  );
-
-  if (!sufficientPermissions) {
-    throw {
-      error: "insufficient_scopes"
-    };
   }
 }
 

@@ -15,7 +15,8 @@ function umaHeader(ticket) {
 }
 
 function commonExceptions(e) {
-  const res = {};
+  !e.error || logger.debug(`${e.error}: ${e.message}`);
+
   if (e.error === "unauthorized" || e.error === "forbidden") {
     return {
       status: e.status,
@@ -53,7 +54,6 @@ function commonExceptions(e) {
     e.error === "permission_registration_error" ||
     e.error === "introspection_error"
   ) {
-    logger.debug(e.message);
     return {
       status: 403,
       headers: {

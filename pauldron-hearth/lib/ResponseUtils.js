@@ -6,6 +6,21 @@ const UNPROTECTED_RESOURCE_TYPES = (
   .split(",")
   .map((res) => res.trim());
 
+function sendResponse(resObject, headers, statusCode, body) {
+  resObject.set(headers);
+  resObject.statusCode = statusCode;
+  resObject.write(body);
+}
+
+function sendJsonResponse(resObject, headers, statusCode, jsonBody) {
+  const bodyBytes = Buffer.from(JSON.stringify(jsonBody), "utf8");
+  const newHeaders = {
+    ...headers,
+    "Content-Type": "application/json"
+  };
+  sendResponse(resObject, newHeaders, statusCode, bodyBytes);
+}
+
 function responseIsProtected(response) {
   return (
     response &&
@@ -47,5 +62,7 @@ function parseResponseBody(rawBody, contentEncoding) {
 
 module.exports = {
   responseIsProtected,
-  parseResponseBody
+  parseResponseBody,
+  sendResponse,
+  sendJsonResponse
 };

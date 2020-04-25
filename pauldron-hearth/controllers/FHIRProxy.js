@@ -43,9 +43,12 @@ async function onProxyRes(proxyRes, req, res) {
 }
 
 function sendIntactResponse(rawBackendBody, proxyRes, req, res) {
-  res.set(proxyRes.headers);
-  res.statusCode = proxyRes.statusCode;
-  res.write(rawBackendBody);
+  ResponseUtils.sendResponse(
+    res,
+    proxyRes.headers,
+    proxyRes.statusCode,
+    rawBackendBody
+  );
   res.end();
 }
 
@@ -61,11 +64,20 @@ async function handleGet(rawBackendBody, proxyRes, req, res) {
         await UMAUtils.processProtecetedResource(req, parserBackendResponse);
       }
     }
-    res.set(proxyRes.headers);
-    res.statusCode = proxyRes.statusCode;
-    res.write(rawBackendBody);
+    ResponseUtils.sendResponse(
+      res,
+      proxyRes.headers,
+      proxyRes.statusCode,
+      rawBackendBody
+    );
   } catch (e) {
-    ErrorUtils.handleCommonExceptionsForProxyResponse(e, res);
+    const errorResponse = ErrorUtils.proxyResponseExceptionResponse(e);
+    ResponseUtils.sendJsonResponse(
+      res,
+      errorResponse.headers,
+      errorResponse.status,
+      errorResponse.body
+    );
   } finally {
     res.end();
   }

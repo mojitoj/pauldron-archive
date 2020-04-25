@@ -78,8 +78,8 @@ function commonExceptions(e) {
   //don't return anything if you didn't handle it.
 }
 
-function handleCommonExceptionsForProxyResponse(e, res) {
-  const errorResponse =
+function proxyResponseExceptionResponse(e) {
+  return (
     commonExceptions(e) ||
     (e instanceof SyntaxError
       ? {
@@ -98,14 +98,8 @@ function handleCommonExceptionsForProxyResponse(e, res) {
             error: "internal_error",
             status: 500
           }
-        });
-
-  res.statusCode = errorResponse.status;
-  res.set({
-    ...errorResponse.headers,
-    "Content-Type": "application/json"
-  });
-  res.write(Buffer.from(JSON.stringify(errorResponse.body), "utf8"));
+        })
+  );
 }
 
 async function noRptException(requiredPermissions) {
@@ -165,5 +159,5 @@ module.exports = {
   invalidRptException,
   insufficientScopesException,
   commonExceptions,
-  handleCommonExceptionsForProxyResponse
+  proxyResponseExceptionResponse
 };

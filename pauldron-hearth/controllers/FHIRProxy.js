@@ -65,28 +65,7 @@ async function handleGet(rawBackendBody, proxyRes, req, res) {
     res.statusCode = proxyRes.statusCode;
     res.write(rawBackendBody);
   } catch (e) {
-    const handled = ErrorUtils.handleCommonExceptionsForProxyResponse(e, res);
-    if (!handled) {
-      if (e instanceof SyntaxError) {
-        res.statusCode = 400;
-        const responseBody = {
-          message:
-            "Invalid response from the FHIR server. Pauldron Hearth only supports JSON at this time.",
-          error: "unsupported_response",
-          status: 400
-        };
-        res.write(Buffer.from(JSON.stringify(responseBody), "utf8"));
-      } else {
-        logger.warn(e);
-        res.statusCode = 500;
-        const responseBody = {
-          message: "Pauldron Hearth encountered an error",
-          error: "internal_error",
-          status: 500
-        };
-        res.write(Buffer.from(JSON.stringify(responseBody), "utf8"));
-      }
-    }
+    ErrorUtils.handleCommonExceptionsForProxyResponse(e, res);
   } finally {
     res.end();
   }

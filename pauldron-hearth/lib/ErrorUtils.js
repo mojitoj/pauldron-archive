@@ -67,31 +67,45 @@ function commonExceptions(e) {
     };
   } else if (e.error === "patient_not_found") {
     return {
-        status: 403,
-        body: {
-            message: `Could not arrange authorization: ${e.message}.`,
-            error: "authorization_error",
-            status: 403
-        }
-      };
+      status: 403,
+      body: {
+        message: `Could not arrange authorization: ${e.message}.`,
+        error: "authorization_error",
+        status: 403
+      }
+    };
   }
   //don't return anything if you didn't handle it.
 }
 
 function handleCommonExceptionsForProxyResponse(e, res) {
-  const errorResponse = commonExceptions(e);
-  if (errorResponse) {
-    res.statusCode = errorResponse.status;
+  const errorResponse =
+    commonExceptions(e) ||
+    (e instanceof SyntaxError
+      ? {
+          status: 400,
+          body: {
+            message:
+              "Invalid response from the FHIR server. Pauldron Hearth only supports JSON at this time.",
+            error: "unsupported_response",
+            status: 400
+          }
+        }
+      : {
+          status: 500,
+          body: {
+            message: "Pauldron Hearth encountered an internal error",
+            error: "internal_error",
+            status: 500
+          }
+        });
 
-    res.set({
-      ...errorResponse.headers,
-      "Content-Type": "application/json"
-    });
-    res.write(Buffer.from(JSON.stringify(errorResponse.body), "utf8"));
-    return true;
-  } else {
-    return false;
-  }
+  res.statusCode = errorResponse.status;
+  res.set({
+    ...errorResponse.headers,
+    "Content-Type": "application/json"
+  });
+  res.write(Buffer.from(JSON.stringify(errorResponse.body), "utf8"));
 }
 
 async function noRptException(requiredPermissions) {

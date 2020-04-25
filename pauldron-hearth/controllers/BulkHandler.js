@@ -21,7 +21,6 @@ async function maybeHandleBulkExport(req, res) {
                 .set(errorResponse.headers)
                 .json(errorResponse.body);
         } else { 
-            console.log(e);
             logger.warn(e);
             res.status(500).json({
                 message: "Pauldron Hearth encountered an error",

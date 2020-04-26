@@ -32,6 +32,27 @@ it("should return a bundle of unprotected resources as-is", async () => {
   expect(res.body).toEqual(bundleRsponse);
 });
 
+it("should label resources in a bundle with default label", async () => {
+  expect.assertions(3);
+  const bundleRsponse = require("./fixtures/consent-bundl-with-labeled-resource.json");
+  MOCK_FHIR_SERVER.get("/Consent").reply(200, bundleRsponse);
+
+  const res = await request(app)
+    .get("/Consent")
+    .set("content-type", "application/json");
+
+  expect(res.status).toEqual(200);
+  expect(res.body.entry[0].resource.meta.security).toEqual(
+    expect.arrayContaining([
+      {
+        system: VocabularyUtils.CONFIDENTIALITY_CODE_SYSTEM,
+        code: VocabularyUtils.DEFAULT_CONFIDENTIALITY_CODE
+      }
+    ])
+  );
+  expect(res.body.entry[1].resource.meta.security).toBeUndefined();
+});
+
 it("should return an unprotected resources as-is", async () => {
   expect.assertions(2);
   const resourceResponse = require("./fixtures/patient.json");

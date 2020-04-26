@@ -121,5 +121,6 @@ module.exports = {
   addDefaultConfidentialityOnBundle,
   addConfidentialityHighWaterMark,
   filterLabelsOfInterest,
-  augmentSecurityLabel
+  augmentSecurityLabel,
+  trimLabels
 };

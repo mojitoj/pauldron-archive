@@ -51,7 +51,7 @@ function consolidatePermissions(permissions) {
 }
 
 function securityLabelsToScopes(labels) {
-  return LabelingUtils.trimmedLabels(
+  return LabelingUtils.trimLabels(
     LabelingUtils.filterLabelsOfInterest(
       LabelingUtils.augmentSecurityLabel(labels)
     )

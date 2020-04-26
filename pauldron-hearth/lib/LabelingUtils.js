@@ -88,8 +88,38 @@ function getConfidentialityLabel(resource) {
   );
 }
 
+const CODE_SYSTEMS_OF_INTEREST = (
+  process.env.DESIGNATED_SECURITY_LABEL_SYSTEMS || ""
+)
+  .split(",")
+  .map((res) => res.trim());
+
+function filterLabelsOfInterest(labels) {
+  return labels.filter((label) =>
+    CODE_SYSTEMS_OF_INTEREST.includes(label.system)
+  );
+}
+
+function augmentSecurityLabel(labels) {
+  if (!labels || !labels.length) {
+    return [
+      {
+        system: VocabularyUtils.CONFIDENTIALITY_CODE_SYSTEM,
+        code: VocabularyUtils.DEFAULT_CONFIDENTIALITY_CODE
+      }
+    ];
+  }
+  return labels;
+}
+
+function trimLabels(labels) {
+  return labels.map((label) => _.pick(label, ["system", "code"]));
+}
+
 module.exports = {
   addDefaultConfidentialityOnResource,
   addDefaultConfidentialityOnBundle,
-  addConfidentialityHighWaterMark
+  addConfidentialityHighWaterMark,
+  filterLabelsOfInterest,
+  augmentSecurityLabel
 };

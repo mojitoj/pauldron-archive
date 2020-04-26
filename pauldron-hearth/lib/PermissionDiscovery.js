@@ -1,16 +1,12 @@
 const rp = require("request-promise");
 const _ = require("lodash");
-const VocabularyUtils = require("./VocabularyUtils");
+
+const LabelingUtils = require("./LabelingUtils");
 
 const FHIR_SERVER_BASE = process.env.FHIR_SERVER_BASE;
 
 const DESIGNATED_PATIENT_ID_SYSTEMS = (
   process.env.DESIGNATED_PATIENT_ID_SYSTEMS || ""
-)
-  .split(",")
-  .map((res) => res.trim());
-const CODE_SYSTEMS_OF_INTEREST = (
-  process.env.DESIGNATED_SECURITY_LABEL_SYSTEMS || ""
 )
   .split(",")
   .map((res) => res.trim());
@@ -54,28 +50,12 @@ function consolidatePermissions(permissions) {
   return _.unionWith(permissions, permissions, _.isEqual);
 }
 
-function augmentSecurityLabel(labels) {
-  if (!labels || !labels.length) {
-    return [
-      {
-        system: VocabularyUtils.CONFIDENTIALITY_CODE_SYSTEM,
-        code: "N"
-      }
-    ];
-  }
-  return labels;
-}
-
 function securityLabelsToScopes(labels) {
-  const augmentedLabels = augmentSecurityLabel(labels);
-  const filteredLabels = augmentedLabels.filter((label) =>
-    CODE_SYSTEMS_OF_INTEREST.includes(label.system)
+  return LabelingUtils.trimmedLabels(
+    LabelingUtils.augmentSecurityLabel(
+      LabelingUtils.filterLabelsOfInterest(labels)
+    )
   );
-  // only system and code
-  const trimmedLabels = filteredLabels.map((label) =>
-    _.pick(label, ["system", "code"])
-  );
-  return trimmedLabels;
 }
 async function getPatientId(plainResource) {
   // the input is a primitive FHIR resource and not a bundle.

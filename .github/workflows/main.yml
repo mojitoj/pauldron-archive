@@ -50,3 +50,6 @@ jobs:
           PERMISSION_TICKET_TTL: 2000
           RPT_TTL: 2000
           UPSTREAM_SERVERS_PROTECTION_API_KEYS: '{"https://upstream-uma-server":"sample-api-key"}'
+          ENABLE_LABELING_SERVICE: true
+          ADD_DEFAULT_CONFIDENTIALITY_LABEL: true
+          NO_LABEL_RESOURCE_TYPES: CapabilityStatement,ValueSet

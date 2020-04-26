@@ -15,14 +15,17 @@ function sendResponse(resObject, headers, statusCode, body) {
 
 function sendJsonResponse(resObject, headers, statusCode, jsonBody) {
   const bodyBytes = Buffer.from(JSON.stringify(jsonBody), "utf8");
+
   _.unset(headers, "Content-Type");
   _.unset(headers, "content-type");
   _.unset(headers, "Content-Encoding");
   _.unset(headers, "content-encoding");
-
+  _.unset(headers, "Content-Length");
+  _.unset(headers, "content-length");
   const newHeaders = {
     "Content-Type": "application/json",
     "Content-Encoding": "identity",
+    "Content-Length": bodyBytes.length,
     ...headers
   };
   sendResponse(resObject, newHeaders, statusCode, bodyBytes);

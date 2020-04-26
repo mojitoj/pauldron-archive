@@ -32,8 +32,8 @@ it("should return a bundle of unprotected resources as-is", async () => {
   expect(res.body).toEqual(bundleRsponse);
 });
 
-it("should label resources in a bundle with default label", async () => {
-  expect.assertions(3);
+it("should label resources in a bundle with default confidentiality label and add confidentiality hwm to the bundle", async () => {
+  expect.assertions(4);
   const bundleRsponse = require("./fixtures/consent-bundl-with-labeled-resource.json");
   MOCK_FHIR_SERVER.get("/Consent").reply(200, bundleRsponse);
 
@@ -51,6 +51,14 @@ it("should label resources in a bundle with default label", async () => {
     ])
   );
   expect(res.body.entry[1].resource.meta.security).toBeUndefined();
+  expect(res.body.meta.security).toEqual(
+    expect.arrayContaining([
+      {
+        system: VocabularyUtils.CONFIDENTIALITY_CODE_SYSTEM,
+        code: VocabularyUtils.DEFAULT_CONFIDENTIALITY_CODE
+      }
+    ])
+  );
 });
 
 it("should return an unprotected resources as-is", async () => {

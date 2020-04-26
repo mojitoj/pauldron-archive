@@ -28,3 +28,10 @@ it("should assign hwm label to a bundle", async () => {
     ])
   );
 });
+
+it("should leave unlabled bundle with no labeled resources intact", async () => {
+  const bundle = require("../fixtures/consent-bundle.json");
+
+  const labeledBundle = LabelingUtils.addConfidentialityHighWaterMark(bundle);
+  expect(labeledBundle.meta.security).toBeUndefined();
+});

@@ -53,10 +53,12 @@ function addConfidentialityHighWaterMark(bundle) {
 
   const hwm = allConfidentialityLabels.reduce(pickHWT, undefined);
 
-  return assignLabelToBundle(bundle, {
-    system: VocabularyUtils.CONFIDENTIALITY_CODE_SYSTEM,
-    code: hwm
-  });
+  return hwm
+    ? assignLabelToBundle(bundle, {
+        system: VocabularyUtils.CONFIDENTIALITY_CODE_SYSTEM,
+        code: hwm
+      })
+    : bundle;
 }
 
 const pickHWT = (acc, current) => {

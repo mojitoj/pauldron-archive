@@ -34,11 +34,12 @@ function labelResourceEntry(entry) {
 }
 
 function labelBundle(bundle) {
-  return _.set(
+  const labeledBundle = _.set(
     _.cloneDeep(bundle),
     "entry",
     bundle.entry.map(labelResourceEntry)
   );
+  return maybeAddHighWaterMark(labeledBundle);
 }
 
 function maybeAddDefaultConfidentialityLabelOnResource(resource) {
@@ -48,8 +49,8 @@ function maybeAddDefaultConfidentialityLabelOnResource(resource) {
 }
 
 function maybeAddHighWaterMark(bundle) {
-  return ADD_HIGHT_WATER_MARK ? LabelingUtils.addHighWaterMark(bundle)
-  : resource;
+  return ADD_HIGHT_WATER_MARK ? LabelingUtils.addConfidentialityHighWaterMark(bundle)
+  : bundle;
 }
 
 module.exports = {

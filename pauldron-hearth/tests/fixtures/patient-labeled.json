@@ -1,0 +1,57 @@
+{
+  "resourceType": "Patient",
+  "id": "1",
+  "meta": {
+    "versionId": "2",
+    "lastUpdated": "2018-11-16T12:28:06.697+00:00",
+    "security": [
+      {
+        "system": "http://terminology.hl7.org/CodeSystem/v3-ActCode",
+        "code": "DELAU"
+      }
+    ]
+  },
+  "text": {
+    "status": "generated",
+    "div": "<div xmlns=\"http://www.w3.org/1999/xhtml\">Everywoman, Eve. SSN:\n      444222222</div>"
+  },
+  "identifier": [
+    {
+      "type": {
+        "coding": [
+          {
+            "system": "http://hl7.org/fhir/v2/0203",
+            "code": "SS"
+          }
+        ]
+      },
+      "system": "urn:official:id",
+      "value": "10001"
+    }
+  ],
+  "active": true,
+  "name": [
+    {
+      "use": "official",
+      "family": "Everywoman",
+      "given": ["Eve"]
+    }
+  ],
+  "telecom": [
+    {
+      "system": "phone",
+      "value": "555-555-5555",
+      "use": "work"
+    }
+  ],
+  "gender": "female",
+  "birthDate": "1976-07-04",
+  "address": [
+    {
+      "use": "home",
+      "line": ["2222 Home Street"],
+      "city": "Mannhattan",
+      "postalCode": "6676"
+    }
+  ]
+}

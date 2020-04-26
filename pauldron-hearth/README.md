@@ -16,6 +16,9 @@ The proxy mediates between requests sent by a client and responses sent back by 
 - Wildcard and conjunctive grants in scopes.
 - Negative (denied) scopes.
 - Authorization on bulk `$export` requests with automatic application of redaction filters on the client's request based on the client's granted security labels in its scopes.
+- An optional, rudimentary FHIR labeling service, currently capable of:
+  - Adding a default [confidentiality label](https://www.hl7.org/fhir/v3/ConfidentialityClassification/vs.html) to any outgoing resource otherwise already labeled, i.e., having an existing `meta.security` (except resources of types listed in the `NO_LABEL_RESOURCE_TYPES` environment variable).
+  - Adding a confidentiality high-watermark label to outgoing bundles, based on their contents.
 
 Currently, inspecting other HTTP verbs is not supported and those requests will be simply passed on to the FHIR server.
 
@@ -211,6 +214,13 @@ If you're using UMA, the following environment variables must also be configured
 - `UMA_SERVER_PERMISSION_REGISTRATION_ENDPOINT`: The permission endpoint for the  Pauldron server. If you have set up Pauldron server with default settings, set this to `/protection/permissions`
 - `UMA_SERVER_REALM`: This will be used as the value of the `realm` field in the UMA response to the client when the client is advised to obtain authorization from the Pauldron authorization endpoint.  
 - `UMA_SERVER_AUTHORIZATION_ENDPOINT`: The authorization endpoint for the  Pauldron server. If you have set up Pauldron server with default settings, set this to `/authorization`. Note that Hearth does not make any calls to this endpoint and simply includes this value in the UMA response to the client when the client is advised to obtain authorization from the Pauldron authorization endpoint.
+
+### Labelin Service Settings
+- `ENABLE_LABELING_SERVICE`: enables the labeling service if set to `true`.
+- `ADD_DEFAULT_CONFIDENTIALITY_LABEL`: enables adding default confidentiality label to resources if set to `true`. This label is only assigned if the resource is already labeled, i.e., has an existing `meta.security` attribute.
+- `DEFAULT_CONFIDENTIALITY_CODE`: the default confidentiality label to be added to otherwise labeled resources. If not provided, this will default to `M` (moderate).
+- `NO_LABEL_RESOURCE_TYPES`: comma-separated list of resource types that are exempt from adding labeling service.
+- `ADD_HIGHT_WATER_MARK`: enables adding high-watermark confidentiality label to outgoing bundles based on their resource content.
 
 ## Demo Server
 There is a Pauldron Hearth demo server deployed [here](https://pauldron-hearth.herokuapp.com) which is configured to proxy the FHIR server at: [http://hapi.fhir.org/baseR4](http://hapi.fhir.org/baseR4)

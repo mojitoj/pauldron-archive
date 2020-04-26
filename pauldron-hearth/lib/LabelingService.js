@@ -10,6 +10,8 @@ const NO_LABEL_RESOURCE_TYPES = (process.env.NO_LABEL_RESOURCE_TYPES || "")
   .split(",")
   .map((res) => res.trim());
 
+const ADD_HIGHT_WATER_MARK = process.env.ADD_HIGHT_WATER_MARK === "true";
+
 function maybeLabelResponse(response) {
   return !ENABLE_LABELING_SERVICE
     ? response
@@ -32,13 +34,22 @@ function labelResourceEntry(entry) {
 }
 
 function labelBundle(bundle) {
-  return _.set(_.cloneDeep(bundle), "entry", bundle.entry.map(labelResourceEntry));
+  return _.set(
+    _.cloneDeep(bundle),
+    "entry",
+    bundle.entry.map(labelResourceEntry)
+  );
 }
 
 function maybeAddDefaultConfidentialityLabelOnResource(resource) {
   return ADD_DEFAULT_CONFIDENTIALITY_LABEL
     ? LabelingUtils.addDefaultConfidentialityOnResource(resource)
     : resource;
+}
+
+function maybeAddHighWaterMark(bundle) {
+  return ADD_HIGHT_WATER_MARK ? LabelingUtils.addHighWaterMark(bundle)
+  : resource;
 }
 
 module.exports = {

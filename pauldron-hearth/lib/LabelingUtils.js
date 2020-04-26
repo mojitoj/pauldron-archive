@@ -2,11 +2,11 @@ const _ = require("lodash");
 const VocabularyUtils = require("./VocabularyUtils");
 
 function addDefaultConfidentialityOnBundle(bundle) {
-    return _.set(_.clone(bundle), "entry", bundle.entry.map(addDefaultConfidentialityToResourceEntry));
+    return _.set(_.cloneDeep(bundle), "entry", bundle.entry.map(addDefaultConfidentialityToResourceEntry));
 }
 
 function addDefaultConfidentialityToResourceEntry(entry) {
-    return _.set(_.clone(entry), "resource", addDefaultConfidentialityOnResource(entry.resource));
+    return _.set(_.cloneDeep(entry), "resource", addDefaultConfidentialityOnResource(entry.resource));
 }
 
 function addDefaultConfidentialityOnResource(resource) {
@@ -17,7 +17,7 @@ function addDefaultConfidentialityOnResource(resource) {
 }
 
 function resourceAugmentedWithConfidentialityLabel(resource) {
-    return _.set(_.clone(resource), "meta.security", _.concat(resource.meta.security, {
+    return _.set(_.cloneDeep(resource), "meta.security", _.concat(resource.meta.security, {
         system: VocabularyUtils.CONFIDENTIALITY_CODE_SYSTEM,
         code: VocabularyUtils.DEFAULT_CONFIDENTIALITY_CODE
     }));

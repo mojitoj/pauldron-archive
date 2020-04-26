@@ -28,11 +28,11 @@ function labelResource(resource) {
 }
 
 function labelResourceEntry(entry) {
-  return _.set(_.clone(entry), "resource", labelResource(entry.resource));
+  return _.set(_.cloneDeep(entry), "resource", labelResource(entry.resource));
 }
 
 function labelBundle(bundle) {
-  return _.set(_.clone(bundle), "entry", bundle.entry.map(labelResourceEntry));
+  return _.set(_.cloneDeep(bundle), "entry", bundle.entry.map(labelResourceEntry));
 }
 
 function maybeAddDefaultConfidentialityLabelOnResource(resource) {

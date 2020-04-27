@@ -34,7 +34,7 @@ jobs:
           REDIS_HOST: redis
           REDIS_PORT: 6379
           FHIR_SERVER_BASE: https://mock-fhir-server/base
-          UNPROTECTED_RESOURCE_TYPES: Consent,Patient
+          UNPROTECTED_RESOURCE_TYPES: Consent,Patient,CapabilityStatement
           DESIGNATED_PATIENT_ID_SYSTEMS: 'urn:official:id'
           DESIGNATED_SECURITY_LABEL_SYSTEMS: http://terminology.hl7.org/CodeSystem/v3-Confidentiality
           UMA_SERVER_BASE: 'http://localhost:3000'
@@ -54,3 +54,4 @@ jobs:
           ADD_DEFAULT_CONFIDENTIALITY_LABEL: true
           ADD_HIGHT_WATER_MARK: true
           NO_LABEL_RESOURCE_TYPES: CapabilityStatement,ValueSet
+          AUGMENT_CAPABILITY_STATEMENT: true

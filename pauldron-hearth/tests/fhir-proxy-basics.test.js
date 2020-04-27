@@ -4,6 +4,7 @@ const nock = require("nock");
 const _ = require("lodash");
 
 const VocabularyUtils = require("../lib/VocabularyUtils");
+const CapabilityStatementUtils = require("../lib/CapabilityStatementUtils");
 
 const { app } = require("../app");
 
@@ -94,6 +95,26 @@ it("should label resources and add default label", async () => {
       }
     ])
   );
+});
+
+it("should return an augmented capability statement", async () => {
+  expect.assertions(5);
+  const response = require("./fixtures/capability-statement.json");
+  MOCK_FHIR_SERVER.get("/metadata").reply(200, response);
+
+  const res = await request(app)
+    .get("/metadata")
+    .set("content-type", "application/json");
+
+  expect(res.status).toEqual(200);
+  expect(res.body.rest[0].security.service).toEqual(
+    expect.arrayContaining([CapabilityStatementUtils.SECURITY])
+  );
+  expect(res.body.implementationGuide).toEqual(
+    expect.arrayContaining([CapabilityStatementUtils.IG])
+  );
+  expect(res.body.format.length).toEqual(1);
+  expect(res.body.format[0]).toEqual("application/fhir+json");
 });
 
 it("should be able to handle and parse gzip-encoded response from the backend", async () => {

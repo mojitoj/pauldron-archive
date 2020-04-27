@@ -5,6 +5,7 @@ const UMAUtils = require("../lib/UMAUtils");
 const ResponseUtils = require("../lib/ResponseUtils");
 const ErrorUtils = require("../lib/ErrorUtils");
 const LabelingService = require("../lib/LabelingService");
+const CapabilityStatementUtils = require("../lib/CapabilityStatementUtils");
 const BulkHandler = require("../controllers/BulkHandler");
 
 const FHIR_SERVER_BASE = process.env.FHIR_SERVER_BASE;
@@ -53,9 +54,17 @@ function sendIntactResponse(rawBackendBody, proxyRes, req, res) {
   res.end();
 }
 
+function maybeAugmentCapabilityStatement(req, response) {
+  const path = req.url.split("?")[0];
+  return path === "/metadata"
+    ? CapabilityStatementUtils.maybeAugmentCapabilityStatement(response)
+    : response;
+}
+
 async function handleGet(rawBackendBody, proxyRes, req, res) {
   try {
     const backendResponseStatus = proxyRes.statusCode;
+
     if (backendResponseStatus === 200) {
       const parsedBackendResponse = ResponseUtils.parseResponseBody(
         rawBackendBody,
@@ -64,7 +73,14 @@ async function handleGet(rawBackendBody, proxyRes, req, res) {
       if (ResponseUtils.responseIsProtected(parsedBackendResponse)) {
         await UMAUtils.processProtecetedResource(req, parsedBackendResponse);
       }
-      const modifiedResponse = LabelingService.maybeLabelResponse(parsedBackendResponse);
+
+      const maybeAugmentedResponse = maybeAugmentCapabilityStatement(
+        req,
+        parsedBackendResponse
+      );
+      const modifiedResponse = LabelingService.maybeLabelResponse(
+        maybeAugmentedResponse
+      );
       ResponseUtils.sendJsonResponse(
         res,
         proxyRes.headers,

@@ -1,0 +1,197 @@
+{
+  "resourceType": "CapabilityStatement",
+  "id": "592255",
+  "meta": {
+    "versionId": "1",
+    "lastUpdated": "2020-01-23T22:48:46.664+00:00",
+    "source": "#3Cx5aG8GyGOY919g"
+  },
+  "version": "20191118",
+  "name": "Sample",
+  "title": "Sample CapabilityStatement",
+  "status": "draft",
+  "experimental": true,
+  "date": "2019-11-19",
+  "publisher": "Sample Publisher",
+  "description": "Sample FHIR capability statement.",
+  "purpose": "Sample",
+  "kind": "requirements",
+  "fhirVersion": "4.0.1",
+  "format": ["application/fhir+json", "application/fhir+xml"],
+  "rest": [
+    {
+      "mode": "server",
+      "documentation": "Sample.",
+      "resource": [
+        {
+          "type": "Patient",
+          "interaction": [
+            {
+              "code": "read"
+            }
+          ]
+        },
+        {
+          "type": "Condition",
+          "interaction": [
+            {
+              "code": "read"
+            }
+          ]
+        },
+        {
+          "type": "Location",
+          "interaction": [
+            {
+              "code": "read"
+            }
+          ]
+        },
+        {
+          "type": "Organization",
+          "interaction": [
+            {
+              "code": "read"
+            }
+          ]
+        },
+        {
+          "type": "AllergyIntolerance",
+          "interaction": [
+            {
+              "code": "read"
+            }
+          ]
+        },
+        {
+          "type": "List",
+          "interaction": [
+            {
+              "code": "read"
+            }
+          ]
+        },
+        {
+          "type": "Flag",
+          "interaction": [
+            {
+              "code": "read"
+            }
+          ]
+        },
+        {
+          "type": "RelatedPerson",
+          "interaction": [
+            {
+              "code": "read"
+            }
+          ]
+        },
+        {
+          "type": "Observation",
+          "interaction": [
+            {
+              "code": "read"
+            }
+          ]
+        },
+        {
+          "type": "Procedure",
+          "interaction": [
+            {
+              "code": "read"
+            }
+          ]
+        },
+        {
+          "type": "DiagnosticReport",
+          "interaction": [
+            {
+              "code": "read"
+            }
+          ]
+        },
+        {
+          "type": "DocumentReference",
+          "interaction": [
+            {
+              "code": "read"
+            }
+          ]
+        },
+        {
+          "type": "Binary",
+          "interaction": [
+            {
+              "code": "read"
+            }
+          ]
+        },
+        {
+          "type": "Appointment",
+          "interaction": [
+            {
+              "code": "read"
+            }
+          ]
+        },
+        {
+          "type": "PractitionerRole",
+          "interaction": [
+            {
+              "code": "read"
+            }
+          ]
+        },
+        {
+          "type": "Provenance",
+          "interaction": [
+            {
+              "code": "read"
+            }
+          ]
+        },
+        {
+          "type": "ChargeItem",
+          "interaction": [
+            {
+              "code": "read"
+            }
+          ]
+        },
+        {
+          "type": "Account",
+          "interaction": [
+            {
+              "code": "read"
+            }
+          ]
+        },
+        {
+          "type": "Coverage",
+          "interaction": [
+            {
+              "code": "read"
+            }
+          ]
+        },
+        {
+          "type": "ServiceRequest",
+          "interaction": [
+            {
+              "code": "read"
+            }
+          ]
+        },
+        {
+          "type": "MedicationRequest",
+          "interaction": [
+            {
+              "code": "read"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

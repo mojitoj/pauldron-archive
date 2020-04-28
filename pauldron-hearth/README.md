@@ -12,15 +12,18 @@ The proxy mediates between requests sent by a client and responses sent back by 
 3. If the token provided by the client is valid, Hearth compares the list of _granted scopes_ with the implied set of _required scopes_ by the client's request, and accordingly, either permits the full response, redacts resources for which the required scopes were not granted, or denies the request altogether if none of the required scopes for fulfilling the request are granted.
 
 ## Features
-- Authorization on `GET` requests based on the response contents.
+- Authorization on `GET` requests based on the response contents. (Currently, inspecting other HTTP verbs is not supported and those requests will be simply passed on to the FHIR server.)
 - Wildcard and conjunctive grants in scopes.
 - Negative (denied) scopes.
 - Authorization on bulk `$export` requests with automatic application of redaction filters on the client's request based on the client's granted security labels in its scopes.
 - An optional, rudimentary FHIR labeling service, currently capable of:
   - Adding a default [confidentiality label](https://www.hl7.org/fhir/v3/ConfidentialityClassification/vs.html) to any outgoing resource otherwise already labeled, i.e., having an existing `meta.security` (except resources of types listed in the `NO_LABEL_RESOURCE_TYPES` environment variable).
   - Adding a confidentiality high-watermark label to outgoing bundles, based on their contents.
+- Augmenting the backend FHIR Server `CapabilityStatement` (at `/metadata`) to add capabilities added by Pauldron Hearth. Currently, this includes:
+  - Declaring support for the [FHIR DS4P IG](http://build.fhir.org/ig/HL7/fhir-security-label-ds4p/branches/master/index.html).
+  - Declaring `OAuth` support as the security mechanism for the server's REST endpoint.
+  - Declaring that the server only supports JSON in the `format` attribute.
 
-Currently, inspecting other HTTP verbs is not supported and those requests will be simply passed on to the FHIR server.
 
 ## Scope/Permission Structure
 Pauldron Hearth supports both UMA and OAuth 2.0 access tokens, issued by the respective endpoints of Pauldorn (see [here](https://github.com/mojitoholic/pauldron/blob/master/pauldron/README.md) for details). 

@@ -20,12 +20,14 @@ function sendJsonResponse(resObject, headers, statusCode, jsonBody) {
   _.unset(headers, "content-type");
   _.unset(headers, "Content-Encoding");
   _.unset(headers, "content-encoding");
+  _.unset(headers, "transfer-encoding");
+  _.unset(headers, "Transfer-Encoding");
   _.unset(headers, "Content-Length");
   _.unset(headers, "content-length");
   const newHeaders = {
     "Content-Type": "application/json",
     "Content-Encoding": "identity",
-    "Content-Length": bodyBytes.length,
+    "Transfer-Encoding": "identity",
     ...headers
   };
   sendResponse(resObject, newHeaders, statusCode, bodyBytes);

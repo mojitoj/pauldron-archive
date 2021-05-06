@@ -21,7 +21,7 @@
   "dependencies": {
     "express": "^4.17.1",
     "http-proxy-middleware": "^1.0.3",
-    "lodash": ">=4.17.19",
+    "lodash": ">=4.17.21",
     "morgan": ">=1.10.0",
     "pauldron-clients": "0.6.1",
     "request": ">=2.88.2",

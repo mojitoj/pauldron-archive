@@ -26,6 +26,6 @@
     "pauldron-clients": "0.6.1",
     "request": ">=2.88.2",
     "request-promise": ">=4.2.5",
-    "winston": "^3.2.1"
+    "winston": "^3.3.3"
   }
 }

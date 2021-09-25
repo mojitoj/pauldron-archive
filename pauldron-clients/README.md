@@ -93,7 +93,15 @@ const grantedPermissions = await PauldronClient.OAuth2Token.introspect(
 ```
 
 ### HTTP Client
-This is a wrapper around the `request` library which enables a client to communicate with a resource server protected by Pauldron with minimal effort. The client needs to provide the required information to obtain authrorization, i.e. the requested scopes, a JWT claims token, the URL for the OAuth2 authorization endpoint, and the suitable API key for communicating with the this authorization endpoint. Note that this client is currently implemented only for the OAuth2 interface. The client wrapper will request a fresh OAuth2 Token and includes it in the request to the resource server, if a a Token is not provided or in case it has expired. It, then, returns the Token and the response from the resource server. Here is an example:
+This client is a simulation of the (now-deprecated) `request-promise` library that enables a client to communicate with a resource server protected by Pauldron, with minimal effort. The client has to provide the following information to obtain authorization in a JSON structure similar to that of the `request-promise` library: 
+- requested scopes (`requestedScopes`), 
+- a JWT claims token (`claimsToken`), 
+- the URL for the OAuth2 authorization endpoint (`authEndpointUrl`), 
+- a suitable API key for communicating with the above authorization endpoint (`authApiKey`)
+
+Note that this client is currently implemented only for the OAuth2 interface of Pauldron.  
+
+If an authorization token is not provided (or in case it has expired), the client requests a fresh OAuth2 Token and includes it in the request to the resource server. It, then, returns the Token and the response from the resource server. The following is an example:
 
 ```javascript
 const PauldronClient = require("pauldron-client");
@@ -120,9 +128,6 @@ const options = {
 
 const {token, response} = await PauldronClient.HTTP.OAuth2.request(options);
 ```
-
-
-### 
 
 ## License
 MIT

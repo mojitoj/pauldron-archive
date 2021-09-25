@@ -1,9 +1,12 @@
 const _ = require("lodash");
-const rp = require("request-promise");
+const superagent = require("superagent");
 const db = require("../lib/db");
 
-const logger = require ("../lib/logger");
-const {reconcilePermissionsAndObligations, validatePermissions} = require("../lib/permission-handler");
+const logger = require("../lib/logger");
+const {
+  reconcilePermissionsAndObligations,
+  validatePermissions
+} = require("../lib/permission-handler");
 
 const TimeStampedPermission = require("../model/TimeStampedPermission");
 const UpstreamServers = require("../lib/upstream-servers");
@@ -11,9 +14,8 @@ const APIAuthorization = require("../lib/api-authorization");
 const GenericErrorHandler = require("./error-handler");
 const JWTClaimsToken = require("../lib/jwt-claims-token");
 
-
-const {SimplePolicyDecisionCombinerEngine} = require ("pauldron-policy");
-const {policyTypeToEnginesMap} = require("./policy-endpoint");
+const { SimplePolicyDecisionCombinerEngine } = require("pauldron-policy");
+const { policyTypeToEnginesMap } = require("./policy-endpoint");
 
 const UMA_REDIRECT_OBLIGATION_ID = "UMA_REDIRECT";
 
@@ -26,45 +28,51 @@ const rptTTL = parseInt(process.env.RPT_TTL) || 20;
 
 async function create(req, res, next) {
   try {
-      const realm = APIAuthorization.validate(req, ["AUTH:C"]);
+    const realm = APIAuthorization.validate(req, ["AUTH:C"]);
 
-      await validateRPTRequest(req);
+    await validateRPTRequest(req);
 
-      const policies = await db.Policies.list(realm);
+    const policies = await db.Policies.list(realm);
 
-      const ticket = req.body.ticket;
+    const ticket = req.body.ticket;
 
-      const claimsTokens = req.body.claim_tokens;
-      const claims = await parseAndValidateClaimTokens(claimsTokens);
+    const claimsTokens = req.body.claim_tokens;
+    const claims = await parseAndValidateClaimTokens(claimsTokens);
 
-      const permission = await db.Permissions.get(realm, ticket);
-      validatePermissions(permission, "ticket");
+    const permission = await db.Permissions.get(realm, ticket);
+    validatePermissions(permission, "ticket");
 
-      const permissionsAfterReconciliationWithPolicies = 
-        await checkPolicies(claims, permission.permissions, policies);
+    const permissionsAfterReconciliationWithPolicies = await checkPolicies(
+      claims,
+      permission.permissions,
+      policies
+    );
 
-      const rpt = TimeStampedPermission.issue(
-        rptTTL, 
-        permissionsAfterReconciliationWithPolicies, 
-        permission.realm
-      );
+    const rpt = TimeStampedPermission.issue(
+      rptTTL,
+      permissionsAfterReconciliationWithPolicies,
+      permission.realm
+    );
 
-      await db.RPTs.add(realm, rpt.id, rpt);
+    await db.RPTs.add(realm, rpt.id, rpt);
 
-      await db.Permissions.del(realm, ticket);
+    await db.Permissions.del(realm, ticket);
 
-      res.status(201).send({rpt: rpt.id});
+    res.status(201).send({ rpt: rpt.id });
   } catch (e) {
     if (e && e.error === "uma_redirect") {
-      res.status(401)
-      .set("WWW-Authenticate", `UMA realm=\"${e.umaServerParams.realm}\", as_uri=\"${e.umaServerParams.uri}\", ticket=\"${e.ticket}\"`)
-      .send({
+      res
+        .status(401)
+        .set(
+          "WWW-Authenticate",
+          `UMA realm=\"${e.umaServerParams.realm}\", as_uri=\"${e.umaServerParams.uri}\", ticket=\"${e.ticket}\"`
+        )
+        .send({
           message: `Need approval from ${e.umaServerParams.uri}.`,
           error: "uma_redirect",
           status: 401,
-          info: {"server": e.umaServerParams}
-        }
-      );
+          info: { server: e.umaServerParams }
+        });
     } else {
       GenericErrorHandler.handle(e, res, req);
     }
@@ -73,28 +81,41 @@ async function create(req, res, next) {
 
 async function checkPolicies(claims, permissions, policies) {
   const policyArray = _.values(policies);
-  const decision = SimplePolicyDecisionCombinerEngine.evaluate(claims, policyArray, policyTypeToEnginesMap);
+  const decision = SimplePolicyDecisionCombinerEngine.evaluate(
+    claims,
+    policyArray,
+    policyTypeToEnginesMap
+  );
 
   const authorizationDecision = decision.authorization;
-    
-  if (!authorizationDecision || authorizationDecision === "Deny" || authorizationDecision === "NotApplicable") {
+
+  if (
+    !authorizationDecision ||
+    authorizationDecision === "Deny" ||
+    authorizationDecision === "NotApplicable"
+  ) {
     // failing safe to Deny if no applicable policies were found. This could be a configuration setting.
     throw {
       error: "policy_forbidden"
     };
   } else if (decision.authorization === "Permit") {
-    const grantedPermissions = reconcilePermissionsAndObligations(permissions, decision.obligations);
+    const grantedPermissions = reconcilePermissionsAndObligations(
+      permissions,
+      decision.obligations
+    );
     if (!grantedPermissions || !grantedPermissions.length) {
-        logger.debug("Rejecting RPT request because to permissions could be granted.");
-        throw {
-            error: "policy_forbidden"
-        };
+      logger.debug(
+        "Rejecting RPT request because to permissions could be granted."
+      );
+      throw {
+        error: "policy_forbidden"
+      };
     }
     return grantedPermissions;
-  } else if (decision.authorization === "Indeterminate") {    
-    const server =  decision.obligations[UMA_REDIRECT_OBLIGATION_ID];
+  } else if (decision.authorization === "Indeterminate") {
+    const server = decision.obligations[UMA_REDIRECT_OBLIGATION_ID];
     const ticket = await registerUMAPermissions(server, permissions);
-  
+
     throw {
       error: "uma_redirect",
       ticket: ticket,
@@ -104,31 +125,29 @@ async function checkPolicies(claims, permissions, policies) {
 }
 
 async function registerUMAPermissions(server, permissions) {
-  const protectionAPIKeyForUpstreamServer = UpstreamServers.protectionAPITokenFor(server.uri);
-  const upstreamServerPermissionRegistrationEndpoint = server.uri + server.permission_registration_endpoint;
-  if (! protectionAPIKeyForUpstreamServer) {
+  const protectionAPIKeyForUpstreamServer =
+    UpstreamServers.protectionAPITokenFor(server.uri);
+  const upstreamServerPermissionRegistrationEndpoint =
+    server.uri + server.permission_registration_endpoint;
+  if (!protectionAPIKeyForUpstreamServer) {
     throw {
       error: "uma_redirect_error",
       message: `Need approval from ${upstreamServerPermissionRegistrationEndpoint} but no API token found for communicating with this server.`
     };
   }
-  const options = {
-    method: "POST",
-    json: true,
-    uri: upstreamServerPermissionRegistrationEndpoint,
-    headers: {"Authorization": `Bearer ${protectionAPIKeyForUpstreamServer}`},
-    body: permissions
-  };
 
   try {
-    const response = await rp(options);
-    if (! response.ticket) {
+    const response = await superagent
+      .post(upstreamServerPermissionRegistrationEndpoint)
+      .set("Authorization", `Bearer ${protectionAPIKeyForUpstreamServer}`)
+      .send(permissions);
+    if (!response.body.ticket) {
       throw {
         error: "uma_redirect_error",
         message: `Need approval from ${upstreamServerPermissionRegistrationEndpoint} but no ticket was returned.`
       };
     }
-    return response.ticket;
+    return response.body.ticket;
   } catch (e) {
     throw {
       error: "uma_redirect_error",
@@ -138,48 +157,46 @@ async function registerUMAPermissions(server, permissions) {
 }
 
 async function introspectRPT(server, rpt) {
-  const protectionAPIKeyForUpstreamServer = UpstreamServers.protectionAPITokenFor(server.uri);
-  const upstreamServerIntrospectionEndpoint = server.uri + server.introspection_endpoint
+  const protectionAPIKeyForUpstreamServer =
+    UpstreamServers.protectionAPITokenFor(server.uri);
+  const upstreamServerIntrospectionEndpoint =
+    server.uri + server.introspection_endpoint;
 
-  if (! protectionAPIKeyForUpstreamServer) {
+  if (!protectionAPIKeyForUpstreamServer) {
     throw {
       error: "uma_introspection_error",
       message: `Need introspection from ${upstreamServerIntrospectionEndpoint} but no API token found for communicating with this server.`
     };
   }
-  const options = {
-    method: "POST",
-    json: true,
-    form: {
-      token: rpt
-    },
-    headers: {"Authorization": `Bearer ${protectionAPIKeyForUpstreamServer}`},
-    uri: upstreamServerIntrospectionEndpoint
-  };
-  let response = null;
+
   try {
-    response = await rp(options);
+    const httpResponse = await superagent
+      .post(upstreamServerIntrospectionEndpoint)
+      .type("form")
+      .set("Authorization", `Bearer ${protectionAPIKeyForUpstreamServer}`)
+      .send({ token: rpt });
+    const response = httpResponse.body;
+    if (!response || !response.active || !response.permissions) {
+      throw {
+        error: "uma_introspection_error",
+        message: `Unsuccessful introspection attempt at ${upstreamServerIntrospectionEndpoint}`
+      };
+    }
+    return response.permissions;
   } catch (e) {
     throw {
       error: "uma_introspection_error",
       message: `Failed introspection attempt at ${upstreamServerIntrospectionEndpoint}:${e}`
     };
   }
-  if (!response || !response.active || ! response.permissions) {
-    throw {
-      error: "uma_introspection_error",
-      message: `Unsuccessful introspection attempt at ${upstreamServerIntrospectionEndpoint}`
-    };
-  }
-  return response.permissions;
 }
 
 async function parseAndValidateClaimTokens(claimTokens) {
-  claimTokens = claimTokens || [];  
+  claimTokens = claimTokens || [];
 
-  let allClaims = {rpts: {}};
+  let allClaims = { rpts: {} };
   for (let index = 0; index < claimTokens.length; index++) {
-    const claimToken = claimTokens [index];
+    const claimToken = claimTokens[index];
     if (claimToken.format === "jwt") {
       allClaims = {
         ...JWTClaimsToken.parse(claimToken.token),
@@ -191,7 +208,8 @@ async function parseAndValidateClaimTokens(claimTokens) {
       if (!serverInfo || !serverInfo.introspection_endpoint) {
         throw {
           error: "claims_error",
-          message: "RPT claims must provide 'info.introspection_endpoint' to enable verificication."
+          message:
+            "RPT claims must provide 'info.introspection_endpoint' to enable verificication."
         };
       }
 
@@ -214,22 +232,25 @@ async function parseAndValidateClaimTokens(claimTokens) {
 const yup = require("yup");
 const schema = yup.object().shape({
   ticket: yup.string().required(),
-  claim_tokens: yup.array().of(
-      yup.object().shape({ 
-          format: yup.string().required(),
-          token: yup.string().required()
+  claim_tokens: yup
+    .array()
+    .of(
+      yup.object().shape({
+        format: yup.string().required(),
+        token: yup.string().required()
       })
-  ).required()
+    )
+    .required()
 });
 
-async function validateRPTRequest(request) {  
+async function validateRPTRequest(request) {
   try {
     await schema.validate(request.body);
   } catch (e) {
     throw {
       error: "bad_request",
       message: `Bad Request. ${_.join(e.errors, ", ")}.`
-    }    
+    };
   }
 }
 

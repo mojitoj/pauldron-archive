@@ -31,8 +31,7 @@
     "object-hash": "^2.0.3",
     "pauldron-policy": "0.2.3",
     "redis": "^3.1.1",
-    "request": ">=2.88.2",
-    "request-promise": ">=4.2.5",
+    "superagent": "^6.1.0",
     "uuid": "^7.0.3",
     "winston": "^3.2.1",
     "yup": "^0.28.4"

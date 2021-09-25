@@ -1,19 +1,18 @@
-const rp = require("request-promise");
+const superagent = require("superagent");
+
 const _ = require("lodash");
-const {genericErrorHandler} = require("./ErrorHandler");
+const { genericErrorHandler } = require("./ErrorHandler");
 
 async function registerPermissions(permissions, url, apiKey) {
-  const options = {
-    method: "POST",
-    json: true,
-    uri: url,
-    headers: {"Authorization": `Bearer ${apiKey}`},
-    body: permissions
-  };
-
   try {
-    const response = await rp(options);
-    if (! response.ticket) {
+    const httpResponse = await superagent
+      .post(url)
+      .type("json")
+      .set("Authorization", `Bearer ${apiKey}`)
+      .set("Accept", "application/json")
+      .send(permissions);
+    const response = httpResponse.body;
+    if (!response.ticket) {
       throw {
         error: "permission_registration_error",
         message: `No ticket was returned from ${url}`
@@ -30,18 +29,17 @@ async function registerPermissions(permissions, url, apiKey) {
 }
 
 async function introspectRPT(rpt, url, apiKey) {
-  const options = {
-    method: "POST",
-    json: true,
-    form: {
-      token: rpt
-    },
-    headers: {"Authorization": `Bearer ${apiKey}`},
-    uri: url
-  };
   let response = null;
   try {
-    response = await rp(options);
+    const httpResponse = await superagent
+      .post(url)
+      .type("form")
+      .set("Authorization", `Bearer ${apiKey}`)
+      .set("Accept", "application/json")
+      .send({
+        token: rpt
+      });
+    response = httpResponse.body;
   } catch (e) {
     throw {
       error: "introspection_error",
@@ -54,7 +52,7 @@ async function introspectRPT(rpt, url, apiKey) {
       error: "introspection_error",
       message: `Failed at introspection from ${url}: Invalid response.`
     };
-  } else if (!response.active || ! response.permissions) {
+  } else if (!response.active || !response.permissions) {
     throw {
       error: "invalid_rpt",
       message: `Invalid RPT.`
@@ -64,19 +62,18 @@ async function introspectRPT(rpt, url, apiKey) {
 }
 
 async function getRPT(ticket, claimTokens, url, apiKey) {
-  const options = {
-    method: "POST",
-    json: true,
-    body: {
-      ticket: ticket,
-      claim_tokens: claimTokens
-    },
-    headers: {"Authorization": `Bearer ${apiKey}`},
-    uri: url
-  };
   let response = null;
   try {
-    response = await rp(options);
+    const httpResponse = await superagent
+      .post(url)
+      .type("json")
+      .set("Authorization", `Bearer ${apiKey}`)
+      .set("Accept", "application/json")
+      .send({
+        ticket: ticket,
+        claim_tokens: claimTokens
+      });
+    response = httpResponse.body;
   } catch (e) {
     throw {
       error: "get_rpt_error",
@@ -95,21 +92,21 @@ async function getRPT(ticket, claimTokens, url, apiKey) {
 
 async function getOAuth2Token(requestedScopes, claimsToken, url, apiKey) {
   const scope = JSON.stringify(requestedScopes);
-  const options = {
-    method: "POST",
-    form: {
-      client_assertion_type: "urn:ietf:params:oauth:client-assertion-type:jwt-bearer",
-      grant_type: "client_credentials",
-      client_assertion: claimsToken,
-      scope
-    },
-    json: true,
-    headers: {"Authorization": `Bearer ${apiKey}`},
-    uri: url
-  };
   let response = null;
   try {
-    response = await rp(options);
+    const httpResponse = await superagent
+      .post(url)
+      .type("form")
+      .set("Authorization", `Bearer ${apiKey}`)
+      .set("Accept", "application/json")
+      .send({
+        client_assertion_type:
+          "urn:ietf:params:oauth:client-assertion-type:jwt-bearer",
+        grant_type: "client_credentials",
+        client_assertion: claimsToken,
+        scope
+      });
+    response = httpResponse.body;
   } catch (e) {
     genericErrorHandler(e);
     throw {
@@ -127,16 +124,15 @@ async function getOAuth2Token(requestedScopes, claimsToken, url, apiKey) {
 }
 
 async function addPolicy(policy, url, apiKey) {
-  const options = {
-    method: "POST",
-    json: true,
-    body: policy,
-    headers: {"Authorization": `Bearer ${apiKey}`},
-    uri: url
-  };
   let response = null;
   try {
-    response = await rp(options);
+    const httpResponse = await superagent
+      .post(url)
+      .type("json")
+      .set("Authorization", `Bearer ${apiKey}`)
+      .set("Accept", "application/json")
+      .send(policy);
+    response = httpResponse.body;
   } catch (e) {
     throw {
       error: "add_policy_error",
@@ -154,15 +150,11 @@ async function addPolicy(policy, url, apiKey) {
 }
 
 async function deletePolicy(policyId, url, apiKey) {
-  const options = {
-    method: "DELETE",
-    json: true,
-    headers: {"Authorization": `Bearer ${apiKey}`},
-    uri: `${url}/${policyId}`
-  };
-  let response = null;
   try {
-    response = await rp(options);
+    const httpResponse = await superagent
+      .delete(`${url}/${policyId}`)
+      .type("json")
+      .set({ Authorization: `Bearer ${apiKey}` });
   } catch (e) {
     throw {
       error: "delete_policy_error",
@@ -173,15 +165,13 @@ async function deletePolicy(policyId, url, apiKey) {
 }
 
 async function getPolicy(policyId, url, apiKey) {
-  const options = {
-    method: "GET",
-    json: true,
-    headers: {"Authorization": `Bearer ${apiKey}`},
-    uri: `${url}/${policyId}`
-  };
   let response = null;
   try {
-    response = await rp(options);
+    const httpResponse = await superagent
+      .get(`${url}/${policyId}`)
+      .set("Authorization", `Bearer ${apiKey}`)
+      .set("Accept", "application/json");
+    response = httpResponse.body;
   } catch (e) {
     throw {
       error: "get_policy_error",
@@ -198,48 +188,77 @@ async function getPolicy(policyId, url, apiKey) {
   return response;
 }
 
+function getSuperAgentFunction(options) {
+  const httpVerb = options.method ? options.method.toLowerCase() : "";
+  const uri = options.uri;
+  const headers = options.headers;
+  const body = options.body;
+  const form = options.form;
+  const qs = options.qs;
+  if (httpVerb === "get" && !qs) {
+    return superagent.get(uri).set(headers);
+  } else if (httpVerb === "get" && qs) {
+    return superagent.get(uri).set(headers).query(qs);
+  } else if (httpVerb === "post" && !form) {
+    return superagent.post(uri).set(headers).send(body);
+  } else if (httpVerb === "post" && form) {
+    return superagent.post(uri).type("form").set(headers).send(form);
+  } else if (httpVerb === "delete") {
+    return superagent.delete(uri).set(headers);
+  } else {
+    throw {
+      error: "internal_error",
+      message: `invalid HTTP verb: ${verb}`
+    };
+  }
+}
+
 async function httpRequestOAuth2(options) {
   let newOptions = options;
   let newToken = options.token;
 
-  const {
-      requestedScopes,
-      claimsToken,
-      authEndpointUrl,
-      authApiKey
-  } = options;
+  const { requestedScopes, claimsToken, authEndpointUrl, authApiKey } = options;
 
   try {
-    newToken = newToken || await getOAuth2Token(
-          requestedScopes,
-          claimsToken,
-          authEndpointUrl, 
-          authApiKey
-      );
-      
-      newOptions = _.set(options, "headers['Authorization']", `Bearer ${newToken}`);
-      const response = await rp(newOptions);
-      return {
-          token: newToken,
-          response
-      };
-      
+    newToken =
+      newToken ||
+      (await getOAuth2Token(
+        requestedScopes,
+        claimsToken,
+        authEndpointUrl,
+        authApiKey
+      ));
+
+    newOptions = _.set(
+      options,
+      "headers['Authorization']",
+      `Bearer ${newToken}`
+    );
+    const response = await getSuperAgentFunction(newOptions);
+    return {
+      token: newToken,
+      response: response.body
+    };
   } catch (e) {
-      if (e.statusCode === 401) {
-          newToken = await getOAuth2Token(
-              requestedScopes,
-              claimsToken,
-              authEndpointUrl, 
-              authApiKey
-          );
-          newOptions = _.set(options, "headers['Authorization']", `Bearer ${newToken}`);
-          const response = await rp(newOptions);
-          return {
-              token: newToken,
-              response
-          };
-      }
-      throw e;
+    if (e.status === 401) {
+      newToken = await getOAuth2Token(
+        requestedScopes,
+        claimsToken,
+        authEndpointUrl,
+        authApiKey
+      );
+      newOptions = _.set(
+        options,
+        "headers['Authorization']",
+        `Bearer ${newToken}`
+      );
+      const secondResponse = await getSuperAgentFunction(newOptions);
+      return {
+        token: newToken,
+        response: secondResponse.body
+      };
+    }
+    throw e;
   }
 }
 
@@ -264,7 +283,7 @@ const OAuth2Token = {
 };
 
 const HTTP = {
-  OAuth2 : {
+  OAuth2: {
     request: httpRequestOAuth2
   }
 };
@@ -275,4 +294,4 @@ module.exports = {
   RPT,
   OAuth2Token,
   HTTP
-}
+};

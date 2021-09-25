@@ -1,4 +1,4 @@
-const rp = require("request-promise");
+const superagent = require("superagent");
 const _ = require("lodash");
 
 const LabelingUtils = require("./LabelingUtils");
@@ -40,9 +40,8 @@ async function getRequiredPermissions(resource, action) {
 
   const resolvedPermissions = await Promise.all(fhirUMAPermissions);
 
-  const consolidatedUmaPermissions = consolidatePermissions(
-    resolvedPermissions
-  );
+  const consolidatedUmaPermissions =
+    consolidatePermissions(resolvedPermissions);
   return Object.values(consolidatedUmaPermissions);
 }
 
@@ -69,16 +68,12 @@ async function getPatientId(plainResource) {
   const patientURL = `${FHIR_SERVER_BASE}/${patientReference.reference}`;
   let patient = null;
 
-  const options = {
-    method: "GET",
-    json: true,
-    uri: patientURL,
-    cacheKey: patientURL,
-    cacheTTL: 5000
-  }; //todo: this cache doesn't seem to work
-
   try {
-    patient = await rp(options);
+    const patientResponse = await superagent
+      .get(patientURL)
+      .set({ Accept: "application/json" });
+    //todo: cache this
+    patient = patientResponse.body;
   } catch (e) {
     throw {
       error: "patient_not_found",

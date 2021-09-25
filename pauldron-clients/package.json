@@ -18,7 +18,6 @@
   },
   "dependencies": {
     "lodash": ">=4.17.21",
-    "request": ">=2.88.2",
-    "request-promise": ">=4.2.5"
+    "superagent": "^6.1.0"
   }
 }

@@ -4,8 +4,6 @@ jobs:
   container-job:
     # Containers must run in Linux based operating systems
     runs-on: ubuntu-latest
-    # Docker Hub image that `container-job` executes in
-    container: node:10.18-jessie
 
     # Service containers to run with `container-job`
     services:
@@ -21,7 +19,10 @@ jobs:
           --health-retries 5
     steps:
       # Downloads a copy of the code in your repository before running CI tests
-      - uses: actions/checkout@v1
+      - uses: actions/checkout@v2
+      - uses: actions/setup-node@v2
+        with:
+          node-version: "16"
       - uses: borales/actions-yarn@v2.3.0
         with:
           cmd: install # will run `yarn install` command

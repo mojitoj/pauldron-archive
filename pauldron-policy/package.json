@@ -6,7 +6,6 @@
   "repository": "https://github.com/mojitoholic/pauldron.git",
   "author": "mojitoholic",
   "license": "MIT",
-  "private": false,
   "keywords": [
     "Policy",
     "Authorization",
@@ -24,8 +23,5 @@
   "dependencies": {
     "esprima": "^4.0.1",
     "lodash": ">=4.17.21"
-  },
-  "devDependencies": {
-    "jest": "^27.0.6"
   }
 }

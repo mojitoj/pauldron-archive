@@ -1,4 +1,4 @@
-const { v4: uuidv4 } = require("uuid");
+const { randomUUID } = require("crypto");
 
 function isExpired(timeStampedPermissions) {
   return new Date().valueOf() > timeStampedPermissions.exp;
@@ -7,7 +7,7 @@ function isExpired(timeStampedPermissions) {
 function issue(validityInSeconds, permissions, realm) {
   const now = new Date().valueOf();
   return {
-    id: uuidv4(),
+    id: randomUUID(),
     iat: now,
     exp: now + validityInSeconds * 1000,
     realm,

@@ -17,7 +17,7 @@
     "supertest": "^6.2.2"
   },
   "dependencies": {
-    "express": "^4.17.2",
+    "express": "^4.17.3",
     "http-proxy-middleware": "^1.0.3",
     "lodash": ">=4.17.21",
     "morgan": ">=1.10.0",

@@ -11,11 +11,11 @@
   },
   "devDependencies": {
     "jsonwebtoken": "^9.0.0",
-    "nock": "^13.2.1",
+    "nock": "^13.2.9",
     "pauldron": "0.1.0"
   },
   "dependencies": {
     "lodash": ">=4.17.21",
-    "superagent": "^7.1.1"
+    "superagent": "^8.0.6"
   }
 }

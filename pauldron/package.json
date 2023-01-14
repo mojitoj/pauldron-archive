@@ -13,7 +13,7 @@
   ],
   "scripts": {
     "start": "node server.js",
-    "test": "jest --runInBand --forceExit"
+    "test": "npx jest --runInBand --forceExit"
   },
   "license": "MIT",
   "devDependencies": {

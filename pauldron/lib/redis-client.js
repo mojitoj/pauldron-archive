@@ -9,7 +9,9 @@ const config = url
   ? { host, port }
   : { url: "redis://localhost:6379" };
 
-const redisClient = redis.createClient(config);
+const redisClient = createClient(config)
+  .connect()
+  .catch(console.error);
 
 const { promisify } = require("util");
 

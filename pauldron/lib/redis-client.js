@@ -18,7 +18,7 @@ const set = promisify(redisClient.set).bind(redisClient);
 const get = promisify(redisClient.get).bind(redisClient);
 const del = promisify(redisClient.del).bind(redisClient);
 
-const flushdb = promisify(redisClient.flushdb).bind(redisClient);
+const flushdb = promisify(redisClient.flushDb).bind(redisClient);
 
 module.exports = {
   set,

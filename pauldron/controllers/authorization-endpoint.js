@@ -247,6 +247,8 @@ async function validateRPTRequest(request) {
   try {
     await schema.validate(request.body);
   } catch (e) {
+    logger.info(`bad token ${e}`);
+    console.log(e);
     throw {
       error: "bad_request",
       message: `Bad Request. ${_.join(e.errors, ", ")}.`

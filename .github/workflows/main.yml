@@ -5,30 +5,18 @@ jobs:
     # Containers must run in Linux based operating systems
     runs-on: ubuntu-latest
 
-    # Service containers to run with `container-job`
-    services:
-      # Label used to access the service container
-      redis:
-        # Docker Hub image
-        image: redis
-        # Set health checks to wait until redis has started
-        options: >-
-          --health-cmd "redis-cli ping"
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-
     steps:
       # Downloads a copy of the code in your repository before running CI tests
-      - uses: actions/checkout@v2
-      - uses: actions/setup-node@v2
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v3
         with:
           node-version: "17"
           cache: "yarn"
-      - uses: borales/actions-yarn@v2.3.0
+      - uses: supercharge/redis-github-action@1.7.0
+      - uses: borales/actions-yarn@v4
         with:
           cmd: install # will run `yarn install` command
-      - uses: borales/actions-yarn@v2.3.0
+      - uses: borales/actions-yarn@v4
         with:
           cmd: test # will run `yarn test` command
         env:
@@ -38,9 +26,9 @@ jobs:
           REDIS_PORT: 6379
           FHIR_SERVER_BASE: https://mock-fhir-server/base
           UNPROTECTED_RESOURCE_TYPES: Consent,Patient,CapabilityStatement
-          DESIGNATED_PATIENT_ID_SYSTEMS: 'urn:official:id'
+          DESIGNATED_PATIENT_ID_SYSTEMS: "urn:official:id"
           DESIGNATED_SECURITY_LABEL_SYSTEMS: http://terminology.hl7.org/CodeSystem/v3-Confidentiality
-          UMA_SERVER_BASE: 'http://localhost:3000'
+          UMA_SERVER_BASE: "http://localhost:3000"
           UMA_SERVER_REALM: example
           UMA_SERVER_PERMISSION_REGISTRATION_ENDPOINT: /protection/permissions
           UMA_SERVER_INTROSPECTION_ENDPOINT: /protection/introspection

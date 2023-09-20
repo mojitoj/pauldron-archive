@@ -2,11 +2,11 @@ const redisClient = require("../../lib/redis-client");
 const db = require("../../lib/db");
 
 beforeEach(async () => {
-    await redisClient.flushdb();
+    await redisClient.flushDb();
 });
 
 afterAll( async () => {
-    await redisClient.flushdb();
+    await redisClient.flushDb();
 });
 
 describe("permissions", () => {

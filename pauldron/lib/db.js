@@ -115,7 +115,7 @@ const Policies = {
 };
 
 async function flush() {
-    await redisClient.flushdb();
+    await redisClient.flushDb();
 }
 
 module.exports = {

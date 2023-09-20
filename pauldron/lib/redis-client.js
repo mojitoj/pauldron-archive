@@ -9,23 +9,9 @@ const config = url
   ? { host, port }
   : { url: "redis://localhost:6379" };
 
-const redisClient = createClient(config)
-  .connect()
-  .catch(console.error);
+const redisClient = redis.createClient(config);
+redisClient.on("error", (err) => console.log("Redis Client Error", err));
 
-const { promisify } = require("util");
+redisClient.connect().catch(console.error);
 
-const keys = promisify(redisClient.keys).bind(redisClient);
-const set = promisify(redisClient.set).bind(redisClient);
-const get = promisify(redisClient.get).bind(redisClient);
-const del = promisify(redisClient.del).bind(redisClient);
-
-const flushdb = promisify(redisClient.flushDb).bind(redisClient);
-
-module.exports = {
-  set,
-  get,
-  del,
-  keys,
-  flushdb
-};
+module.exports = redisClient;

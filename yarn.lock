@@ -3922,7 +3922,7 @@ __metadata:
     superagent: ^8.1.2
     supertest: ^6.3.3
     winston: ^3.10.0
-    yup: ^1.3.0
+    yup: ^1.3.1
   languageName: unknown
   linkType: soft
 
@@ -4921,14 +4921,14 @@ __metadata:
   languageName: node
   linkType: hard
 
-"yup@npm:^1.3.0":
-  version: 1.3.0
-  resolution: "yup@npm:1.3.0"
+"yup@npm:^1.3.1":
+  version: 1.3.1
+  resolution: "yup@npm:1.3.1"
   dependencies:
     property-expr: ^2.0.5
     tiny-case: ^1.0.3
     toposort: ^2.0.2
     type-fest: ^2.19.0
-  checksum: ab10e58b749785570af878409e87524c84d3836e27d4513ff8f55d777e87191539f4d5310dba8f57cfa6668d658f55bce966ca2ec46ee85a2be05c2fa9510f2c
+  checksum: 55193e1e8a697894e3b56931d70f9ddb574c26da4d81db0aafdb54550bd70668ae3e51df8bb56ecd4fef19336ccb5cdb0561d6435d2b58a55da6324a7f972a64
   languageName: node
   linkType: hard

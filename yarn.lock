@@ -415,6 +415,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@colors/colors@npm:^1.6.0":
+  version: 1.6.0
+  resolution: "@colors/colors@npm:1.6.0"
+  checksum: aa209963e0c3218e80a4a20553ba8c0fbb6fa13140540b4e5f97923790be06801fc90172c1114fc8b7e888b3d012b67298cde6b9e81521361becfaee400c662f
+  languageName: node
+  linkType: hard
+
 "@dabh/diagnostics@npm:^2.0.2":
   version: 2.0.2
   resolution: "@dabh/diagnostics@npm:2.0.2"
@@ -3251,7 +3258,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"lodash@npm:>=4.17.21, lodash@npm:^4.17.21":
+"lodash@npm:>=4.17.21":
   version: 4.17.21
   resolution: "lodash@npm:4.17.21"
   checksum: eb835a2e51d381e561e508ce932ea50a8e5a68f4ebdd771ea240d3048244a8d13658acbd502cd4829768c56f2e16bdd4340b9ea141297d472517b83868e677f7
@@ -3608,15 +3615,14 @@ __metadata:
   languageName: node
   linkType: hard
 
-"nock@npm:^13.3.3":
-  version: 13.3.3
-  resolution: "nock@npm:13.3.3"
+"nock@npm:^13.4.0":
+  version: 13.4.0
+  resolution: "nock@npm:13.4.0"
   dependencies:
     debug: ^4.1.0
     json-stringify-safe: ^5.0.1
-    lodash: ^4.17.21
     propagate: ^2.0.0
-  checksum: e3e4f0fb777ac63d74f89bbb7aebe8e815b891b64ac71983d91686f725fdab856fe189cf2fe23d4add9f5dd5da53f3568106a61116a771ce0f4ed0f5ad7b035b
+  checksum: 30c3751854f9c412df5f99e01eeaef25b2583d3cae80b8c46524acb39d8b7fa61043603472ad94a3adc4b7d1e0f3098e6bb06e787734cbfbde2751891115b311
   languageName: node
   linkType: hard
 
@@ -3873,7 +3879,7 @@ __metadata:
   dependencies:
     jsonwebtoken: ^9.0.2
     lodash: ">=4.17.21"
-    nock: ^13.3.3
+    nock: ^13.4.0
     pauldron: 0.1.0
     superagent: ^8.1.2
   languageName: unknown
@@ -3888,12 +3894,12 @@ __metadata:
     jsonwebtoken: ^9.0.2
     lodash: ">=4.17.21"
     morgan: ">=1.10.0"
-    nock: ^13.3.3
+    nock: ^13.4.0
     pauldron: 0.1.0
     pauldron-clients: 0.6.1
     superagent: ^8.1.2
     supertest: ^6.3.3
-    winston: ^3.10.0
+    winston: ^3.11.0
   languageName: unknown
   linkType: soft
 
@@ -3915,13 +3921,13 @@ __metadata:
     jsonwebtoken: ^9.0.2
     lodash: ">=4.17.21"
     morgan: ">=1.10.0"
-    nock: ^13.3.3
+    nock: ^13.4.0
     object-hash: ^3.0.0
     pauldron-policy: 0.2.3
     redis: ^4.6.10
     superagent: ^8.1.2
     supertest: ^6.3.3
-    winston: ^3.10.0
+    winston: ^3.11.0
     yup: ^1.3.1
   languageName: unknown
   linkType: soft
@@ -4813,11 +4819,11 @@ __metadata:
   languageName: node
   linkType: hard
 
-"winston@npm:^3.10.0":
-  version: 3.10.0
-  resolution: "winston@npm:3.10.0"
+"winston@npm:^3.11.0":
+  version: 3.11.0
+  resolution: "winston@npm:3.11.0"
   dependencies:
-    "@colors/colors": 1.5.0
+    "@colors/colors": ^1.6.0
     "@dabh/diagnostics": ^2.0.2
     async: ^3.2.3
     is-stream: ^2.0.0
@@ -4828,7 +4834,7 @@ __metadata:
     stack-trace: 0.0.x
     triple-beam: ^1.3.0
     winston-transport: ^4.5.0
-  checksum: 47df0361220d12b46d1b3c98a1c380a3718321739d527a182ce7984fc20715e5b0b55db0bcd3fd076d1b1d3261903b890b053851cfd4bc028bda7951fa8ca2e0
+  checksum: ca4454070f7a71b19f53c8c1765c59a013dab220edb49161b2e81917751d3e9edc3382430e4fb050feda04fb8463290ecab7cbc9240ec8d3d3b32a121849bbb0
   languageName: node
   linkType: hard
 

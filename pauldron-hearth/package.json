@@ -12,7 +12,7 @@
   },
   "devDependencies": {
     "jsonwebtoken": "^9.0.2",
-    "nock": "^13.3.3",
+    "nock": "^13.4.0",
     "pauldron": "0.1.0",
     "supertest": "^6.3.3"
   },
@@ -23,6 +23,6 @@
     "morgan": ">=1.10.0",
     "pauldron-clients": "0.6.1",
     "superagent": "^8.1.2",
-    "winston": "^3.10.0"
+    "winston": "^3.11.0"
   }
 }

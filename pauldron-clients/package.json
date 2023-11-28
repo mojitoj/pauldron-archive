@@ -11,7 +11,7 @@
   },
   "devDependencies": {
     "jsonwebtoken": "^9.0.2",
-    "nock": "^13.3.3",
+    "nock": "^13.4.0",
     "pauldron": "0.1.0"
   },
   "dependencies": {
